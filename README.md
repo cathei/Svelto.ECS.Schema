@@ -71,6 +71,55 @@ public class AnotherSchema : IEntitySchema<AnotherSchema>
 ```
 Above example shows use case of multiple tables with number or enum. Note that `AnotherSchema.AllPlayers` array caches all player group so you can directly pass it to `EntitiesDB.QueryEntities`. Do not make them static, it is not safe to access to schema until it is added to `EnginesRoot`.
 
+### Defining Partition
+On the other hand, you will want to group some related tables, and reuse it. We use `Partition<TShard>` for it. First, define a shard, which is logical group of tables.
+```csharp
+public struct PlayerShard : IEntityShard
+{
+    public ShardOffset Offset { get; set; }
+
+    public enum ItemType { Potion, Weapon, Armor, MAX };
+
+    static Table<CharacterDescriptor> aliveCharacter = new Table<CharacterDescriptor>();
+    static Table<CharacterDescriptor> deadCharacter = new Table<CharacterDescriptor>();
+    static Table<ItemDescriptor> items = new Table<ItemDescriptor>((int)ItemType.MAX);
+
+    public ExclusiveGroupStruct AliveCharacter => aliveCharacter.At(Offset).Group();
+    public ExclusiveGroupStruct DeadCharacter => deadCharacter.At(Offset).Group();
+    public ExclusiveGroupStruct Items(ItemType type) => items.At(Offset).Group((int)type);
+}
+```
+Looks similar to defining schema, but little different. First, `PlayerShard` is `struct`. Second, there is `Offset` property which defined in IEntityShard, and they are passed in properties by `.At(Offset)` before get the underlying group.
+
+Reason of this is `PlayerShard` can be reused but tables will be static. So we need to pass a `Offset` information to get the correct group when accessed from different partition.
+
+Now we have Shard, we can define actual partition with `Partition<TShard>` in the schema.
+
+```csharp
+public class MyGameSchema : IEntitySchema<MyGameSchema>
+{
+    public const int MaxPlayerCount = 10;
+
+    public SchemaContext Context { get; set; }
+
+    static Partition<PlayerShard> ai = new Partition<PlayerShard>();
+    static Partition<PlayerShard> players = new Partition<PlayerShard>(MaxPlayerCount);
+
+    public PlayerShard AI => ai.Shard();
+    public PlayerShard Player(int playerId) => players.Shard(playerId);
+
+    public static FasterList<ExclusiveGroupStruct> AllAliveCharacters { get; }
+
+    public MyGameSchema()
+    {
+        AllAliveCharacters = Enumerable.Range(0, MaxPlayerCount)
+            .Select(Player).Append(AI)
+            .Select(x => x.AliveCharacter).ToFasterList();
+    }
+}
+```
+Nice. We defined a group for AI, and 10 players. Just like how we expose group instead of table, we'll expose shard insted of partition. If you want to access group for player 5's alive characters, use `MyGameSchema.Player(5).AliveCharacter`. Also we added shortcut groups for all alive characters.
+
 ### Applying Schema
 Before we can use schema, we need to call `EnginesRoot.AddSchema<T>()`. When you initializing `EnginesRoot`, do this before any entitiy submission.
 ```csharp
@@ -121,55 +170,6 @@ foreach (var ((healths, positions, count), group) in entitiesDB.QueryEntities<He
     }
 }
 ```
-
-### Defining Partition
-On the other hand, you will want to group some related tables, and reuse it. We use `Partition<TShard>` for it. First, define a shard, which is logical group of tables.
-```csharp
-public struct PlayerShard : IEntityShard
-{
-    public ShardOffset Offset { get; set; }
-
-    public enum ItemType { Potion, Weapon, Armor, MAX };
-
-    static Table<CharacterDescriptor> aliveCharacter = new Table<CharacterDescriptor>();
-    static Table<CharacterDescriptor> deadCharacter = new Table<CharacterDescriptor>();
-    static Table<ItemDescriptor> items = new Table<ItemDescriptor>((int)ItemType.MAX);
-
-    public ExclusiveGroupStruct AliveCharacter => aliveCharacter.At(Offset).Group();
-    public ExclusiveGroupStruct DeadCharacter => deadCharacter.At(Offset).Group();
-    public ExclusiveGroupStruct Items(ItemType type) => items.At(Offset).Group((int)type);
-}
-```
-Looks similar to defining schema, but little different. First, `PlayerShard` is `struct`. Second, there is `Offset` property which defined in IEntityShard, and they are passed in properties by `.At(Offset)` before get the underlying group.
-
-Reason of this is `PlayerShard` can be reused but tables will be static. So we need to pass a `Offset` information to get the correct group when accessed from different partition.
-
-Now we have Shard, we can define actual partition with `Partition<TShard>` in the schema.
-
-```csharp
-public class MyGameSchema : IEntitySchema<MyGameSchema>
-{
-    public const int MaxPlayerCount = 10;
-
-    public SchemaContext Context { get; set; }
-
-    static Partition<PlayerShard> ai = new Partition<PlayerShard>();
-    static Partition<PlayerShard> players = new Partition<PlayerShard>(MaxPlayerCount);
-
-    public PlayerShard AI => ai.Shard();
-    public PlayerShard Player(int playerId) => players.Shard(playerId);
-
-    public static FasterList<ExclusiveGroupStruct> AllAliveCharacters { get; }
-
-    public MyGameSchema()
-    {
-        AllAliveCharacters = Enumerable.Range(0, MaxPlayerCount)
-            .Select(Player).Append(AI)
-            .Select(x => x.AliveCharacter).ToFasterList();
-    }
-}
-```
-Nice. We defined a group for AI, and 10 players. Just like how we expose group instead of table, we'll expose shard insted of partition. If you want to access group for player 5's alive characters, use `MyGameSchema.Player(5).AliveCharacter`. Also we added shortcut groups for all alive characters.
 
 ### vs. Doofuses example
 GroupCompound is good enough for simple, static groups. But not all the groups in game is simple or static. Most of them are not, actually. Let's look at the Doofuses example of Svelto.ECS.MiniExamples. They have groups like this.
