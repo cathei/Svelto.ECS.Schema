@@ -13,11 +13,11 @@ In RDBMS, tables can hold records having specific combination of columns.
 In Svelto.ECS, groups can hold entities having specific combination of components.
 That is why I chose to take friendly terms from RDBMS and define schema of ECS.
 
-### Basic Usage
-##### Install
+## Basic Usage
+### Install
 Currently it is PoC state. So I didn't publish anywhere but feel free to try it by cloning this repository and let me know how you feel!
 
-##### Defining Descriptor
+### Defining Descriptor
 Let's say you have basic understanding of general Entity-Component-System.
 Defining schema starts from defining EntityDescriptor, that is combination of components.
 ```csharp
@@ -25,7 +25,7 @@ public class CharacterDescriptor : GenericEntityDescriptor<EGIDComponent, Health
 ```
 It is not part of this extension, but it is important because it is basically definition of records that table can hold.
 
-##### Defining Schema
+### Defining Schema
 Let's define simplest Schema.
 ```csharp
 public class GameSchema : IEntitySchema<GameSchema>
@@ -45,7 +45,7 @@ public class GameSchema : IEntitySchema<GameSchema>
 
 Note that tables are defined as static, and only underlying `ExclusiveGroupStruct` are exposed. This is pattern I recommend, so rest of your code can be kept clean and have minimum dependency to Schema extension.
 
-##### Defining Multiple Tables
+### Defining Multiple Tables
 Sometimes you'll want many tables of same type, without defining many variables. Simiply pass the number of group you want to be created, and there are multiple separated groups!
 ```csharp
 public class AnotherSchema : IEntitySchema<AnotherSchema>
@@ -71,7 +71,7 @@ public class AnotherSchema : IEntitySchema<AnotherSchema>
 ```
 Above example shows use case of multiple tables with number or enum. Note that `AnotherSchema.AllPlayers` array caches all player group so you can directly pass it to `EntitiesDB.QueryEntities`. Do not make them static, it is not safe to access to schema until it is added to `EnginesRoot`.
 
-##### Applying Schema
+### Applying Schema
 Before we can use schema, we need to call `EnginesRoot.AddSchema<T>()`. When you initializing `EnginesRoot`, do this before any entitiy submission.
 ```csharp
 MyGameSchema schema = enginesRoot.AddSchema<MyGameSchema>();
@@ -122,7 +122,7 @@ foreach (var ((healths, positions, count), group) in entitiesDB.QueryEntities<He
 }
 ```
 
-##### Defining Partition
+### Defining Partition
 On the other hand, you will want to group some related tables, and reuse it. We use `Partition<TShard>` for it. First, define a shard, which is logical group of tables.
 ```csharp
 public struct PlayerShard : IEntityShard
@@ -171,7 +171,7 @@ public class MyGameSchema : IEntitySchema<MyGameSchema>
 ```
 Nice. We defined a group for AI, and 10 players. Just like how we expose group instead of table, we'll expose shard insted of partition. If you want to access group for player 5's alive characters, use `MyGameSchema.Player(5).AliveCharacter`. Also we added shortcut groups for all alive characters.
 
-##### vs. Doofuses example
+### vs. Doofuses example
 GroupCompound is good enough for simple, static groups. But not all the groups in game is simple or static. Most of them are not, actually. Let's look at the Doofuses example of Svelto.ECS.MiniExamples. They have groups like this.
 ```csharp
 static class GameGroups
@@ -295,12 +295,12 @@ Same manner as we expose a group for a table, we'll expose `IndexQuery` for a in
 
 Though there is no constraint yet, it is not recommended to share `Indexed<TKey>` across other descriptors.
 
-##### Querying Indexes
+### Querying Indexes
 Now, finally you can iterate over entities with `IndexQuery`. You don't have to include `Indexed<TKey>` in the query. You can query any type of component within the descriptor, because as long as you keep a group with single descriptor you can iterate with same filter.
 
 Just like when you query with `EntitiesDB`, you query with `SchemaContext`.
 ```csharp
-foreach (var ((health, position, indices), group) in schema.Context.QueryEntities<HealthComponent, PositionComponent>(IndexedSchema.CharacterByController(3)))
+foreach (var ((health, position, indices), group) in schema.Context.QueryEntities<HealthComponent, PositionComponent>(schema.CharacterByController(3)))
 {
     for (int i = 0; i < indices.count(); ++i)
     {
