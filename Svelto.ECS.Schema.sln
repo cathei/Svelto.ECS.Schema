@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30114.105
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Svelto.ECS.Schema", "Svelto.ECS.Schema\Svelto.ECS.Schema.csproj", "{1DDD34C7-D5B3-40B9-A651-92F14A2D4833}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Svelto.ECS.Schema.Tests", "Svelto.ECS.Schema.Tests\Svelto.ECS.Schema.Tests.csproj", "{FAF7E5AE-D774-4B06-8BFA-C97173C0971C}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1DDD34C7-D5B3-40B9-A651-92F14A2D4833}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1DDD34C7-D5B3-40B9-A651-92F14A2D4833}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1DDD34C7-D5B3-40B9-A651-92F14A2D4833}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1DDD34C7-D5B3-40B9-A651-92F14A2D4833}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FAF7E5AE-D774-4B06-8BFA-C97173C0971C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FAF7E5AE-D774-4B06-8BFA-C97173C0971C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FAF7E5AE-D774-4B06-8BFA-C97173C0971C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FAF7E5AE-D774-4B06-8BFA-C97173C0971C}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
