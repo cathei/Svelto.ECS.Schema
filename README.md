@@ -33,43 +33,47 @@ public class GameSchema : IEntitySchema<GameSchema>
     public SchemaContext Context { get; set; }
 
     static Table<CharacterDescriptor> character = new Table<CharacterDescriptor>();
-    static Table<ItemDescriptor> item = new Table<ItemDescriptor>();
+    public Group<CharacterDescriptor> Character => character.Group();
 
-    public ExclusiveGroupStruct Character => character.Group();
-    public ExclusiveGroupStruct Item => item.Group();
+    static Table<ItemDescriptor> item = new Table<ItemDescriptor>();
+    public Group<ItemDescriptor> Item => item.Group();
 }
 ```
 `IEntitySchema<TSelf>` represents a class that will hold all defined tables as member. `Context` property is requried by `IEntitySchema<TSelf>`.
 
 `Table<TDescriptor>` represents underlying `ExclusiveGroup`. Tables should only accept entities using same descriptor, or else the index will break.
 
-Note that tables are defined as static, and only underlying `ExclusiveGroupStruct` are exposed. This is pattern I recommend, so rest of your code can be kept clean and have minimum dependency to Schema extension.
+Note that tables are defined as static, and only `Group<T>` are exposed. This is pattern I recommend, so rest of your code can be kept clean and reslove all schema relatived code in schema class. **Do not make methodes static**, it is not safe to access to schema until it is added to `EnginesRoot`.
 
-### Defining Multiple Tables
-Sometimes you'll want many tables of same type, without defining many variables. Simiply pass the number of group you want to be created, and there are multiple separated groups!
+### Defining Ranged Table
+Sometimes you'll want many tables of same type, without defining many variables. Simiply pass the number of group you want to be created, and there are multiple separated tables!
 ```csharp
 public class AnotherSchema : IEntitySchema<AnotherSchema>
 {
     public SchemaContext Context { get; set; }
 
-    public const int MaxPlayerCount = 10;
     public enum ItemType { Potion, Weapon, Armor, MAX };
 
-    static Table<PlayerDescriptor> players = new Table<PlayerDescriptor>(MaxPlayerCount);
+    public const int MaxPlayerCount = 10;
+
     static Table<ItemDescriptor> items = new Table<ItemDescriptor>((int)ItemType.MAX);
+    public Group<ItemDescriptor> Items(ItemType type) => items.Group((int)type);
 
-    public ExclusiveGroupStruct Player(int playerId) => players.Group(playerId);
-    public ExclusiveGroupStruct Items(ItemType type) => items.Group((int)type);
+    static Table<PlayerDescriptor> players = new Table<PlayerDescriptor>(MaxPlayerCount);
+    public Group<PlayerDescriptor> Player(int playerId) => players.Group(playerId);
 
-    public FasterList<ExclusiveGroupStruct> AllPlayers { get; }
-
-    public AnotherSchema()
-    {
-        AllPlayers = Enumerable.Range(0, MaxPlayerCount).Select(Player).ToFasterList();
-    }
+    public Groups<PlayerDescriptor> AllPlayers => players.Groups();
 }
 ```
-Above example shows use case of multiple tables with number or enum. Note that `AnotherSchema.AllPlayers` array caches all player group so you can directly pass it to `EntitiesDB.QueryEntities`. Do not make them static, it is not safe to access to schema until it is added to `EnginesRoot`.
+Above example shows use case of ranged tables with number or enum.
+
+Note that we also exposes `AnotherSchema.AllPlayers` which represents all player groups. `Groups<T>` is actually a builder for `FasterList<ExclusiveGroupStruct>`. Call `Groups<T>.Build()` and cache the result. Then you can pass the list to `EntitiesDB.QueryEntities`. 
+```csharp
+// you probably wanna cache this
+FasterList<ExclusiveGroupStruct> allPlayerGroups = schema.AllPlayers.Build();
+
+foreach (var (...) in entitiesDB.QueryEntities<...>(allPlayerGroups)) { }
+```
 
 ### Defining Partition
 On the other hand, you will want to group some related tables, and reuse it. We use `Partition<TShard>` for it. First, define a shard, which is logical group of tables.
@@ -81,12 +85,13 @@ public struct PlayerShard : IEntityShard
     public enum ItemType { Potion, Weapon, Armor, MAX };
 
     static Table<CharacterDescriptor> aliveCharacter = new Table<CharacterDescriptor>();
-    static Table<CharacterDescriptor> deadCharacter = new Table<CharacterDescriptor>();
-    static Table<ItemDescriptor> items = new Table<ItemDescriptor>((int)ItemType.MAX);
+    public Group<CharacterDescriptor> AliveCharacter => aliveCharacter.At(Offset).Group();
 
-    public ExclusiveGroupStruct AliveCharacter => aliveCharacter.At(Offset).Group();
-    public ExclusiveGroupStruct DeadCharacter => deadCharacter.At(Offset).Group();
-    public ExclusiveGroupStruct Items(ItemType type) => items.At(Offset).Group((int)type);
+    static Table<CharacterDescriptor> deadCharacter = new Table<CharacterDescriptor>();
+    public Group<CharacterDescriptor> DeadCharacter => deadCharacter.At(Offset).Group();
+
+    static Table<ItemDescriptor> items = new Table<ItemDescriptor>((int)ItemType.MAX);
+    public Group<ItemDescriptor> Item(ItemType type) => items.At(Offset).Group((int)type);
 }
 ```
 Looks similar to defining schema, but little different. First, `PlayerShard` is `struct`. Second, there is `Offset` property which defined in IEntityShard, and they are passed in properties by `.At(Offset)` before get the underlying group.
@@ -103,19 +108,13 @@ public class MyGameSchema : IEntitySchema<MyGameSchema>
     public SchemaContext Context { get; set; }
 
     static Partition<PlayerShard> ai = new Partition<PlayerShard>();
-    static Partition<PlayerShard> players = new Partition<PlayerShard>(MaxPlayerCount);
-
     public PlayerShard AI => ai.Shard();
+
+    static Partition<PlayerShard> players = new Partition<PlayerShard>(MaxPlayerCount);
     public PlayerShard Player(int playerId) => players.Shard(playerId);
 
-    public static FasterList<ExclusiveGroupStruct> AllAliveCharacters { get; }
-
-    public MyGameSchema()
-    {
-        AllAliveCharacters = Enumerable.Range(0, MaxPlayerCount)
-            .Select(Player).Append(AI)
-            .Select(x => x.AliveCharacter).ToFasterList();
-    }
+    public Groups<CharacterDescriptor> AllAliveCharacters =>
+        AI.AliveCharacter + players.Shards().Each(x => x.AliveCharacter);
 }
 ```
 Nice. We defined a group for AI, and 10 players. Just like how we expose group instead of table, we'll expose shard insted of partition. If you want to access group for player 5's alive characters, use `MyGameSchema.Player(5).AliveCharacter`. Also we added shortcut groups for all alive characters.
@@ -149,20 +148,23 @@ public class CompositionRoot
         submissionScheduler.SubmitEntities();
     }
 
-    private void AddCharacter(IEntityFactory entityFactory, ExclusiveGroupStruct group)
+    private void AddCharacter(IEntityFactory entityFactory, Group<CharacterDescriptor> group)
     {
-        var builder = entityFactory.BuildEntity<CharacterDescriptor>(eidCounter++, group);
+        var builder = entityFactory.BuildEntity(eidCounter++, group);
 
         builder.Init(new HealthComponent(1000));
         builder.Init(new PositionComponent(0, 0));
     }
 }
 ```
-Above we have example to put 10 characters to alive, AI controlled character group, and put another 10 characters to dead, player 0 controlled character group.
+Above we have example to put 10 characters to alive, AI controlled character group, and put another 10 characters to dead, player 0 controlled character group. You don't have to specify descriptor when call BuildEntity, because group is already implying descriptor type.
 
 Inject schema to your engines. Now you can query this from your desired engine.
 ```csharp
-foreach (var ((healths, positions, count), group) in entitiesDB.QueryEntities<HealthComponent, PositionComponent>(schema.AllAliveCharacters))
+// you probably wanna cache this
+FastList<ExclusiveGroupStruct> allAliveCharactersGroup = schema.AllAliveCharacters.Build();
+
+foreach (var ((healths, positions, count), group) in entitiesDB.QueryEntities<HealthComponent, PositionComponent>(allAliveCharactersGroup))
 {
     for (int i = 0; i < count; ++i)
     {
@@ -209,10 +211,10 @@ public struct StateShard : IEntityShard
     public ShardOffset Offset { get; set; }
 
     static Table<DoofusEntityDescriptor> doofus = new Table<DoofusEntityDescriptor>();
-    static Table<FoodEntityDescriptor> food = new Table<FoodEntityDescriptor>();
+    public Group<DoofusEntityDescriptor> Doofus => doofus.At(Offset).Group();
 
-    public ExclusiveGroupStruct Doofus => doofus.At(Offset).Group();
-    public ExclusiveGroupStruct Food => food.At(Offset).Group();
+    static Table<FoodEntityDescriptor> food = new Table<FoodEntityDescriptor>();
+    public Group<FoodEntityDescriptor> Food => food.At(Offset).Group();
 }
 
 public struct TeamShard : IEntityShard
@@ -220,9 +222,9 @@ public struct TeamShard : IEntityShard
     public ShardOffset Offset { get; set; }
 
     static Partition<StateShard> eating = new Partition<StateShard>();
-    static Partition<StateShard> nonEating = new Partition<StateShard>();
-
     public StateShard Eating => eating.At(Offset).Shard();
+
+    static Partition<StateShard> nonEating = new Partition<StateShard>();
     public StateShard NonEating => nonEating.At(Offset).Shard();
 }
 
@@ -233,17 +235,9 @@ public class GameSchema : IEntitySchema<GameSchema>
     public SchemaContext Context { get; set; }
 
     static Partition<TeamShard> team = new Partition<TeamShard>((int)TeamColor.MAX);
-
     public TeamShard Team(TeamColor color) => team.Shard((int)color);
 
-    public FasterList<ExclusiveGroupStruct> EatingDoofuses { get; }
-
-    public GameSchema()
-    {
-        EatingDoofuses = Enumerable.Range(0, (int)TeamColor.MAX)
-            .Select(x => team.Shard(x).Eating.Doofus)
-            .ToFasterList();
-    }
+    public Groups<DoofusEntityDescriptor> EatingDoofuses => team.Shards().Each(x => x.Eating.Doofus);
 }
 ```
 More code, but you'll thank to some complexity when you have to deal with big design changes!
@@ -279,14 +273,14 @@ Before look into `SchemaContext`, Let's add `Index<TKey>` to our schema.
 public class IndexedSchema : IEntitySchema<IndexedSchema>
 {
     static Table<CharacterDescriptor> flyingCharacter = new Table<CharacterDescriptor>();
+    public Group<CharacterDescriptor> FlyingCharacter => flyingCharacter.Group();
+
     static Table<CharacterDescriptor> groundCharacter = new Table<CharacterDescriptor>();
+    public Group<CharacterDescriptor> GroundCharacter => flyingCharacter.Group();
 
-    static Index<Controller> characterByController = new Index<Controller>();
+    static Index<Controller> charactersByController = new Index<Controller>();
 
-    public ExclusiveGroupStruct FlyingCharacter => flyingCharacter.Group();
-    public ExclusiveGroupStruct GroundCharacter => flyingCharacter.Group();
-
-    public IndexQuery CharacterByController(int playerId) => characterByController.Query(playerId);
+    public IndexQuery CharactersByController(int playerId) => charactersByController.Query(playerId);
 }
 ```
 `Index<TKey>` will index any `Indexed<TKey>` component in any tables with same partition. Any child partition will be indexed as well. If `Index<TKey>` is defined in root schema, any table with `Indexed<TKey>` will be indexed. In this example both `FlyingCharacter` and `GroundCharacter` group will be indexed and returned when queried. If you want to index specific groups only, define a partition.
@@ -308,4 +302,18 @@ foreach (var ((health, position, indices), group) in schema.Context.QueryEntitie
     }
 }
 ```
-Note that you have to use double indexing like `health[indices[i]]`.
+Note that you have to use double indexing like `health[indices[i]]`.  **DO NOT update `Indexed` component while iterating through index query with it.** It is undefined behaviour.
+
+## Naming Convention
+Below is naming convention suggestions.
+
+### For Tables and Partitions
+* Use `singularNoun` for singluar table or partition.
+* Use `pluralNouns` for ranged table or partition.
+* Use `SingularNone` for `Group<T>` or result of `Shard()`.
+* Use `PluralNouns` for `Groups<T>` or result of `Shards()`.
+
+### For Indexes
+* Use `TableNameKeyName` for `IEntityIndexKey`. e.g. `ItemHolder`
+* Use `tableNamesByKeyName` for `Index<T>`. e.g. `itemsByHodler`
+* Use `TableNamesByKeyName` for `IndexQuery`.

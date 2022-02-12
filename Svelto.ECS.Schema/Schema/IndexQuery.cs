@@ -8,9 +8,15 @@ using Svelto.ECS.DataStructures;
 
 namespace Svelto.ECS.Schema
 {
-    public struct IndexQuery
+    public readonly struct IndexQuery
     {
-        internal int indexerId;
-        internal int key;
+        internal readonly int indexerId;
+        internal readonly int key;
+
+        internal IndexQuery(int indexerId, int key)
+        {
+            this.indexerId = indexerId;
+            this.key = key;
+        }
     }
 }

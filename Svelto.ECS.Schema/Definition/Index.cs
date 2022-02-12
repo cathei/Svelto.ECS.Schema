@@ -20,11 +20,7 @@ namespace Svelto.ECS.Schema.Definition
             if (node.element != this)
                 throw new ECSException("Cannot find correct node");
 
-            return new IndexQuery
-            {
-                indexerId = node.indexerStartIndex + index,
-                key = key
-            };
+            return new IndexQuery(node.indexerStartIndex + index, key);
         }
 
         internal override IEngine CreateEngine(SchemaContext context)
@@ -32,7 +28,7 @@ namespace Svelto.ECS.Schema.Definition
             return new TableIndexingEngine<T>(context);
         }
 
-        public struct Accessor
+        public readonly struct Accessor
         {
             private readonly Index<T> indexer;
             private readonly ShardOffset offset;

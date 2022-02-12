@@ -32,9 +32,15 @@ namespace Svelto.ECS.Schema
         internal abstract IEngine CreateEngine(SchemaContext context);
     }
 
-    public struct ShardOffset
+    public readonly struct ShardOffset
     {
-        internal SchemaMetadata.PartitionNode node;
-        internal int index;
+        internal readonly SchemaMetadata.PartitionNode node;
+        internal readonly int index;
+
+        internal ShardOffset(SchemaMetadata.PartitionNode node, int index)
+        {
+            this.node = node;
+            this.index = index;
+        }
     }
 }

@@ -24,20 +24,17 @@ namespace Svelto.ECS.Schema.Tests
 
             for (int i = 0; i < 100; ++i)
             {
-                var builder = entityFactory.BuildEntity<CharacterDescriptor>(
-                    characterIdCounter++, schema.AI.Character);
+                var builder = entityFactory.BuildEntity(characterIdCounter++, schema.AI.Character);
             }
 
             for (int i = 0; i < 100; ++i)
             {
-                var builder = entityFactory.BuildEntity<CharacterDescriptor>(
-                    characterIdCounter++, schema.Player(random.Next(10)).Character);
+                var builder = entityFactory.BuildEntity(characterIdCounter++, schema.Player(random.Next(10)).Character);
             }
 
             for (int j = 0; j < 1000; ++j)
             {
-                var itemBuilder = entityFactory.BuildEntity<ItemDescriptor>(
-                    itemIdCounter++, schema.Player(5).Item);
+                var itemBuilder = entityFactory.BuildEntity(itemIdCounter++, schema.Player(random.Next(5)).Item);
 
                 var owner = new ItemOwner(random.Next((int)characterIdCounter));
                 itemBuilder.Init(new Indexed<ItemOwner>(owner));
@@ -58,7 +55,9 @@ namespace Svelto.ECS.Schema.Tests
 
             PrintItemOwners(schema, "Index");
 
-            foreach (var ((keys, count), _) in entitiesDB.QueryEntities<Indexed<ItemOwner>>(schema.AllItems))
+            var allItemsGroup = schema.AllItems.Build();
+
+            foreach (var ((keys, count), _) in entitiesDB.QueryEntities<Indexed<ItemOwner>>(allItemsGroup))
             {
                 for (int i = 0; i < count; ++i)
                 {
@@ -68,11 +67,11 @@ namespace Svelto.ECS.Schema.Tests
 
             PrintItemOwners(schema, "IndexUpdate");
 
-            foreach (var ((keys, count), _) in entitiesDB.QueryEntities<Indexed<ItemOwner>>(schema.AllItems))
+            foreach (var ((keys, count), _) in entitiesDB.QueryEntities<Indexed<ItemOwner>>(allItemsGroup))
             {
                 for (int i = 0; i < count; ++i)
                 {
-                    entityFunctions.SwapEntityGroup<ItemDescriptor>(keys[i].ID, schema.Player(9).Item);
+                    entityFunctions.SwapEntityGroup(keys[i].ID, schema.Player(9).Item);
                 }
             }
 

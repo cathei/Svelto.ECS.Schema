@@ -33,10 +33,10 @@ namespace Svelto.ECS.Schema.Tests
         public ShardOffset Offset { get; set; }
 
         static Table<CharacterDescriptor> character = new Table<CharacterDescriptor>();
-        static Table<ItemDescriptor> item = new Table<ItemDescriptor>();
+        public Group<CharacterDescriptor> Character => character.At(Offset).Group();
 
-        public ExclusiveGroupStruct Character => character.At(Offset).Group();
-        public ExclusiveGroupStruct Item => item.At(Offset).Group();
+        static Table<ItemDescriptor> item = new Table<ItemDescriptor>();
+        public Group<ItemDescriptor> Item => item.At(Offset).Group();
     }
 
     // schema
@@ -45,25 +45,15 @@ namespace Svelto.ECS.Schema.Tests
         public SchemaContext Context { get; set; }
 
         static Partition<PlayerShard> ai = new Partition<PlayerShard>();
-        static Partition<PlayerShard> players = new Partition<PlayerShard>(10);
-
-        static Index<ItemOwner> itemByOwner = new Index<ItemOwner>();
-
         public PlayerShard AI => ai.Shard();
+
+        static Partition<PlayerShard> players = new Partition<PlayerShard>(10);
         public PlayerShard Player(int playerId) => players.Shard(playerId);
 
+        static Index<ItemOwner> itemByOwner = new Index<ItemOwner>();
         public IndexQuery ItemByOwner(int characterId) => itemByOwner.Query(characterId);
 
-        public FasterList<ExclusiveGroupStruct> AllCharacters { get; }
-        public FasterList<ExclusiveGroupStruct> AllItems { get; }
-
-        public SampleSchema()
-        {
-            AllCharacters = Enumerable.Range(0, 10).Select(Player)
-                .Append(AI).Select(x => x.Character).ToFasterList();
-
-            AllItems = Enumerable.Range(0, 10).Select(Player)
-                .Append(AI).Select(x => x.Item).ToFasterList();
-        }
+        public Groups<CharacterDescriptor> AllCharacters => AI.Character + players.Shards().Each(x => x.Character);
+        public Groups<ItemDescriptor> AllItems => AI.Item + players.Shards().Each(x => x.Item);
     }
 }

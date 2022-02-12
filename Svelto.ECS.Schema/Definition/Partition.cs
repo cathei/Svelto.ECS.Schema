@@ -1,6 +1,9 @@
+using System.Collections.Generic;
+using System.Linq;
+
 namespace Svelto.ECS.Schema.Definition
 {
-    public sealed class Partition<T> : EntitySchemaElement where T : IEntityShard, new()
+    public sealed class Partition<T> : EntitySchemaElement where T : struct, IEntityShard
     {
         public Partition(int range = 1)
         {
@@ -9,10 +12,11 @@ namespace Svelto.ECS.Schema.Definition
 
         public Accessor At(ShardOffset offset) => new Accessor(this, offset);
 
-        public T Shard(int index = 0)
-        {
-            return GetShard(metadata.root, index);
-        }
+        public T Shard(int index = 0) => GetShard(metadata.root, index);
+
+        public ShardEnumerable<T> Shards() => GetShards(metadata.root, Enumerable.Range(0, range));
+
+        public ShardEnumerable<T> Shards(IEnumerable<int> indexes) => GetShards(metadata.root, indexes);
 
         private T GetShard(SchemaMetadata.PartitionNode parent, int index)
         {
@@ -21,10 +25,20 @@ namespace Svelto.ECS.Schema.Definition
             if (node.element != this)
                 throw new ECSException("Cannot find correct node");
 
-            return new T { Offset = new ShardOffset { node = node, index = index } };
+            return new T { Offset = new ShardOffset(node, index) };
         }
 
-        public struct Accessor
+        private ShardEnumerable<T> GetShards(SchemaMetadata.PartitionNode parent, IEnumerable<int> indexes)
+        {
+            var node = parent.partitions[siblingOrder];
+
+            if (node.element != this)
+                throw new ECSException("Cannot find correct node");
+
+            return new ShardEnumerable<T>(node, indexes);
+        }
+
+        public readonly struct Accessor
         {
             private readonly Partition<T> partition;
             private readonly ShardOffset offset;
@@ -38,6 +52,18 @@ namespace Svelto.ECS.Schema.Definition
             public T Shard(int index = 0)
             {
                 return partition.GetShard(offset.node, (offset.index * partition.range) + index);
+            }
+
+            public ShardEnumerable<T> Shards()
+            {
+                int start = offset.index * partition.range;
+                return partition.GetShards(offset.node, Enumerable.Range(start, partition.range));
+            }
+
+            public ShardEnumerable<T> Shards(IEnumerable<int> indexes)
+            {
+                int start = offset.index * partition.range;
+                return partition.GetShards(offset.node, indexes.Select(i => start + i));
             }
         }
     }
