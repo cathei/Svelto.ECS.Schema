@@ -293,7 +293,7 @@ Now, finally you can iterate over entities with `IndexQuery`. You don't have to 
 
 Just like when you query with `EntitiesDB`, you query with `SchemaContext`.
 ```csharp
-foreach (var ((health, position, indices), group) in schema.Context.QueryEntities<HealthComponent, PositionComponent>(schema.CharacterByController(3)))
+foreach (var ((health, position, indices), group) in schema.Context.QueryEntities<HealthComponent, PositionComponent>(schema.CharactersByController(3)))
 {
     for (int i = 0; i < indices.count(); ++i)
     {
@@ -309,10 +309,10 @@ Below is naming convention suggestions.
 ### For Tables and Partitions
 * Use `singularNoun` for singluar table or partition.
 * Use `pluralNouns` for ranged table or partition.
-* Use `SingularNone` for `Group<T>` or result of `Shard()`.
+* Use `SingularNoun` for `Group<T>` or result of `Shard()`.
 * Use `PluralNouns` for `Groups<T>` or result of `Shards()`.
 
 ### For Indexes
 * Use `TableNameKeyName` for `IEntityIndexKey`. e.g. `ItemHolder`
 * Use `tableNamesByKeyName` for `Index<T>`. e.g. `itemsByHodler`
-* Use `TableNamesByKeyName` for `IndexQuery`.
+* Use `TableNameByKeyName` for `IndexQuery`. e.g. `ItemsByHolder`
