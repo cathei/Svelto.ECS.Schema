@@ -1,5 +1,5 @@
 ## Svelto.ECS.Schema
-Extension for Svelto.ECS, helps defining structure like database schema.
+Extension for [Svelto.ECS](https://github.com/sebas77/Svelto.ECS), helps defining structure like database schema.
 
 ### Motivation
 Svelto.ECS is an awesome project, however I found understanding underlying entity structure can be pretty confusing to new users like myself.
@@ -279,7 +279,6 @@ public class IndexedSchema : IEntitySchema<IndexedSchema>
     public Group<CharacterDescriptor> GroundCharacter => flyingCharacter.Group();
 
     static Index<Controller> charactersByController = new Index<Controller>();
-
     public IndexQuery CharactersByController(int playerId) => charactersByController.Query(playerId);
 }
 ```
