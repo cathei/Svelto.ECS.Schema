@@ -304,13 +304,19 @@ foreach (var ((health, position, indices), group) in schema.Context.QueryEntitie
 Note that you have to use double indexing like `health[indices[i]]`.  **DO NOT update `Indexed` component while iterating through index query with it.** It is undefined behaviour.
 
 ## Naming Convention
-Below is naming convention suggestions.
+Below is naming convention suggestions to make schema more readable. Optionally you could apply preceding `_` for private static members.
 
 ### For Tables and Partitions
-* Use `singularNoun` for singluar table or partition.
-* Use `pluralNouns` for ranged table or partition.
-* Use `SingularNoun` for `Group<T>` or result of `Shard()`.
-* Use `PluralNouns` for `Groups<T>` or result of `Shards()`.
+* Use `singularNoun` for singluar table.
+* Use `pluralNouns` for ranged table.
+* Use `SingularNoun` for `Group<T>`.
+* Use `PluralNouns` for `Groups<T>`.
+
+### For Partitions
+* Use `adjective` or `singluarNoun` for singular partition. e.g. `flying`
+* Use `adjective` or `pluralNouns` for ranged partition.
+* Use `Adjective` or `SingularNoun` for result of `Shard()`. e.g. `Flying`, so you can access like `Flying.Monster`
+* Use `Adjective` or `PluralNouns` for result of `Shards()`.
 
 ### For Indexes
 * Use `TableNameKeyName` for `IEntityIndexKey`. e.g. `ItemHolder`
