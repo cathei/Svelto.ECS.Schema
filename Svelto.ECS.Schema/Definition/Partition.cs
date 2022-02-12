@@ -23,7 +23,7 @@ namespace Svelto.ECS.Schema.Definition
             var node = parent.partitions[siblingOrder];
 
             if (node.element != this)
-                throw new ECSException("Cannot find correct node");
+                throw new ECSException("Cannot find correct node. Did you forget to call .At(Offset)?");
 
             return new T { Offset = new ShardOffset(node, index) };
         }
@@ -33,7 +33,7 @@ namespace Svelto.ECS.Schema.Definition
             var node = parent.partitions[siblingOrder];
 
             if (node.element != this)
-                throw new ECSException("Cannot find correct node");
+                throw new ECSException("Cannot find correct node. Did you forget to call .At(Offset)?");
 
             return new ShardEnumerable<T>(node, indexes);
         }

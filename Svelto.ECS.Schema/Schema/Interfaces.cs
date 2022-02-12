@@ -20,18 +20,6 @@ namespace Svelto.ECS.Schema
         ShardOffset Offset { get; set; }
     }
 
-    public abstract class EntitySchemaElement : IEntitySchemaElement
-    {
-        internal SchemaMetadata metadata;
-        internal int siblingOrder;
-        internal int range = 1;
-    }
-
-    public abstract class EntitySchemaIndex : EntitySchemaElement
-    {
-        internal abstract IEngine CreateEngine(SchemaContext context);
-    }
-
     public readonly struct ShardOffset
     {
         internal readonly SchemaMetadata.PartitionNode node;

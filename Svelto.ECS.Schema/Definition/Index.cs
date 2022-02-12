@@ -23,7 +23,7 @@ namespace Svelto.ECS.Schema.Definition
             var node = parent.indexers[siblingOrder];
 
             if (node.element != this)
-                throw new ECSException("Cannot find correct node");
+                throw new ECSException("Cannot find correct node. Did you forget to call .At(Offset)?");
 
             return new IndexQuery(node.indexerStartIndex + index, key);
         }
