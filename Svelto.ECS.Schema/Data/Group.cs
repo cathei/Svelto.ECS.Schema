@@ -12,16 +12,16 @@ namespace Svelto.ECS.Schema
     {
         public readonly ExclusiveGroupStruct exclusiveGroup;
 
-        public Group(ExclusiveGroupStruct group)
+        public Group(in ExclusiveGroupStruct group)
         {
             exclusiveGroup = group;
         }
 
-        public static Groups<T> operator+(Group<T> a, Group<T> b)
+        public static Groups<T> operator+(in Group<T> a, in Group<T> b)
         {
             return new Groups<T>(new [] { a.exclusiveGroup, b.exclusiveGroup });
         }
 
-        public static implicit operator ExclusiveGroupStruct(Group<T> group) => group.exclusiveGroup;
+        public static implicit operator ExclusiveGroupStruct(in Group<T> group) => group.exclusiveGroup;
     }
 }

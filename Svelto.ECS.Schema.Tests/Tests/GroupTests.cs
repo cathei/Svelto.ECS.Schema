@@ -84,7 +84,7 @@ namespace Svelto.ECS.Schema.Tests
         {
             for (int characterId = 0; characterId < characterIdCounter; ++characterId)
             {
-                foreach (var ((keys, indices), _) in schema.Context.QueryEntities<Indexed<ItemOwner>>(schema.ItemByOwner(characterId)))
+                foreach (var ((keys, indices), _) in schema.Context.QueryEntities<Indexed<ItemOwner>>(schema.ItemsByOwner(characterId)))
                 {
                     for (int i = 0; i < indices.Count(); ++i)
                     {
@@ -92,7 +92,6 @@ namespace Svelto.ECS.Schema.Tests
                     }
                 }
             }
-
         }
     }
 }

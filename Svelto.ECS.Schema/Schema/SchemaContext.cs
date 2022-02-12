@@ -38,7 +38,7 @@ namespace Svelto.ECS.Schema
             indexers = new IndexerData[metadata.indexerCount];
         }
 
-        internal bool TryGetTable(ExclusiveGroupStruct group, out SchemaMetadata.TableNode table, out int offset)
+        internal bool TryGetTable(in ExclusiveGroupStruct group, out SchemaMetadata.TableNode table, out int offset)
         {
             if (!metadata.groupToTable.TryGetValue(group, out table))
             {

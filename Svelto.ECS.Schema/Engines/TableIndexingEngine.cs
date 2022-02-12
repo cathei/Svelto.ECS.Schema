@@ -43,7 +43,7 @@ namespace Svelto.ECS.Schema
             CheckRemove(ref keyComponent, egid.groupID);
         }
 
-        private void CheckAdd(ref Indexed<T> keyComponent, ExclusiveGroupStruct groupId)
+        private void CheckAdd(ref Indexed<T> keyComponent, in ExclusiveGroupStruct groupId)
         {
             if (_context.TryGetTable(groupId, out var table, out int offset))
             {
@@ -71,7 +71,7 @@ namespace Svelto.ECS.Schema
             }
         }
 
-        private void AddToFilter(int indexerId, ref Indexed<T> keyComponent, ExclusiveGroupStruct groupId)
+        private void AddToFilter(int indexerId, ref Indexed<T> keyComponent, in ExclusiveGroupStruct groupId)
         {
             ref var groupData = ref _context.CreateOrGetGroupData<T>(indexerId, keyComponent.Key, groupId);
 
@@ -80,7 +80,7 @@ namespace Svelto.ECS.Schema
             groupData.filter.Add(keyComponent.ID.entityID, mapper);
         }
 
-        private void CheckRemove(ref Indexed<T> keyComponent, ExclusiveGroupStruct groupId)
+        private void CheckRemove(ref Indexed<T> keyComponent, in ExclusiveGroupStruct groupId)
         {
             if (_context.TryGetTable(groupId, out var table, out int offset))
             {
@@ -108,7 +108,7 @@ namespace Svelto.ECS.Schema
             }
         }
 
-        private void RemoveFromFilter(int indexerId, ref Indexed<T> keyComponent, ExclusiveGroupStruct groupId)
+        private void RemoveFromFilter(int indexerId, ref Indexed<T> keyComponent, in ExclusiveGroupStruct groupId)
         {
             ref var groupData = ref _context.CreateOrGetGroupData<T>(indexerId, keyComponent.Key, groupId);
 

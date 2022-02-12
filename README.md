@@ -247,9 +247,9 @@ When using it, code `GameGroups.RED_DOOFUSES_EATING.Groups` would be equvalent t
 ### Defining Indexes
 Index is wrapper of filters system, but works like indexes in RDBMS. Filters are used to have subset from a group. Indexes are to collect entities by specific key, from a partition or entire schema. Let's take a look. You have to define Key first.
 ```csharp
-public struct Controller : IEntityIndexKey
+public readonly struct Controller : IEntityIndexKey
 {
-    public int playerId;
+    public readonly int playerId;
 
     public int Key => playerId;
 
@@ -259,7 +259,7 @@ public struct Controller : IEntityIndexKey
     }
 }
 ```
-Keys are structs inheriting `IEntityIndexKey`. You can have more members in it, but you need to provide which member or combination will be `Key`. If the type is not `int`, consider using `GetHashCode()`.
+Keys are structs inheriting `IEntityIndexKey`. You can have more members in it, but you need to provide which member or combination will be `Key`. If the type is not `int`, consider using `GetHashCode()`. Also key are not meant to be mutable so I added `readonly` constraint but it is your choice.
 
 Then, you add `Indexed<TKey>` to your descriptor.
 

@@ -13,6 +13,11 @@ namespace Svelto.ECS.Schema.Definition
             return GetQuery(metadata.root, 0, key);
         }
 
+        public IndexQuery Query(in T key)
+        {
+            return GetQuery(metadata.root, 0, key.Key);
+        }
+
         private IndexQuery GetQuery(SchemaMetadata.PartitionNode parent, int index, int key)
         {
             var node = parent.indexers[siblingOrder];
@@ -42,6 +47,11 @@ namespace Svelto.ECS.Schema.Definition
             public IndexQuery Query(int key)
             {
                 return indexer.GetQuery(offset.node, offset.index, key);
+            }
+
+            public IndexQuery Query(in T key)
+            {
+                return indexer.GetQuery(offset.node, offset.index, key.Key);
             }
         }
     }

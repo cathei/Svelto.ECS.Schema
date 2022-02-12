@@ -9,10 +9,9 @@ using Svelto.ECS.Schema.Definition;
 
 namespace Svelto.ECS.Schema.Tests
 {
-    // keys
-    public struct ItemOwner : IEntityIndexKey
+    public readonly struct ItemOwner : IEntityIndexKey
     {
-        public int characterId;
+        public readonly int characterId;
 
         public int Key => characterId;
 
@@ -50,8 +49,8 @@ namespace Svelto.ECS.Schema.Tests
         static Partition<PlayerShard> players = new Partition<PlayerShard>(10);
         public PlayerShard Player(int playerId) => players.Shard(playerId);
 
-        static Index<ItemOwner> itemByOwner = new Index<ItemOwner>();
-        public IndexQuery ItemByOwner(int characterId) => itemByOwner.Query(characterId);
+        static Index<ItemOwner> itemsByOwner = new Index<ItemOwner>();
+        public IndexQuery ItemsByOwner(int characterId) => itemsByOwner.Query(characterId);
 
         public Groups<CharacterDescriptor> AllCharacters => AI.Character + players.Shards().Each(x => x.Character);
         public Groups<ItemDescriptor> AllItems => AI.Item + players.Shards().Each(x => x.Item);

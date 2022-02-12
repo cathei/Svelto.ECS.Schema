@@ -33,12 +33,12 @@ namespace Svelto.ECS.Schema
             return new Groups<T>(a.items.Concat(b.items));
         }
 
-        public static Groups<T> operator+(Groups<T> a, Group<T> b)
+        public static Groups<T> operator+(Groups<T> a, in Group<T> b)
         {
             return new Groups<T>(a.items.Append(b.exclusiveGroup));
         }
 
-        public static Groups<T> operator+(Group<T> a, Groups<T> b)
+        public static Groups<T> operator+(in Group<T> a, Groups<T> b)
         {
             return new Groups<T>(b.items.Prepend(a.exclusiveGroup));
         }
