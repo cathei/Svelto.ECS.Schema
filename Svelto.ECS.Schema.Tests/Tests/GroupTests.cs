@@ -13,7 +13,6 @@ namespace Svelto.ECS.Schema.Tests
         public void Test()
         {
             var submissionScheduler = new SimpleEntitiesSubmissionScheduler();
-
             var enginesRoot = new EnginesRoot(submissionScheduler);
 
             var entityFactory = enginesRoot.GenerateEntityFactory();

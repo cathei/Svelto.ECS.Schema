@@ -173,11 +173,14 @@ namespace Svelto.ECS.Schema
             indexersToGenerateEngine[typeRef] = (EntitySchemaIndex)node.element;
         }
 
-        // the order should be deterministic... maybe sorting
         private static IEnumerable<FieldInfo> GetStaticElementFields(Type type)
         {
             var fieldInfos = type.GetFields(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
-            return fieldInfos.Where(x => ElementBaseType.IsAssignableFrom(x.FieldType.BaseType));
+            var elementFieldInfos = fieldInfos.Where(x => ElementBaseType.IsAssignableFrom(x.FieldType.BaseType));
+
+            // the order should be deterministic and GetFields doesn't guarantee order
+            // can this be affected by obfuscation?
+            return elementFieldInfos.OrderBy(x => x.Name);
         }
     }
 }
