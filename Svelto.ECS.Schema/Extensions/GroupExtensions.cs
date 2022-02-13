@@ -10,6 +10,11 @@ namespace Svelto.ECS.Schema
 {
     public static class GroupExtensions
     {
+        public static FasterList<T> ToFasterList<T>(this IEnumerable<T> enumerable)
+        {
+            return new FasterList<T>(enumerable.ToArray());
+        }
+
         // this basically prevent putting wrong descriptor to a group
         public static EntityInitializer BuildEntity<T>(this IEntityFactory factory,
                 uint entityID, Group<T> group, IEnumerable<object> implementors = null)

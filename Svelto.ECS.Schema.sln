@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Svelto.ECS.Schema", "Svelto
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Svelto.ECS.Schema.Tests", "Svelto.ECS.Schema.Tests\Svelto.ECS.Schema.Tests.csproj", "{FAF7E5AE-D774-4B06-8BFA-C97173C0971C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Svelto.ECS.Schema.Generator", "Svelto.ECS.Schema.Generator\Svelto.ECS.Schema.Generator.csproj", "{2D2FCBEC-21C4-44A0-A58B-E426F321B995}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +26,9 @@ Global
 		{FAF7E5AE-D774-4B06-8BFA-C97173C0971C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FAF7E5AE-D774-4B06-8BFA-C97173C0971C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FAF7E5AE-D774-4B06-8BFA-C97173C0971C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2D2FCBEC-21C4-44A0-A58B-E426F321B995}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2D2FCBEC-21C4-44A0-A58B-E426F321B995}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2D2FCBEC-21C4-44A0-A58B-E426F321B995}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2D2FCBEC-21C4-44A0-A58B-E426F321B995}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

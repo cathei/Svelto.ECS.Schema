@@ -12,9 +12,20 @@
     <PackageReadmeFile>../README.md</PackageReadmeFile>
   </PropertyGroup>
 
+  <!-- <PropertyGroup>
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <CompilerGeneratedFilesOutputPath>Generated</CompilerGeneratedFilesOutputPath>
+  </PropertyGroup> -->
+
   <ItemGroup>
     <PackageReference Include="Svelto.ECS" Version="3.2.5" />
     <PackageReference Include="Svelto.Common" Version="3.2.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+      <ProjectReference Include="..\Svelto.ECS.Schema.Generator\Svelto.ECS.Schema.Generator.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
   </ItemGroup>
 
 </Project>
