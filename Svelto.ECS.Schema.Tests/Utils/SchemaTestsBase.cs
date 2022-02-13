@@ -6,7 +6,7 @@ namespace Svelto.ECS.Schema.Tests
 {
     public class SchemaTestsBase<T> where T : class, IEntitySchema<T>, new()
     {
-        protected EntitiesSubmissionScheduler _submissionScheduler;
+        protected SimpleEntitiesSubmissionScheduler _submissionScheduler;
         protected EnginesRoot _enginesRoot;
 
         protected IEntityFactory _factory;

@@ -21,12 +21,12 @@ namespace Svelto.ECS.Schema.Generator
             for (int i = 0; i < groupDataList.count; ++i)
             {{
                 var groupData = values[i];
+                var indices = groupData.filter.filteredIndices;
 
-                if (!groupData.group.IsEnabled())
+                if (!groupData.group.IsEnabled() || indices.Count() == 0)
                     continue;
 
                 var ({3}, _) = context.entitiesDB.QueryEntities<{1}>(groupData.group);
-                var indices = groupData.filter.filteredIndices;
 
                 yield return (({3}, indices), groupData.group);
             }}
@@ -70,11 +70,12 @@ namespace Svelto.ECS.Schema.Generator
                 if (!groupDataList.TryGetValue(groups[i], out var groupData))
                     continue;
 
-                if (!groupData.group.IsEnabled())
+                var indices = groupData.filter.filteredIndices;
+
+                if (!groupData.group.IsEnabled() || indices.Count() == 0)
                     continue;
 
                 var ({3}, _) = context.entitiesDB.QueryEntities<{1}>(groupData.group);
-                var indices = groupData.filter.filteredIndices;
 
                 yield return (({3}, indices), groupData.group);
             }}
