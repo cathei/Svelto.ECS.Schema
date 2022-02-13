@@ -1,10 +1,11 @@
-﻿using System.Linq;
+﻿using System.IO;
+using System.Linq;
 using System.Text;
 using Microsoft.CodeAnalysis;
 
 namespace Svelto.ECS.Schema.Generator
 {
-    public static class StringBuilderExtensions
+    public static class SourceGeneratorExtensions
     {
         // public static StringBuilder AppendTab(this StringBuilder builder, int tab)
         // {
@@ -38,6 +39,22 @@ namespace Svelto.ECS.Schema.Generator
             }
 
             return builder;
+        }
+
+
+        private const string RootPath = "../Svelto.ECS.Schema";
+
+        public static void SaveToFile(this GeneratorExecutionContext context, string filePath, string source)
+        {
+            // I know it is modern this way...
+            // context.AddSource("IndexExtensions.g.cs", source);
+
+            // However I prefer just save it as file because
+            // 0. I do not use runtime code analysis
+            // 1. Intelisence will work without any problem
+            // 2. Source is directly visible so I can see problem if generation step is wrong
+            // is there a way to achieve this without build multiple times?
+            File.WriteAllText(Path.Combine(RootPath, filePath), source);
         }
     }
 }

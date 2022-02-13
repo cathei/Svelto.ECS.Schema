@@ -31,7 +31,6 @@ namespace Svelto.ECS.Schema.Generator
                 yield return (({3}, indices), groupData.group);
             }}
         }}
-
 ";
 
         const string QueryEntitiesWithGroupTemplate = @"
@@ -53,7 +52,33 @@ namespace Svelto.ECS.Schema.Generator
 
             return ({3}, indices);
         }}
+";
 
+        const string QueryEntitiesWithGroupListTemplate = @"
+        public static IEnumerable<(({0}, FilteredIndices), ExclusiveGroupStruct)> QueryEntities<{1}>(this SchemaContext context, IndexQuery query, FasterList<ExclusiveGroupStruct> groups)
+{2}
+        {{
+            var groupDataList = context.GetGroupIndexDataList(query);
+
+            if (groupDataList == null)
+                yield break;
+
+            // var values = groupDataList.unsafeValues;
+
+            for (int i = 0; i < groups.count; ++i)
+            {{
+                if (!groupDataList.TryGetValue(groups[i], out var groupData))
+                    continue;
+
+                if (!groupData.group.IsEnabled())
+                    continue;
+
+                var ({3}, _) = context.entitiesDB.QueryEntities<{1}>(groupData.group);
+                var indices = groupData.filter.filteredIndices;
+
+                yield return (({3}, indices), groupData.group);
+            }}
+        }}
 ";
 
         public string GenerateQueryEntities(string template)
@@ -92,12 +117,12 @@ namespace Svelto.ECS.Schema
     {{
 {GenerateQueryEntities(QueryEntitiesTemplate)}
 {GenerateQueryEntities(QueryEntitiesWithGroupTemplate)}
+{GenerateQueryEntities(QueryEntitiesWithGroupListTemplate)}
     }}
 }}";
 
             context.AddSource("IndexExtensions.g.cs", source);
         }
-
 
         public void Initialize(GeneratorInitializationContext context)
         {
