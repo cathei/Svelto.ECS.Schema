@@ -4,6 +4,13 @@
     <TargetFramework>netstandard2.1</TargetFramework>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <PackageId>Svelto.ECS.Schema</PackageId>
+    <Authors>Maxwell Keonwoo Kang</Authors>
+    <RepositoryUrl>https://github.com/cathei/Svelto.ECS.Schema</RepositoryUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Svelto.ECS" Version="3.2.5" />
     <PackageReference Include="Svelto.Common" Version="3.2.3" />
