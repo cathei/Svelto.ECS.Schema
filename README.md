@@ -17,7 +17,7 @@ That is why I chose to take friendly terms from RDBMS and define schema of ECS.
 
 ## Basic Usage
 ### Install
-Currently it is alpha stage. While I don't recommend to use it on production, feel free to try it and please share me the experience! If you need help, you can either join [my Discord Channel](https://discord.gg/Dvak3QMj3n) or ping @cathei from [Svelto's Official Discord Channel](https://discord.gg/3qAdjDb).
+Currently it is alpha stage, available on [NuGet](https://www.nuget.org/packages/Svelto.ECS.Schema/). While I don't recommend to use it on production, feel free to try it and please share me the experience! If you need help, you can either join [my Discord Channel](https://discord.gg/Dvak3QMj3n) or ping @cathei from [Svelto's Official Discord Channel](https://discord.gg/3qAdjDb).
 
 ### Need help?
 
