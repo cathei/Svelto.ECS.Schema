@@ -1,3 +1,5 @@
+[![Nuget](https://img.shields.io/nuget/v/Svelto.ECS.Schema)](https://www.nuget.org/packages/Svelto.ECS.Schema/) [![Discord](https://img.shields.io/discord/942240862354702376?color=%235865F2&label=discord&logo=discord&logoColor=%23FFFFFF)](https://discord.gg/Dvak3QMj3n)
+
 ## Svelto.ECS.Schema
 Extension for [Svelto.ECS](https://github.com/sebas77/Svelto.ECS), helps defining structure like database schema.
 
@@ -15,7 +17,9 @@ That is why I chose to take friendly terms from RDBMS and define schema of ECS.
 
 ## Basic Usage
 ### Install
-Currently it is PoC state. So I didn't publish anywhere but feel free to try it by cloning this repository and let me know how you feel!
+Currently it is alpha stage. While I don't recommend to use it on production, feel free to try it and please share me the experience! If you need help, you can either join [my Discord Channel](https://discord.gg/Dvak3QMj3n) or ping @cathei from [Svelto's Official Discord Channel](https://discord.gg/3qAdjDb).
+
+### Need help?
 
 ### Defining Descriptor
 Let's say you have basic understanding of general Entity-Component-System.
