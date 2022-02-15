@@ -9,26 +9,24 @@ using Svelto.ECS.DataStructures;
 namespace Svelto.ECS.Schema
 {
     public struct Indexed<T> : IEntityComponent, INeedEGID
-        where T : unmanaged, IEntityIndexKey
+        where T : unmanaged, IEntityIndexKey<T>
     {
         public EGID ID { get; set; }
 
-        public T Content { get; private set; }
-
-        public int Key => Content.Key;
+        public T Key { get; private set; }
 
         // constructors should be only called when building entity
-        public Indexed(in T content)
+        public Indexed(in T key)
         {
             ID = default;
-            Content = content;
+            Key = key;
         }
 
-        public void Update(SchemaContext context, in T content)
+        public void Update(SchemaContext context, in T key)
         {
-            int oldKey = Key;
-            Content = content;
-            context.NotifyKeyUpdate(ref this, oldKey);
+            T oldKey = Key;
+            Key = key;
+            context.NotifyKeyUpdate(ref this, oldKey, key);
         }
     }
 }

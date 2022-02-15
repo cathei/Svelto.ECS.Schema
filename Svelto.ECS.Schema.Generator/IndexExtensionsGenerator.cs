@@ -8,10 +8,10 @@ namespace Svelto.ECS.Schema.Generator
     public class IndexExtensionsGenerator : ISourceGenerator
     {
         const string QueryEntitiesTemplate = @"
-        public static IEnumerable<(({0}, FilteredIndices), ExclusiveGroupStruct)> QueryEntities<{1}>(this SchemaContext context, IndexQuery query)
+        public IEnumerable<(({0}, FilteredIndices), ExclusiveGroupStruct)> QueryEntities<{1}>(SchemaContext context)
 {2}
         {{
-            var groupDataList = context.GetGroupIndexDataList(query);
+            var groupDataList = GetGroupIndexDataList(context);
 
             if (groupDataList == null)
                 yield break;
@@ -34,10 +34,10 @@ namespace Svelto.ECS.Schema.Generator
 ";
 
         const string QueryEntitiesWithGroupTemplate = @"
-        public static ({0}, FilteredIndices) QueryEntities<{1}>(this SchemaContext context, IndexQuery query, in ExclusiveGroupStruct group)
+        public ({0}, FilteredIndices) QueryEntities<{1}>(SchemaContext context, in ExclusiveGroupStruct group)
 {2}
         {{
-            var groupDataList = context.GetGroupIndexDataList(query);
+            var groupDataList = GetGroupIndexDataList(context);
 
             FilteredIndices indices = EmptyFilteredIndices;
 
@@ -55,15 +55,13 @@ namespace Svelto.ECS.Schema.Generator
 ";
 
         const string QueryEntitiesWithGroupListTemplate = @"
-        public static IEnumerable<(({0}, FilteredIndices), ExclusiveGroupStruct)> QueryEntities<{1}>(this SchemaContext context, IndexQuery query, FasterList<ExclusiveGroupStruct> groups)
+        public IEnumerable<(({0}, FilteredIndices), ExclusiveGroupStruct)> QueryEntities<{1}>(SchemaContext context, FasterList<ExclusiveGroupStruct> groups)
 {2}
         {{
-            var groupDataList = context.GetGroupIndexDataList(query);
+            var groupDataList = GetGroupIndexDataList(context);
 
             if (groupDataList == null)
                 yield break;
-
-            // var values = groupDataList.unsafeValues;
 
             for (int i = 0; i < groups.count; ++i)
             {{
@@ -114,7 +112,7 @@ using Svelto.DataStructures;
 
 namespace Svelto.ECS.Schema
 {{
-    public static partial class IndexExtensions
+    public partial struct IndexQuery<T>
     {{
 {GenerateQueryEntities(QueryEntitiesTemplate)}
 {GenerateQueryEntities(QueryEntitiesWithGroupTemplate)}
@@ -122,7 +120,7 @@ namespace Svelto.ECS.Schema
     }}
 }}";
 
-            context.AddSource("IndexExtensions.g.cs", source);
+            context.AddSource("IndexQuery.g.cs", source);
         }
 
         public void Initialize(GeneratorInitializationContext context)

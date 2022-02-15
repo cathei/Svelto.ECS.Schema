@@ -10,9 +10,13 @@ namespace Svelto.ECS.Schema
 {
     public interface IEntitySchemaElement { }
 
-    public interface IEntityIndexKey
+    public interface IEntityIndexKey<T>
+        where T : unmanaged, IEntityIndexKey<T>
     {
-        int Key { get; }
+        // This is not IEquatable because I want to keep it simple.
+        // Without verbosely override object.Equals and == operator etc.
+        // But if user wants they can always implement
+        bool Equals(T other);
     }
 
     public interface IEntityShard

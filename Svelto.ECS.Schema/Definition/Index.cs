@@ -1,31 +1,26 @@
 namespace Svelto.ECS.Schema.Definition
 {
     public sealed class Index<T> : EntitySchemaIndex
-        where T : unmanaged, IEntityIndexKey
+        where T : unmanaged, IEntityIndexKey<T>
     {
         public Accessor At(ShardOffset offset)
         {
             return new Accessor(this, offset);
         }
 
-        public IndexQuery Query(int key)
+        public IndexQuery<T> Query(in T key)
         {
             return GetQuery(metadata.root, 0, key);
         }
 
-        public IndexQuery Query(in T key)
-        {
-            return GetQuery(metadata.root, 0, key.Key);
-        }
-
-        private IndexQuery GetQuery(SchemaMetadata.PartitionNode parent, int index, int key)
+        private IndexQuery<T> GetQuery(SchemaMetadata.PartitionNode parent, int index, in T key)
         {
             var node = parent.indexers[siblingOrder];
 
             if (node.element != this)
                 throw new ECSException("Cannot find correct node. Did you forget to call .At(Offset)?");
 
-            return new IndexQuery(node.indexerStartIndex + index, key);
+            return new IndexQuery<T>(node.indexerStartIndex + index, key);
         }
 
         internal override IEngine CreateEngine(SchemaContext context)
@@ -44,14 +39,9 @@ namespace Svelto.ECS.Schema.Definition
                 this.offset = offset;
             }
 
-            public IndexQuery Query(int key)
+            public IndexQuery<T> Query(in T key)
             {
                 return indexer.GetQuery(offset.node, offset.index, key);
-            }
-
-            public IndexQuery Query(in T key)
-            {
-                return indexer.GetQuery(offset.node, offset.index, key.Key);
             }
         }
     }

@@ -17,9 +17,44 @@ namespace Svelto.ECS.Schema
             public FilterGroup filter;
         }
 
-        internal struct IndexerData
+        internal abstract class IndexerData {}
+
+        internal sealed class IndexerData<TKey> : IndexerData
+            where TKey : unmanaged, IEntityIndexKey<TKey>
         {
-            public FasterDictionary<int, FasterDictionary<ExclusiveGroupStruct, IndexerGroupData>> keyToGroups;
+            public readonly struct KeyWrapper : IEquatable<KeyWrapper>
+            {
+                private readonly TKey _value;
+                private readonly int _hashcode;
+
+                public KeyWrapper(TKey value)
+                {
+                    _value = value;
+                    _hashcode = _value.GetHashCode();
+                }
+
+                // this uses IEntityIndexKey<T>.Equals
+                public bool Equals(KeyWrapper other) => _value.Equals(other._value);
+
+                public override bool Equals(object obj) => obj is IndexerData<TKey> other && Equals(other);
+
+                public override int GetHashCode() => _hashcode;
+
+                public static implicit operator TKey(KeyWrapper t) => t._value;
+            }
+
+            private readonly FasterDictionary<KeyWrapper, FasterDictionary<ExclusiveGroupStruct, IndexerGroupData>> keyToGroups
+                = new FasterDictionary<KeyWrapper, FasterDictionary<ExclusiveGroupStruct, IndexerGroupData>>();
+
+            public FasterDictionary<ExclusiveGroupStruct, IndexerGroupData> CreateOrGet(in TKey key)
+            {
+                return keyToGroups.GetOrCreate(new KeyWrapper(key), () => new FasterDictionary<ExclusiveGroupStruct, IndexerGroupData>());
+            }
+
+            public bool TryGetValue(in TKey key, out FasterDictionary<ExclusiveGroupStruct, IndexerGroupData> result)
+            {
+                return keyToGroups.TryGetValue(new KeyWrapper(key), out result);
+            }
         }
 
         internal readonly IndexerData[] indexers;
@@ -51,13 +86,11 @@ namespace Svelto.ECS.Schema
         }
 
         // this should be fast enough, no group change means we don't have to rebuild filter
-        internal void NotifyKeyUpdate<T>(ref Indexed<T> keyComponent, int oldKey)
-            where T : unmanaged, IEntityIndexKey
+        internal void NotifyKeyUpdate<T>(ref Indexed<T> keyComponent, in T oldKey, in T newKey)
+            where T : unmanaged, IEntityIndexKey<T>
         {
-            int newKey = keyComponent.Key;
-
             // component updated but key didn't change
-            if (oldKey == newKey)
+            if (oldKey.Equals(newKey))
                 return;
 
             // index may exist but no table found
@@ -88,8 +121,8 @@ namespace Svelto.ECS.Schema
             }
         }
 
-        private void UpdateFilters<T>(int indexerId, ref Indexed<T> keyComponent, int oldKey, int newKey)
-            where T : unmanaged, IEntityIndexKey
+        private void UpdateFilters<T>(int indexerId, ref Indexed<T> keyComponent, in T oldKey, in T newKey)
+            where T : unmanaged, IEntityIndexKey<T>
         {
             ref var oldGroupData = ref CreateOrGetGroupData<T>(indexerId, oldKey, keyComponent.ID.groupID);
             ref var newGroupData = ref CreateOrGetGroupData<T>(indexerId, newKey, keyComponent.ID.groupID);
@@ -100,23 +133,30 @@ namespace Svelto.ECS.Schema
             newGroupData.filter.Add(keyComponent.ID.entityID, mapper);
         }
 
-        private ref IndexerData CreateOrGetIndexerData(int indexerId)
+        private IndexerData<T> CreateOrGetIndexerData<T>(int indexerId)
+            where T : unmanaged, IEntityIndexKey<T>
         {
-            ref var indexerData = ref indexers[indexerId];
+            IndexerData<T> indexerData;
 
-            if (indexerData.keyToGroups == null)
+            if (indexers[indexerId] == null)
             {
-                indexerData.keyToGroups = new FasterDictionary<int, FasterDictionary<ExclusiveGroupStruct, IndexerGroupData>>();
+                indexerData = new IndexerData<T>();
+                indexers[indexerId] = indexerData;
+            }
+            else
+            {
+                indexerData = (IndexerData<T>)indexers[indexerId];
             }
 
-            return ref indexerData;
+            return indexerData;
         }
 
-        internal ref IndexerGroupData CreateOrGetGroupData<T>(int indexerId, int key, ExclusiveGroupStruct group)
-            where T : unmanaged, IEntityIndexKey
+        internal ref IndexerGroupData CreateOrGetGroupData<T>(int indexerId, in T key, ExclusiveGroupStruct group)
+            where T : unmanaged, IEntityIndexKey<T>
         {
-            ref var indexerData = ref CreateOrGetIndexerData(indexerId);
-            var groupDict = indexerData.keyToGroups.GetOrCreate(key, () => new FasterDictionary<ExclusiveGroupStruct, IndexerGroupData>());
+            var indexerData = CreateOrGetIndexerData<T>(indexerId);
+
+            var groupDict = indexerData.CreateOrGet(key);
 
             return ref groupDict.GetOrCreate(group, () => new IndexerGroupData
             {

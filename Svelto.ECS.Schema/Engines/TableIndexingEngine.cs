@@ -6,7 +6,7 @@ namespace Svelto.ECS.Schema
 {
     public class TableIndexingEngine<T> :
             IReactOnAddAndRemove<Indexed<T>>, IReactOnSwap<Indexed<T>>, IReactOnSubmission, IQueryingEntitiesEngine
-        where T : unmanaged, IEntityIndexKey
+        where T : unmanaged, IEntityIndexKey<T>
     {
         private readonly SchemaContext _context;
 

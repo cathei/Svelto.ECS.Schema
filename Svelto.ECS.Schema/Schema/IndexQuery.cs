@@ -8,15 +8,28 @@ using Svelto.ECS.DataStructures;
 
 namespace Svelto.ECS.Schema
 {
-    public readonly struct IndexQuery
+    public readonly partial struct IndexQuery<T>
+        where T : unmanaged, IEntityIndexKey<T>
     {
         internal readonly int indexerId;
-        internal readonly int key;
+        internal readonly T key;
 
-        internal IndexQuery(int indexerId, int key)
+        private static readonly FilteredIndices EmptyFilteredIndices = new FilteredIndices();
+
+        internal IndexQuery(int indexerId, T key)
         {
             this.indexerId = indexerId;
             this.key = key;
+        }
+
+        private FasterDictionary<ExclusiveGroupStruct, SchemaContext.IndexerGroupData> GetGroupIndexDataList(SchemaContext context)
+        {
+            if (context.indexers[indexerId] == null)
+                return null;
+
+            var indexerData = (SchemaContext.IndexerData<T>)context.indexers[indexerId];
+            indexerData.TryGetValue(key, out var result);
+            return result;
         }
     }
 }
