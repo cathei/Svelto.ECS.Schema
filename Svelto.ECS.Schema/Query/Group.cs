@@ -23,20 +23,5 @@ namespace Svelto.ECS.Schema
         }
 
         public static implicit operator ExclusiveGroupStruct(in Group<T> group) => group.exclusiveGroup;
-
-        public EntityInitializer Create(IEntityFactory factory, uint entityID)
-        {
-            return factory.BuildEntity<T>(entityID, exclusiveGroup);
-        }
-
-        public void Insert(IEntityFunctions functions, EGID fromID)
-        {
-            functions.SwapEntityGroup<T>(fromID, exclusiveGroup);
-        }
-
-        public void Delete(IEntityFunctions functions, uint entityID)
-        {
-            functions.RemoveEntity<T>(entityID, exclusiveGroup);
-        }
     }
 }

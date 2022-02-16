@@ -7,12 +7,10 @@ namespace Svelto.ECS.Schema.Generator
     [Generator]
     public class IndexQueryGenerator : ISourceGenerator
     {
-        const string SelectTemplate = @"
-        public IEnumerable<(({0}, FilteredIndices), ExclusiveGroupStruct)> Select<{1}>(SchemaContext context)
+        const string QueryEntitiesTemplate = @"
+        public IEnumerable<(({0}, FilteredIndices), ExclusiveGroupStruct)> Entities<{1}>()
 {2}
         {{
-            var groupDataList = GetGroupIndexDataList(context);
-
             if (groupDataList == null)
                 yield break;
 
@@ -33,12 +31,10 @@ namespace Svelto.ECS.Schema.Generator
         }}
 ";
 
-        const string SelectWithGroupTemplate = @"
-        public ({0}, FilteredIndices) Select<{1}>(SchemaContext context)
+        const string QueryEntitiesWithGroupTemplate = @"
+        public ({0}, FilteredIndices) Entities<{1}>(in ExclusiveGroupStruct group)
 {2}
         {{
-            var groupDataList = query.GetGroupIndexDataList(context);
-
             FilteredIndices indices = EmptyFilteredIndices;
 
             if (groupDataList != null &&
@@ -54,12 +50,10 @@ namespace Svelto.ECS.Schema.Generator
         }}
 ";
 
-        const string SelectWithGroupsTemplate = @"
-        public IEnumerable<(({0}, FilteredIndices), ExclusiveGroupStruct)> Select<{1}>(SchemaContext context)
+        const string QueryEntitiesWithGroupsTemplate = @"
+        public IEnumerable<(({0}, FilteredIndices), ExclusiveGroupStruct)> Entities<{1}>(FasterList<ExclusiveGroupStruct> groups)
 {2}
         {{
-            var groupDataList = query.GetGroupIndexDataList(context);
-
             if (groupDataList == null)
                 yield break;
 
@@ -112,18 +106,13 @@ using Svelto.DataStructures;
 
 namespace Svelto.ECS.Schema
 {{
-    public partial struct IndexQuery<T>
+    public partial class SchemaContext
     {{
-{GenerateQueryEntities(SelectTemplate)}
-
-        public partial struct FromGroup<TDesc>
+        public partial struct QueryAccessor
         {{
-{GenerateQueryEntities(SelectWithGroupTemplate)}
-        }}
-
-        public partial struct FromGroups<TDesc>
-        {{
-{GenerateQueryEntities(SelectWithGroupsTemplate)}
+{GenerateQueryEntities(QueryEntitiesTemplate)}
+{GenerateQueryEntities(QueryEntitiesWithGroupTemplate)}
+{GenerateQueryEntities(QueryEntitiesWithGroupsTemplate)}
         }}
     }}
 }}";

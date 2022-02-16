@@ -8,25 +8,25 @@ using Svelto.ECS.DataStructures;
 
 namespace Svelto.ECS.Schema
 {
-    public readonly struct ShardEnumerable<T> where T : class, IEntityShard
+    public readonly struct ShardsBuilder<T> where T : class, IEntityShard
     {
         internal readonly IEnumerable<T> shards;
 
         public delegate GroupsBuilder<TDesc> GroupsBuilderSelector<TDesc>(T shard) where TDesc : IEntityDescriptor, new();
 
-        internal ShardEnumerable(IEnumerable<T> shards)
+        internal ShardsBuilder(IEnumerable<T> shards)
         {
             this.shards = shards;
         }
 
-        public ShardEnumerable<TOut> Combine<TOut>(Func<T, TOut> selector) where TOut : class, IEntityShard
+        public ShardsBuilder<TOut> Combine<TOut>(Func<T, TOut> selector) where TOut : class, IEntityShard
         {
-            return new ShardEnumerable<TOut>(shards.Select(selector));
+            return new ShardsBuilder<TOut>(shards.Select(selector));
         }
 
-        public ShardEnumerable<TOut> Combine<TOut>(Func<T, ShardEnumerable<TOut>> selector) where TOut : class, IEntityShard
+        public ShardsBuilder<TOut> Combine<TOut>(Func<T, ShardsBuilder<TOut>> selector) where TOut : class, IEntityShard
         {
-            return new ShardEnumerable<TOut>(Unpack(selector));
+            return new ShardsBuilder<TOut>(Unpack(selector));
         }
 
         public GroupsBuilder<TDesc> Combine<TDesc>(Func<T, Group<TDesc>> selector) where TDesc : IEntityDescriptor, new()
@@ -40,7 +40,7 @@ namespace Svelto.ECS.Schema
         }
 
         // just SelectMany...
-        internal IEnumerable<TOut> Unpack<TOut>(Func<T, ShardEnumerable<TOut>> selector) where TOut : class, IEntityShard
+        internal IEnumerable<TOut> Unpack<TOut>(Func<T, ShardsBuilder<TOut>> selector) where TOut : class, IEntityShard
         {
             foreach (var shard in shards)
             {

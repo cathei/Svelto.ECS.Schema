@@ -25,8 +25,8 @@ namespace Svelto.ECS.Schema.Definition
 
         public T Shard(int index = 0) => GetShard(index);
 
-        public ShardEnumerable<T> Shards() => new ShardEnumerable<T>(GetShards(Enumerable.Range(0, range)));
-        public ShardEnumerable<T> Shards(IEnumerable<int> indexes) => new ShardEnumerable<T>(GetShards(indexes));
+        public ShardsBuilder<T> Shards() => new ShardsBuilder<T>(GetShards(Enumerable.Range(0, range)));
+        public ShardsBuilder<T> Shards(IEnumerable<int> indexes) => new ShardsBuilder<T>(GetShards(indexes));
 
         private T GetShard(int index)
         {

@@ -9,7 +9,7 @@ using Svelto.ECS.DataStructures;
 
 namespace Svelto.ECS.Schema
 {
-    public class SchemaContext
+    public partial class SchemaContext
     {
         internal struct IndexerGroupData
         {
@@ -157,6 +157,25 @@ namespace Svelto.ECS.Schema
         private int GenerateFilterId()
         {
             return filterIdCounter++;
+        }
+
+        private static readonly FilteredIndices EmptyFilteredIndices = new FilteredIndices();
+
+        public QueryAccessor Query<TKey>(IndexQuery<TKey> query) where TKey : unmanaged, IEntityIndexKey<TKey>
+        {
+            return new QueryAccessor(this, query.GetGroupIndexDataList(this));
+        }
+
+        public readonly partial struct QueryAccessor
+        {
+            private readonly SchemaContext context;
+            private readonly FasterDictionary<ExclusiveGroupStruct, IndexerGroupData> groupDataList;
+
+            internal QueryAccessor(SchemaContext context, FasterDictionary<ExclusiveGroupStruct, IndexerGroupData> groupDataList)
+            {
+                this.context = context;
+                this.groupDataList = groupDataList;
+            }
         }
     }
 }
