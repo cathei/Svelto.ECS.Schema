@@ -141,7 +141,7 @@ namespace Svelto.ECS.Schema
         {
             IndexerData<T> indexerData;
 
-            if (indexers.ContainsKey(indexerId))
+            if (!indexers.ContainsKey(indexerId))
             {
                 indexerData = new IndexerData<T>();
                 indexers[indexerId] = indexerData;

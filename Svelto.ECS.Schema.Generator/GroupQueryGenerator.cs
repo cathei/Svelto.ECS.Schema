@@ -7,16 +7,16 @@ namespace Svelto.ECS.Schema.Generator
     [Generator]
     public class GroupQueryGenerator : ISourceGenerator
     {
-        const string FetchTemplate = @"
-        public EntityCollection<{0}> Fetch<{0}>(EntitiesDB entitiesDB)
+        const string SelectTemplate = @"
+        public EntityCollection<{0}> Select<{0}>(EntitiesDB entitiesDB)
 {1}
         {{
             return entitiesDB.QueryEntities<{0}>(exclusiveGroup);
         }}
 ";
 
-        const string FetchGroupsTemplate = @"
-        public GroupsEnumerable<{0}> Fetch<{0}>(EntitiesDB entitiesDB)
+        const string SelectGroupsTemplate = @"
+        public GroupsEnumerable<{0}> Select<{0}>(EntitiesDB entitiesDB)
 {1}
         {{
             return entitiesDB.QueryEntities<{0}>(exclusiveGroups);
@@ -55,12 +55,12 @@ namespace Svelto.ECS.Schema
 {{
     public readonly partial struct Group<T>
     {{
-{GenerateQueryEntities(FetchTemplate)}
+{GenerateQueryEntities(SelectTemplate)}
     }}
 
     public partial struct Groups<T>
     {{
-{GenerateQueryEntities(FetchGroupsTemplate)}
+{GenerateQueryEntities(SelectGroupsTemplate)}
     }}
 }}";
 

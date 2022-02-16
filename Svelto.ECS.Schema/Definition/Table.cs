@@ -5,7 +5,7 @@ namespace Svelto.ECS.Schema.Definition
 {
     public sealed class Table<T> : IEntitySchemaTable where T : IEntityDescriptor, new()
     {
-        private readonly ExclusiveGroup exclusiveGroup;
+        internal readonly ExclusiveGroup exclusiveGroup;
         internal readonly int range;
 
         public ref readonly ExclusiveGroup ExclusiveGroup => ref exclusiveGroup;

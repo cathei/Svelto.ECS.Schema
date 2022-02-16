@@ -294,7 +294,7 @@ Same manner as we expose a group for a table, we'll expose `IndexQuery` for a in
 Though there is no constraint yet, it is not recommended to share `Indexed<TKey>` across other descriptors.
 
 ### Querying Indexes
-Now, finally you can iterate over entities with `IndexQuery`. You don't have to include `Indexed<TKey>` in the query. You can query any type of component within the descriptor, because as long as you keep a group with single descriptor you can iterate with same filter.
+Now, finally you can iterate over entities with `IndexQuery<TKey>`. You don't have to include `Indexed<TKey>` in the query. You can query any type of component within the descriptor, because as long as you keep a group with single descriptor you can iterate with same filter.
 
 Just like when you query with `EntitiesDB`, you query with `SchemaContext`.
 ```csharp

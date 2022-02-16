@@ -31,8 +31,6 @@ namespace Svelto.ECS.Schema
         private static readonly Type GenericIndexType = typeof(Index<>);
         private static readonly Type GenericPartitionType = typeof(Partition<>);
 
-        internal int indexerCount = 0;
-
         internal SchemaMetadata(Type schemaType)
         {
             groupToParentPartition = new FasterDictionary<ExclusiveGroupStruct, Node>();
@@ -79,7 +77,7 @@ namespace Svelto.ECS.Schema
             }
             else if (genericType == GenericPartitionType)
             {
-                var element = (IEntitySchemaPartition)fieldInfo.GetValue(null);
+                var element = (IEntitySchemaPartition)fieldInfo.GetValue(instance);
 
                 var shardType = element.ShardType;
 
@@ -123,7 +121,7 @@ namespace Svelto.ECS.Schema
         {
             // we get all the fields first so we can warn if user is not using proper pattern
             var fieldInfos = type.GetFields(BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            return fieldInfos.Where(x => ElementBaseType.IsAssignableFrom(x.FieldType.BaseType));
+            return fieldInfos.Where(x => ElementBaseType.IsAssignableFrom(x.FieldType));
         }
     }
 }

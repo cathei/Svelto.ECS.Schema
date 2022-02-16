@@ -96,7 +96,7 @@ namespace Svelto.ECS.Schema.Tests
 
             var (buffer, count) = TestSchema.Player(0).Item.Select<Indexed<ItemOwner>>(_entitiesDB);
             for (int i = 0; i < count; ++i)
-                buffer[i].Update(_schemaContext.Context, new ItemOwner(1));
+                buffer[i].Update(_schemaContext, new ItemOwner(1));
 
             queriedGroups = TestSchema.ItemsByOwner(0).Select<Indexed<ItemOwner>>(_schemaContext).ToList();
             queriedComponents = queriedGroups.Select(x => (buffer: x.Item1.Item1, indices : x.Item1.Item2))
@@ -163,7 +163,7 @@ namespace Svelto.ECS.Schema.Tests
 
             var (buffer, count) = TestSchema.AI.Item.Select<Indexed<ItemOwner>>(_entitiesDB);
             for (int i = 0; i < count / 2; ++i)
-                _functions.SwapEntityGroup(buffer[i].ID, _schemaContext.Player(1).Item);
+                TestSchema.Player(1).Item.Insert(_functions, buffer[i].ID);
 
             _submissionScheduler.SubmitEntities();
 
@@ -217,12 +217,12 @@ namespace Svelto.ECS.Schema.Tests
 
             _submissionScheduler.SubmitEntities();
 
-            var (buffer, indices) = TestSchema.ItemsByOwner(0).Select<Indexed<ItemOwner>>(_schemaContext, TestSchema.AI.Item);
+            var (buffer, indices) = TestSchema.ItemsByOwner(0).From(TestSchema.AI.Item).Select<Indexed<ItemOwner>>(_schemaContext);
 
             Assert.Equal(1, indices.Count());
             Assert.Equal(0u, buffer[indices[0]].ID.entityID);
 
-            var queriedGroups = TestSchema.ItemsByOwner(7).Select<Indexed<ItemOwner>>(_schemaContext.Context, TestSchema.AllItems).ToList();
+            var queriedGroups = TestSchema.ItemsByOwner(7).From(TestSchema.AllItems).Select<Indexed<ItemOwner>>(_schemaContext).ToList();
             var queriedComponents = queriedGroups.Select(x => (buffer: x.Item1.Item1, indices : x.Item1.Item2))
                 .SelectMany(x => Enumerable.Range(0, x.indices.Count()).Select(i => x.buffer[x.indices[i]]))
                 .ToList();

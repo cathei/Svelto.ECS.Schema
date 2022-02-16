@@ -16,73 +16,62 @@ namespace Svelto.ECS.Schema.Tests
         public enum FoodType { Rotten, Good, MAX }
         public enum StateType { Eating, NonEating, MAX }
 
-        public struct StateShard : IEntityShard
+        public class StateShard : IEntityShard
         {
-            public ShardOffset Offset { get; set; }
+            internal Table<DoofusEntityDescriptor> _doofus = new Table<DoofusEntityDescriptor>();
+            public Group<DoofusEntityDescriptor> Doofus => _doofus.Group();
 
-            internal static Table<DoofusEntityDescriptor> _doofus = new Table<DoofusEntityDescriptor>();
-            public Group<DoofusEntityDescriptor> Doofus => _doofus.At(Offset).Group();
-
-            internal static Table<FoodEntityDescriptor> _food = new Table<FoodEntityDescriptor>((int)FoodType.MAX);
-            public Group<FoodEntityDescriptor> Food(FoodType foodType) => _food.At(Offset).Group((int)foodType);
+            internal Table<FoodEntityDescriptor> _food = new Table<FoodEntityDescriptor>((int)FoodType.MAX);
+            public Group<FoodEntityDescriptor> Food(FoodType foodType) => _food.Group((int)foodType);
         }
 
-        public struct TeamShard : IEntityShard
+        public class TeamShard : IEntityShard
         {
-            public ShardOffset Offset { get; set; }
-
-            internal static Partition<StateShard> _state = new Partition<StateShard>((int)StateType.MAX);
-            public StateShard State(StateType stateType) => _state.At(Offset).Shard((int)stateType);
+            internal Partition<StateShard> _state = new Partition<StateShard>((int)StateType.MAX);
+            public StateShard State(StateType stateType) => _state.Shard((int)stateType);
         }
 
-        public class TestSchema : IEntitySchema<TestSchema>
+        public class TestSchema : IEntitySchema
         {
-            public SchemaContext Context { get; set; }
-
             internal static Partition<TeamShard> _team = new Partition<TeamShard>((int)TeamColor.MAX);
-            public TeamShard Team(TeamColor color) => _team.Shard((int)color);
+            public static TeamShard Team(TeamColor color) => _team.Shard((int)color);
 
             internal static Partition<StateShard> _dead = new Partition<StateShard>();
-            public StateShard Dead => _dead.Shard();
+            public static StateShard Dead => _dead.Shard();
 
-            public GroupsBuilder<DoofusEntityDescriptor> EatingDoofuses => _team.Shards().Combine(x => x.State(StateType.Eating).Doofus);
+            public static Groups<DoofusEntityDescriptor> EatingDoofuses { get; }
+                = _team.Shards().Combine(x => x.State(StateType.Eating).Doofus);
         }
 
         [Fact]
         public void MetadataTest()
         {
-            var root = IEntitySchema<TestSchema>.metadata.root;
+            var metadata = SchemaMetadata<TestSchema>.Instance;
 
-            Assert.Equal(2, root.partitions.count);
+            Assert.Equal(24 + 3, metadata.groupToParentPartition.count);
 
-            Assert.Equal(1, root.partitions[0].groupSize);
-            Assert.Equal(2, root.partitions[0].tables[1].groupSize);
+            Assert.Equal(metadata.root, metadata.groupToParentPartition[TestSchema.Dead.Doofus].parent);
+            Assert.Equal(metadata.root, metadata.groupToParentPartition[TestSchema.Team(TeamColor.Red).State(StateType.Eating).Doofus].parent.parent);
 
-            Assert.Equal(4, root.partitions[1].groupSize);
-            Assert.Equal(1, root.partitions[1].partitions.count);
-            Assert.Equal(8, root.partitions[1].partitions[0].groupSize);
-            Assert.Equal(8, root.partitions[1].partitions[0].tables[0].groupSize);
-            Assert.Equal(16, root.partitions[1].partitions[0].tables[1].groupSize);
-            Assert.Null(root.partitions[1].partitions[0].partitions);
+            Assert.Equal(metadata.groupToParentPartition[TestSchema.Team(TeamColor.Red).State(StateType.Eating).Doofus],
+                metadata.groupToParentPartition[TestSchema.Team(TeamColor.Red).State(StateType.Eating).Food(FoodType.Good)]);
 
-            Assert.Equal(TestSchema._dead, root.partitions[0].element);
-            Assert.Equal(TestSchema._team, root.partitions[1].element);
+            Assert.NotEqual(metadata.groupToParentPartition[TestSchema.Team(TeamColor.Red).State(StateType.Eating).Doofus],
+                metadata.groupToParentPartition[TestSchema.Team(TeamColor.Blue).State(StateType.Eating).Food(FoodType.Good)]);
 
-            Assert.Equal(StateShard._doofus, root.partitions[0].tables[0].element);
-            Assert.Equal(StateShard._doofus, root.partitions[1].partitions[0].tables[0].element);
+            Assert.Null(metadata.root.indexers);
+            Assert.Equal(0, metadata.indexersToGenerateEngine.count);
         }
 
         [Fact]
         public void GroupIndexTests()
         {
-            var root = IEntitySchema<TestSchema>.metadata.root;
+            Assert.Equal(TestSchema._dead.shards[0]._doofus.exclusiveGroup + 0, TestSchema.Dead.Doofus);
+            Assert.Equal(TestSchema._dead.shards[0]._food.exclusiveGroup + 0, TestSchema.Dead.Food(FoodType.Rotten));
+            Assert.Equal(TestSchema._dead.shards[0]._food.exclusiveGroup + 1, TestSchema.Dead.Food(FoodType.Good));
 
-            Assert.Equal(root.partitions[0].tables[0].group + 0, _schemaContext.Dead.Doofus);
-            Assert.Equal(root.partitions[0].tables[1].group + 0, _schemaContext.Dead.Food(FoodType.Rotten));
-            Assert.Equal(root.partitions[0].tables[1].group + 1, _schemaContext.Dead.Food(FoodType.Good));
-
-            Assert.Equal(root.partitions[1].partitions[0].tables[1].group + 0, _schemaContext.Team(TeamColor.Red).State(StateType.Eating).Food(FoodType.Rotten));
-            Assert.Equal(root.partitions[1].partitions[0].tables[1].group + 11, _schemaContext.Team(TeamColor.Yellow).State(StateType.NonEating).Food(FoodType.Good));
+            Assert.Equal(TestSchema._team.shards[0]._state.shards[0]._food.exclusiveGroup + 0, TestSchema.Team(TeamColor.Red).State(StateType.Eating).Food(FoodType.Rotten));
+            Assert.Equal(TestSchema._team.shards[2]._state.shards[1]._food.exclusiveGroup + 1, TestSchema.Team(TeamColor.Yellow).State(StateType.NonEating).Food(FoodType.Good));
         }
     }
 }

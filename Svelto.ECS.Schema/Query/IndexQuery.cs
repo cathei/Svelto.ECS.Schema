@@ -16,7 +16,7 @@ namespace Svelto.ECS.Schema
 
         private static readonly FilteredIndices EmptyFilteredIndices = new FilteredIndices();
 
-        internal IndexQuery(int indexerId, T key)
+        internal IndexQuery(int indexerId, in T key)
         {
             this.indexerId = indexerId;
             this.key = key;
@@ -24,7 +24,7 @@ namespace Svelto.ECS.Schema
 
         private FasterDictionary<ExclusiveGroupStruct, SchemaContext.IndexerGroupData> GetGroupIndexDataList(SchemaContext context)
         {
-            if (context.indexers[indexerId] == null)
+            if (!context.indexers.ContainsKey(indexerId))
                 return null;
 
             var indexerData = (SchemaContext.IndexerData<T>)context.indexers[indexerId];
@@ -32,24 +32,28 @@ namespace Svelto.ECS.Schema
             return result;
         }
 
-        public readonly ref partial struct FromGroup<TDesc>
+        public readonly partial struct FromGroup<TDesc>
             where TDesc : IEntityDescriptor, new()
         {
-            public readonly Group<TDesc> group;
+            private readonly IndexQuery<T> query;
+            private readonly ExclusiveGroupStruct group;
 
-            public FromGroup(in Group<TDesc> group)
+            public FromGroup(in IndexQuery<T> query, in Group<TDesc> group)
             {
+                this.query = query;
                 this.group = group;
             }
         }
 
-        public readonly ref partial struct FromGroups<TDesc>
+        public readonly partial struct FromGroups<TDesc>
             where TDesc : IEntityDescriptor, new()
         {
-            public readonly Groups<TDesc> groups;
+            private readonly IndexQuery<T> query;
+            private readonly FasterList<ExclusiveGroupStruct> groups;
 
-            public FromGroups(in Groups<TDesc> groups)
+            public FromGroups(in IndexQuery<T> query, in Groups<TDesc> groups)
             {
+                this.query = query;
                 this.groups = groups;
             }
         }
@@ -57,14 +61,13 @@ namespace Svelto.ECS.Schema
         public FromGroup<TDesc> From<TDesc>(in Group<TDesc> group)
             where TDesc : IEntityDescriptor, new()
         {
-            return new FromGroup<TDesc>(group);
+            return new FromGroup<TDesc>(this, group);
         }
 
         public FromGroups<TDesc> From<TDesc>(in Groups<TDesc> groups)
             where TDesc : IEntityDescriptor, new()
         {
-            return new FromGroups<TDesc>(groups);
+            return new FromGroups<TDesc>(this, groups);
         }
-
     }
 }

@@ -7,12 +7,12 @@ namespace Svelto.ECS.Schema.Definition
     public sealed class Partition<T> : IEntitySchemaPartition
         where T : class, IEntityShard, new()
     {
-        private readonly T[] shards;
-        private readonly int range;
+        internal readonly T[] shards;
+        internal readonly int range;
 
         public int Range => range;
 
-        public Type ShardType => throw new NotImplementedException();
+        public Type ShardType => typeof(T);
 
         public Partition(int range = 1)
         {
