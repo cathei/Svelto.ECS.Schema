@@ -69,22 +69,22 @@ namespace Svelto.ECS.Schema.Tests
             Assert.Equal(100, MerchantShard._items.range);
             Assert.Equal(5000, root.partitions[0].tables[0].groupSize);
 
-            Assert.Equal(root.partitions[0], _schema.Merchant(13).Offset.node);
-            Assert.Equal(5, _schema.Merchant(5).Offset.index);
+            Assert.Equal(root.partitions[0], _schemaContext.Merchant(13).Offset.node);
+            Assert.Equal(5, _schemaContext.Merchant(5).Offset.index);
         }
 
         [Fact]
         public void GroupIndexTests()
         {
             var root = IEntitySchema<TestSchema>.metadata.root;
-            Assert.Equal(root.tables[0].group + 0, _schema.Character(0));
-            Assert.Equal(root.tables[0].group + 10, _schema.Character(10));
-            Assert.Equal(root.tables[1].group + 29, _schema.Equipment(29));
+            Assert.Equal(root.tables[0].group + 0, _schemaContext.Character(0));
+            Assert.Equal(root.tables[0].group + 10, _schemaContext.Character(10));
+            Assert.Equal(root.tables[1].group + 29, _schemaContext.Equipment(29));
 
             // nested group index = parent index * range + index
             var merchant = root.partitions[0];
-            Assert.Equal(merchant.tables[0].group + 403, _schema.Merchant(4).Item(3));
-            Assert.Equal(merchant.tables[0].group + 3110, _schema.Merchant(31).Item(10));
+            Assert.Equal(merchant.tables[0].group + 403, _schemaContext.Merchant(4).Item(3));
+            Assert.Equal(merchant.tables[0].group + 3110, _schemaContext.Merchant(31).Item(10));
         }
     }
 }

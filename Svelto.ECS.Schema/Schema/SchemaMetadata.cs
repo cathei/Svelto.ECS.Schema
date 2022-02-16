@@ -7,41 +7,26 @@ using Svelto.ECS.Schema.Definition;
 
 namespace Svelto.ECS.Schema
 {
-    internal class SchemaMetadata
+    internal static class SchemaMetadata<T>
+        where T : class, IEntitySchema
     {
-        internal abstract class Node
+        public static readonly SchemaMetadata Instance = new SchemaMetadata(typeof(T));
+    }
+
+    internal sealed class SchemaMetadata
+    {
+        internal class Node
         {
-            public PartitionNode parent;
-            public IEntitySchemaElement element;
+            public Node parent;
+            public FasterList<IEntitySchemaIndex> indexers;
         }
 
-        internal class TableNode : Node
-        {
-            public ExclusiveGroup group;
-            public int groupSize;
-        }
+        internal readonly Node root = new Node();
 
-        internal class IndexNode : Node
-        {
-            public Type keyType;
-            public int indexerStartIndex;
-        }
+        internal readonly FasterDictionary<ExclusiveGroupStruct, Node> groupToParentPartition;
+        internal readonly FasterDictionary<RefWrapperType, IEntitySchemaIndex> indexersToGenerateEngine;
 
-        internal class PartitionNode : Node
-        {
-            public int groupSize;
-
-            public FasterList<TableNode> tables;
-            public FasterList<IndexNode> indexers;
-            public FasterList<PartitionNode> partitions;
-        }
-
-        internal readonly PartitionNode root = new PartitionNode();
-
-        internal readonly FasterDictionary<ExclusiveGroupStruct, TableNode> groupToTable;
-        internal readonly FasterDictionary<RefWrapperType, EntitySchemaIndex> indexersToGenerateEngine;
-
-        private static readonly Type ElementBaseType = typeof(EntitySchemaElement);
+        private static readonly Type ElementBaseType = typeof(IEntitySchemaElement);
         private static readonly Type GenericTableType = typeof(Table<>);
         private static readonly Type GenericIndexType = typeof(Index<>);
         private static readonly Type GenericPartitionType = typeof(Partition<>);
@@ -50,137 +35,95 @@ namespace Svelto.ECS.Schema
 
         internal SchemaMetadata(Type schemaType)
         {
-            groupToTable = new FasterDictionary<ExclusiveGroupStruct, TableNode>();
-            indexersToGenerateEngine = new FasterDictionary<RefWrapperType, EntitySchemaIndex>();
+            groupToParentPartition = new FasterDictionary<ExclusiveGroupStruct, Node>();
+            indexersToGenerateEngine = new FasterDictionary<RefWrapperType, IEntitySchemaIndex>();
 
-            root = new PartitionNode
+            root = new Node();
+
+            foreach (var fieldInfo in GetSchemaElementFields(schemaType))
             {
-                element = null,
-                groupSize = 1
-            };
-
-            BuildTree(root, schemaType);
-        }
-
-        private void BuildTree(PartitionNode node, Type type)
-        {
-            foreach (var fieldInfo in GetStaticElementFields(type))
-            {
-                var genericType = fieldInfo.FieldType.GetGenericTypeDefinition();
-
-                if (genericType == GenericTableType)
-                {
-                    if (node.tables == null)
-                        node.tables = new FasterList<TableNode>();
-
-                    var element = (EntitySchemaElement)fieldInfo.GetValue(null);
-
-                    element.metadata = this;
-                    element.siblingOrder = node.tables.count;
-
-                    ushort groupSize = (ushort)(node.groupSize * element.range);
-
-                    var child = new TableNode
-                    {
-                        parent = node,
-                        element = element,
-                        group = new ExclusiveGroup(groupSize),
-                        groupSize = groupSize
-                    };
-
-                    node.tables.Add(child);
-
-                    RegisterTable(child);
-                }
-                else if (genericType == GenericIndexType)
-                {
-                    if (node.indexers == null)
-                        node.indexers = new FasterList<IndexNode>();
-
-                    var element = (EntitySchemaElement)fieldInfo.GetValue(null);
-
-                    element.metadata = this;
-                    element.siblingOrder = node.indexers.count;
-
-                    int indexerStartIndex = indexerCount;
-                    indexerCount += node.groupSize;
-
-                    // Index<T>
-                    var innerType = fieldInfo.FieldType.GetGenericArguments()[0];
-
-                    var child = new IndexNode
-                    {
-                        parent = node,
-                        element = element,
-                        indexerStartIndex = indexerStartIndex,
-                        keyType = innerType,
-                    };
-
-                    node.indexers.Add(child);
-
-                    RegisterIndexer(child);
-                }
-                else if (genericType == GenericPartitionType)
-                {
-                    if (node.partitions == null)
-                        node.partitions = new FasterList<PartitionNode>();
-
-                    var element = (EntitySchemaElement)fieldInfo.GetValue(null);
-
-                    element.metadata = this;
-                    element.siblingOrder = node.partitions.count;
-
-                    var child = new PartitionNode
-                    {
-                        parent = node,
-                        element = element,
-                        groupSize = node.groupSize * element.range
-                    };
-
-                    node.partitions.Add(child);
-
-                    // Partition<T>
-                    var innerType = fieldInfo.FieldType.GetGenericArguments()[0];
-
-                    BuildTree(child, innerType);
-                }
-                else
-                {
-                    throw new ECSException($"Unknown type detected in schema: {genericType}");
-                }
+                RegisterChild(root, fieldInfo, null);
             }
         }
 
-        private void RegisterTable(TableNode node)
+        private void RegisterChild(Node node, FieldInfo fieldInfo, object instance)
+        {
+            if (fieldInfo.IsStatic)
+            {
+                if (instance != null)
+                    throw new ECSException($"Static field {fieldInfo.Name} in IEntityShard is not allowed");
+            }
+            else
+            {
+                if (instance == null)
+                    throw new ECSException($"Non-static field {fieldInfo.Name} in IEntitySchema is not allowed");
+            }
+
+            var genericType = fieldInfo.FieldType.GetGenericTypeDefinition();
+
+            if (genericType == GenericTableType)
+            {
+                var element = (IEntitySchemaTable)fieldInfo.GetValue(instance);
+
+                RegisterTable(node, element);
+            }
+            else if (genericType == GenericIndexType)
+            {
+                if (node.indexers == null)
+                    node.indexers = new FasterList<IEntitySchemaIndex>();
+
+                var element = (IEntitySchemaIndex)fieldInfo.GetValue(instance);
+                node.indexers.Add(element);
+
+                RegisterIndexer(element);
+            }
+            else if (genericType == GenericPartitionType)
+            {
+                var element = (IEntitySchemaPartition)fieldInfo.GetValue(null);
+
+                var shardType = element.ShardType;
+
+                for (int i = 0; i < element.Range; ++i)
+                {
+                    var child = new Node { parent = node };
+
+                    foreach (var shardFieldInfo in GetSchemaElementFields(shardType))
+                        RegisterChild(child, shardFieldInfo, element.GetShard(i));
+                }
+            }
+            else
+            {
+                throw new ECSException($"Unknown type detected in schema: {genericType}");
+            }
+        }
+
+        private void RegisterTable(Node parent, IEntitySchemaTable element)
         {
             // register all possible groups
-            for (ushort i = 0; i < node.groupSize; ++i)
+            for (ushort i = 0; i < element.Range; ++i)
             {
-                groupToTable[node.group + i] = node;
+                groupToParentPartition[element.ExclusiveGroup + i] = parent;
             }
 
             // GroupHashMap is internal class of Svelto.ECS at the time
             // GroupHashMap.RegisterGroup(group, UniqueName);
         }
 
-        private void RegisterIndexer(IndexNode node)
+        private void RegisterIndexer(IEntitySchemaIndex element)
         {
-            var typeRef = new RefWrapperType(node.keyType);
+            var keyType = element.KeyType;
 
-            if (indexersToGenerateEngine.ContainsKey(typeRef))
+            if (indexersToGenerateEngine.ContainsKey(keyType))
                 return;
 
-            indexersToGenerateEngine[typeRef] = (EntitySchemaIndex)node.element;
+            indexersToGenerateEngine[keyType] = element;
         }
 
-        private static IEnumerable<FieldInfo> GetStaticElementFields(Type type)
+        private static IEnumerable<FieldInfo> GetSchemaElementFields(Type type)
         {
-            var fieldInfos = type.GetFields(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
-            var elementFieldInfos = fieldInfos.Where(x => ElementBaseType.IsAssignableFrom(x.FieldType.BaseType));
-
-            // the order should be deterministic and GetFields doesn't guarantee order
-            // can this be affected by obfuscation?
-            return elementFieldInfos.OrderBy(x => x.Name);
+            // we get all the fields first so we can warn if user is not using proper pattern
+            var fieldInfos = type.GetFields(BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            return fieldInfos.Where(x => ElementBaseType.IsAssignableFrom(x.FieldType.BaseType));
         }
     }
 }

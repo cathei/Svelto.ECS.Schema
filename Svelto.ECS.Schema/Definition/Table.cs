@@ -3,66 +3,34 @@ using System.Linq;
 
 namespace Svelto.ECS.Schema.Definition
 {
-    public sealed class Table<T> : EntitySchemaElement where T : IEntityDescriptor
+    public sealed class Table<T> : IEntitySchemaTable where T : IEntityDescriptor, new()
     {
+        private readonly ExclusiveGroup exclusiveGroup;
+        internal readonly int range;
+
+        public ref readonly ExclusiveGroup ExclusiveGroup => ref exclusiveGroup;
+        public int Range => range;
+
         public Table(int range = 1)
         {
             this.range = range;
+            exclusiveGroup = new ExclusiveGroup((ushort)range);
         }
 
-        public Accessor At(ShardOffset offset) => new Accessor(this, offset);
+        public Group<T> Group(int index = 0) => new Group<T>(GetGroup(index));
 
-        public Group<T> Group(int index = 0) => GetGroup(metadata.root, index);
+        public GroupsBuilder<T> Groups() => new GroupsBuilder<T>(GetGroups(Enumerable.Range(0, range)));
+        public GroupsBuilder<T> Groups(IEnumerable<int> indexes) => new GroupsBuilder<T>(GetGroups(indexes));
 
-        public Groups<T> Groups() => new Groups<T>(GetGroups(metadata.root, Enumerable.Range(0, range)));
-        public Groups<T> Groups(IEnumerable<int> indexes) => new Groups<T>(GetGroups(metadata.root, indexes));
-
-        private Group<T> GetGroup(SchemaMetadata.PartitionNode parent, int index)
+        private ExclusiveGroupStruct GetGroup(int index)
         {
-            var node = parent.tables[siblingOrder];
-
-            if (node.element != this)
-                throw new ECSException("Cannot find correct node. Did you forget to call .At(Offset)?");
-
-            return new Group<T>(node.group + (ushort)index);
+            return exclusiveGroup + (ushort)index;
         }
 
-        private IEnumerable<ExclusiveGroupStruct> GetGroups(SchemaMetadata.PartitionNode parent, IEnumerable<int> indexes)
+        private IEnumerable<ExclusiveGroupStruct> GetGroups(IEnumerable<int> indexes)
         {
-            var node = parent.tables[siblingOrder];
-
-            if (node.element != this)
-                throw new ECSException("Cannot find correct node");
-
             foreach (int i in indexes)
-                yield return node.group + (ushort)i;
-        }
-
-        public readonly struct Accessor
-        {
-            private readonly Table<T> table;
-            private readonly ShardOffset offset;
-
-            internal Accessor(Table<T> table, ShardOffset offset)
-            {
-                this.table = table;
-                this.offset = offset;
-            }
-
-            public Group<T> Group(int index = 0) =>
-                table.GetGroup(offset.node, (offset.index * table.range) + index);
-
-            public Groups<T> Groups()
-            {
-                int start = offset.index * table.range;
-                return new Groups<T>(table.GetGroups(offset.node, Enumerable.Range(start, table.range)));
-            }
-
-            public Groups<T> Groups(IEnumerable<int> indexes)
-            {
-                int start = offset.index * table.range;
-                return new Groups<T>(table.GetGroups(offset.node, indexes.Select(i => start + i)));
-            }
+                yield return exclusiveGroup + (ushort)i;
         }
     }
 }

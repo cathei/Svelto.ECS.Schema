@@ -14,7 +14,7 @@ namespace Svelto.ECS.Schema
 
         private readonly HashSet<SchemaContext.IndexerGroupData> _groupsToRebuild = new HashSet<SchemaContext.IndexerGroupData>();
 
-        private static readonly Type IndexKeyType = typeof(T);
+        private static RefWrapperType IndexKeyType => TypeRefWrapper<T>.wrapper;
 
         public TableIndexingEngine(SchemaContext context)
         {
@@ -45,10 +45,8 @@ namespace Svelto.ECS.Schema
 
         private void CheckAdd(ref Indexed<T> keyComponent, in ExclusiveGroupStruct groupId)
         {
-            if (_context.TryGetTable(groupId, out var table, out int offset))
+            if (_context.TryGetPartition(groupId, out var node))
             {
-                var node = table.parent;
-
                 while (node != null)
                 {
                     if (node.indexers != null)
@@ -57,11 +55,9 @@ namespace Svelto.ECS.Schema
                         {
                             var indexer = node.indexers[i];
 
-                            if (indexer.keyType == IndexKeyType)
+                            if (indexer.KeyType.Equals(IndexKeyType))
                             {
-                                int indexerId = indexer.indexerStartIndex + (offset * node.groupSize / table.groupSize);
-
-                                AddToFilter(indexerId, ref keyComponent, groupId);
+                                AddToFilter(indexer.IndexerId, ref keyComponent, groupId);
                             }
                         }
                     }
@@ -73,7 +69,7 @@ namespace Svelto.ECS.Schema
 
         private void AddToFilter(int indexerId, ref Indexed<T> keyComponent, in ExclusiveGroupStruct groupId)
         {
-            ref var groupData = ref _context.CreateOrGetGroupData<T>(indexerId, keyComponent.Key, groupId);
+            ref var groupData = ref _context.CreateOrGetGroupData(indexerId, keyComponent.Key, groupId);
 
             var mapper = entitiesDB.QueryMappedEntities<Indexed<T>>(groupId);
 
@@ -82,10 +78,8 @@ namespace Svelto.ECS.Schema
 
         private void CheckRemove(ref Indexed<T> keyComponent, in ExclusiveGroupStruct groupId)
         {
-            if (_context.TryGetTable(groupId, out var table, out int offset))
+            if (_context.TryGetPartition(groupId, out var node))
             {
-                var node = table.parent;
-
                 while (node != null)
                 {
                     if (node.indexers != null)
@@ -94,11 +88,9 @@ namespace Svelto.ECS.Schema
                         {
                             var indexer = node.indexers[i];
 
-                            if (indexer.keyType == IndexKeyType)
+                            if (indexer.KeyType.Equals(IndexKeyType))
                             {
-                                int indexerId = indexer.indexerStartIndex + (offset * node.groupSize / table.groupSize);
-
-                                RemoveFromFilter(indexerId, ref keyComponent, groupId);
+                                RemoveFromFilter(indexer.IndexerId, ref keyComponent, groupId);
                             }
                         }
                     }

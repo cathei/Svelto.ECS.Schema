@@ -45,7 +45,7 @@ namespace Svelto.ECS.Schema.Tests
             internal static Partition<StateShard> _dead = new Partition<StateShard>();
             public StateShard Dead => _dead.Shard();
 
-            public Groups<DoofusEntityDescriptor> EatingDoofuses => _team.Shards().Each(x => x.State(StateType.Eating).Doofus);
+            public GroupsBuilder<DoofusEntityDescriptor> EatingDoofuses => _team.Shards().Combine(x => x.State(StateType.Eating).Doofus);
         }
 
         [Fact]
@@ -77,12 +77,12 @@ namespace Svelto.ECS.Schema.Tests
         {
             var root = IEntitySchema<TestSchema>.metadata.root;
 
-            Assert.Equal(root.partitions[0].tables[0].group + 0, _schema.Dead.Doofus);
-            Assert.Equal(root.partitions[0].tables[1].group + 0, _schema.Dead.Food(FoodType.Rotten));
-            Assert.Equal(root.partitions[0].tables[1].group + 1, _schema.Dead.Food(FoodType.Good));
+            Assert.Equal(root.partitions[0].tables[0].group + 0, _schemaContext.Dead.Doofus);
+            Assert.Equal(root.partitions[0].tables[1].group + 0, _schemaContext.Dead.Food(FoodType.Rotten));
+            Assert.Equal(root.partitions[0].tables[1].group + 1, _schemaContext.Dead.Food(FoodType.Good));
 
-            Assert.Equal(root.partitions[1].partitions[0].tables[1].group + 0, _schema.Team(TeamColor.Red).State(StateType.Eating).Food(FoodType.Rotten));
-            Assert.Equal(root.partitions[1].partitions[0].tables[1].group + 11, _schema.Team(TeamColor.Yellow).State(StateType.NonEating).Food(FoodType.Good));
+            Assert.Equal(root.partitions[1].partitions[0].tables[1].group + 0, _schemaContext.Team(TeamColor.Red).State(StateType.Eating).Food(FoodType.Rotten));
+            Assert.Equal(root.partitions[1].partitions[0].tables[1].group + 11, _schemaContext.Team(TeamColor.Yellow).State(StateType.NonEating).Food(FoodType.Good));
         }
     }
 }

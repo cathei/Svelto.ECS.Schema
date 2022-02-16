@@ -8,7 +8,27 @@ using Svelto.ECS.DataStructures;
 
 namespace Svelto.ECS.Schema
 {
-    public interface IEntitySchemaElement { }
+    internal interface IEntitySchemaElement { }
+
+    internal interface IEntitySchemaTable : IEntitySchemaElement
+    {
+        ref readonly ExclusiveGroup ExclusiveGroup { get; }
+        int Range { get; }
+    }
+
+    internal interface IEntitySchemaIndex : IEntitySchemaElement
+    {
+        RefWrapperType KeyType { get; }
+        int IndexerId { get; }
+        IEngine CreateEngine(SchemaContext context);
+    }
+
+    internal interface IEntitySchemaPartition : IEntitySchemaElement
+    {
+        Type ShardType { get; }
+        int Range { get; }
+        object GetShard(int index);
+    }
 
     public interface IEntityIndexKey<T>
         where T : unmanaged, IEntityIndexKey<T>
@@ -19,20 +39,7 @@ namespace Svelto.ECS.Schema
         bool Equals(T other);
     }
 
-    public interface IEntityShard
-    {
-        ShardOffset Offset { get; set; }
-    }
+    public interface IEntityShard { }
 
-    public readonly struct ShardOffset
-    {
-        internal readonly SchemaMetadata.PartitionNode node;
-        internal readonly int index;
-
-        internal ShardOffset(SchemaMetadata.PartitionNode node, int index)
-        {
-            this.node = node;
-            this.index = index;
-        }
-    }
+    public interface IEntitySchema { }
 }

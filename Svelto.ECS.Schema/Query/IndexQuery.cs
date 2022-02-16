@@ -31,5 +31,40 @@ namespace Svelto.ECS.Schema
             indexerData.TryGetValue(key, out var result);
             return result;
         }
+
+        public readonly ref partial struct FromGroup<TDesc>
+            where TDesc : IEntityDescriptor, new()
+        {
+            public readonly Group<TDesc> group;
+
+            public FromGroup(in Group<TDesc> group)
+            {
+                this.group = group;
+            }
+        }
+
+        public readonly ref partial struct FromGroups<TDesc>
+            where TDesc : IEntityDescriptor, new()
+        {
+            public readonly Groups<TDesc> groups;
+
+            public FromGroups(in Groups<TDesc> groups)
+            {
+                this.groups = groups;
+            }
+        }
+
+        public FromGroup<TDesc> From<TDesc>(in Group<TDesc> group)
+            where TDesc : IEntityDescriptor, new()
+        {
+            return new FromGroup<TDesc>(group);
+        }
+
+        public FromGroups<TDesc> From<TDesc>(in Groups<TDesc> groups)
+            where TDesc : IEntityDescriptor, new()
+        {
+            return new FromGroups<TDesc>(groups);
+        }
+
     }
 }

@@ -8,7 +8,7 @@ using Svelto.ECS.DataStructures;
 
 namespace Svelto.ECS.Schema
 {
-    public static class GroupExtensions
+    public static partial class GroupExtensions
     {
         public static FasterList<T> ToFasterList<T>(this IEnumerable<T> enumerable)
         {
@@ -23,43 +23,43 @@ namespace Svelto.ECS.Schema
             return factory.BuildEntity<T>(entityID, group.exclusiveGroup, implementors);
         }
 
-        public static void RemoveEntity<T>(this IEntityFunctions functions, uint entityID, Group<T> group)
+        public static void RemoveEntity<T>(this IEntityFunctions functions, uint entityID, in Group<T> group)
             where T : IEntityDescriptor, new()
         {
             functions.RemoveEntity<T>(entityID, group.exclusiveGroup);
         }
 
-        public static void RemoveEntitiesFromGroup<T>(this IEntityFunctions functions, Group<T> group)
+        public static void RemoveEntitiesFromGroup<T>(this IEntityFunctions functions, in Group<T> group)
             where T : IEntityDescriptor, new()
         {
             functions.RemoveEntitiesFromGroup(group.exclusiveGroup);
         }
 
-        public static void SwapEntitiesInGroup<T>(this IEntityFunctions functions, Group<T> fromGroup, Group<T> toGroup)
+        public static void SwapEntitiesInGroup<T>(this IEntityFunctions functions, in Group<T> fromGroup, in Group<T> toGroup)
             where T : IEntityDescriptor, new()
         {
             functions.SwapEntitiesInGroup<T>(fromGroup.exclusiveGroup, toGroup.exclusiveGroup);
         }
 
-        public static void SwapEntityGroup<T>(this IEntityFunctions functions, uint entityID, Group<T> fromGroup, Group<T> toGroup)
+        public static void SwapEntityGroup<T>(this IEntityFunctions functions, uint entityID, in Group<T> fromGroup, in Group<T> toGroup)
             where T : IEntityDescriptor, new()
         {
             functions.SwapEntityGroup<T>(entityID, fromGroup.exclusiveGroup, toGroup.exclusiveGroup);
         }
 
-        public static void SwapEntityGroup<T>(this IEntityFunctions functions, EGID fromID, Group<T> toGroup)
+        public static void SwapEntityGroup<T>(this IEntityFunctions functions, EGID fromID, in Group<T> toGroup)
             where T : IEntityDescriptor, new()
         {
             functions.SwapEntityGroup<T>(fromID, toGroup.exclusiveGroup);
         }
 
-        public static void SwapEntityGroup<T>(this IEntityFunctions functions, EGID fromID, Group<T> fromGroup, Group<T> toGroup)
+        public static void SwapEntityGroup<T>(this IEntityFunctions functions, EGID fromID, in Group<T> fromGroup, in Group<T> toGroup)
             where T : IEntityDescriptor, new()
         {
             functions.SwapEntityGroup<T>(fromID, fromGroup.exclusiveGroup, toGroup.exclusiveGroup);
         }
 
-        public static void SwapEntityGroup<T>(this IEntityFunctions functions, EGID fromID, EGID toID, Group<T> mustBeFromGroup)
+        public static void SwapEntityGroup<T>(this IEntityFunctions functions, EGID fromID, EGID toID, in Group<T> mustBeFromGroup)
             where T : IEntityDescriptor, new()
         {
             functions.SwapEntityGroup<T>(fromID, toID, mustBeFromGroup.exclusiveGroup);

@@ -1,70 +1,44 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace Svelto.ECS.Schema.Definition
 {
-    public sealed class Partition<T> : EntitySchemaElement where T : struct, IEntityShard
+    public sealed class Partition<T> : IEntitySchemaPartition
+        where T : class, IEntityShard, new()
     {
+        private readonly T[] shards;
+        private readonly int range;
+
+        public int Range => range;
+
+        public Type ShardType => throw new NotImplementedException();
+
         public Partition(int range = 1)
         {
             this.range = range;
+
+            shards = new T[range];
+            for (int i = 0; i < range; ++i)
+                shards[i] = new T();
         }
 
-        public Accessor At(ShardOffset offset) => new Accessor(this, offset);
+        public T Shard(int index = 0) => GetShard(index);
 
-        public T Shard(int index = 0) => GetShard(metadata.root, index);
+        public ShardEnumerable<T> Shards() => new ShardEnumerable<T>(GetShards(Enumerable.Range(0, range)));
+        public ShardEnumerable<T> Shards(IEnumerable<int> indexes) => new ShardEnumerable<T>(GetShards(indexes));
 
-        public ShardEnumerable<T> Shards() => GetShards(metadata.root, Enumerable.Range(0, range));
-
-        public ShardEnumerable<T> Shards(IEnumerable<int> indexes) => GetShards(metadata.root, indexes);
-
-        private T GetShard(SchemaMetadata.PartitionNode parent, int index)
+        private T GetShard(int index)
         {
-            var node = parent.partitions[siblingOrder];
-
-            if (node.element != this)
-                throw new ECSException("Cannot find correct node. Did you forget to call .At(Offset)?");
-
-            return new T { Offset = new ShardOffset(node, index) };
+            return shards[index];
         }
 
-        private ShardEnumerable<T> GetShards(SchemaMetadata.PartitionNode parent, IEnumerable<int> indexes)
+        private IEnumerable<T> GetShards(IEnumerable<int> indexes)
         {
-            var node = parent.partitions[siblingOrder];
-
-            if (node.element != this)
-                throw new ECSException("Cannot find correct node. Did you forget to call .At(Offset)?");
-
-            return new ShardEnumerable<T>(node, indexes);
+            foreach (int i in indexes)
+                yield return shards[i];
         }
 
-        public readonly struct Accessor
-        {
-            private readonly Partition<T> partition;
-            private readonly ShardOffset offset;
-
-            internal Accessor(Partition<T> partition, ShardOffset offset)
-            {
-                this.partition = partition;
-                this.offset = offset;
-            }
-
-            public T Shard(int index = 0)
-            {
-                return partition.GetShard(offset.node, (offset.index * partition.range) + index);
-            }
-
-            public ShardEnumerable<T> Shards()
-            {
-                int start = offset.index * partition.range;
-                return partition.GetShards(offset.node, Enumerable.Range(start, partition.range));
-            }
-
-            public ShardEnumerable<T> Shards(IEnumerable<int> indexes)
-            {
-                int start = offset.index * partition.range;
-                return partition.GetShards(offset.node, indexes.Select(i => start + i));
-            }
-        }
+        object IEntitySchemaPartition.GetShard(int index) => GetShard(index);
     }
 }

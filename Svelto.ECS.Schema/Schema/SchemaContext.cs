@@ -57,7 +57,7 @@ namespace Svelto.ECS.Schema
             }
         }
 
-        internal readonly IndexerData[] indexers;
+        internal readonly FasterDictionary<int, IndexerData> indexers;
 
         // well... let's have some space for user defined filter
         private int filterIdCounter = 10000;
@@ -70,19 +70,12 @@ namespace Svelto.ECS.Schema
         {
             this.metadata = metadata;
 
-            indexers = new IndexerData[metadata.indexerCount];
+            indexers = new FasterDictionary<int, IndexerData>();
         }
 
-        internal bool TryGetTable(in ExclusiveGroupStruct group, out SchemaMetadata.TableNode table, out int offset)
+        internal bool TryGetPartition(in ExclusiveGroupStruct group, out SchemaMetadata.Node partition)
         {
-            if (!metadata.groupToTable.TryGetValue(group, out table))
-            {
-                offset = 0;
-                return false;
-            }
-
-            offset = (int)(group.id - table.group.id);
-            return true;
+            return metadata.groupToParentPartition.TryGetValue(group, out partition);
         }
 
         // this should be fast enough, no group change means we don't have to rebuild filter
@@ -94,11 +87,10 @@ namespace Svelto.ECS.Schema
                 return;
 
             // index may exist but no table found
-            if (!TryGetTable(keyComponent.ID.groupID, out var table, out int offset))
+            if (!TryGetPartition(keyComponent.ID.groupID, out var node))
                 return;
 
-            var node = table.parent;
-            var keyType = typeof(T);
+            var keyType = TypeRefWrapper<T>.wrapper;
 
             while (node != null)
             {
@@ -109,11 +101,8 @@ namespace Svelto.ECS.Schema
                     {
                         var indexer = node.indexers[i];
 
-                        if (indexer.keyType == keyType)
-                        {
-                            int indexerId = indexer.indexerStartIndex + (offset * node.groupSize / table.groupSize);
-                            UpdateFilters(indexerId, ref keyComponent, oldKey, newKey);
-                        }
+                        if (indexer.KeyType.Equals(keyType))
+                            UpdateFilters(indexer.IndexerId, ref keyComponent, oldKey, newKey);
                     }
                 }
 
@@ -124,31 +113,13 @@ namespace Svelto.ECS.Schema
         private void UpdateFilters<T>(int indexerId, ref Indexed<T> keyComponent, in T oldKey, in T newKey)
             where T : unmanaged, IEntityIndexKey<T>
         {
-            ref var oldGroupData = ref CreateOrGetGroupData<T>(indexerId, oldKey, keyComponent.ID.groupID);
-            ref var newGroupData = ref CreateOrGetGroupData<T>(indexerId, newKey, keyComponent.ID.groupID);
+            ref var oldGroupData = ref CreateOrGetGroupData(indexerId, oldKey, keyComponent.ID.groupID);
+            ref var newGroupData = ref CreateOrGetGroupData(indexerId, newKey, keyComponent.ID.groupID);
 
             var mapper = entitiesDB.QueryMappedEntities<Indexed<T>>(keyComponent.ID.groupID);
 
             oldGroupData.filter.TryRemove(keyComponent.ID.entityID);
             newGroupData.filter.Add(keyComponent.ID.entityID, mapper);
-        }
-
-        private IndexerData<T> CreateOrGetIndexerData<T>(int indexerId)
-            where T : unmanaged, IEntityIndexKey<T>
-        {
-            IndexerData<T> indexerData;
-
-            if (indexers[indexerId] == null)
-            {
-                indexerData = new IndexerData<T>();
-                indexers[indexerId] = indexerData;
-            }
-            else
-            {
-                indexerData = (IndexerData<T>)indexers[indexerId];
-            }
-
-            return indexerData;
         }
 
         internal ref IndexerGroupData CreateOrGetGroupData<T>(int indexerId, in T key, ExclusiveGroupStruct group)
@@ -163,6 +134,24 @@ namespace Svelto.ECS.Schema
                 group = group,
                 filter = entitiesDB.GetFilters().CreateOrGetFilterForGroup<Indexed<T>>(GenerateFilterId(), group)
             });
+        }
+
+        private IndexerData<T> CreateOrGetIndexerData<T>(int indexerId)
+            where T : unmanaged, IEntityIndexKey<T>
+        {
+            IndexerData<T> indexerData;
+
+            if (indexers.ContainsKey(indexerId))
+            {
+                indexerData = new IndexerData<T>();
+                indexers[indexerId] = indexerData;
+            }
+            else
+            {
+                indexerData = (IndexerData<T>)indexers[indexerId];
+            }
+
+            return indexerData;
         }
 
         private int GenerateFilterId()
