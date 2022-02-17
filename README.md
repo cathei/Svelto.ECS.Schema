@@ -315,8 +315,8 @@ Note that you have to use double indexing like `health[indices[i]]`.  **DO NOT u
 
 If you want to query index within specific `Group<T>` or `Groups<T>`, use `From` like this:
 ```csharp
-var (health, position, indices) = IndexSchema.CharactersByController(3)
-    .From(IndexSchema.FlyingCharacter)
+var (health, position, indices) = IndexedSchema.CharactersByController(3)
+    .From(IndexedSchema.FlyingCharacter)
     .Entities<HealthComponent, PositionComponent>(schemaContext);
 ```
 
