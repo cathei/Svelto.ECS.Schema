@@ -8,26 +8,10 @@ namespace Svelto.ECS.Schema.Generator
     public class IndexQueryGenerator : ISourceGenerator
     {
         const string QueryEntitiesTemplate = @"
-        public IEnumerable<(({0}, FilteredIndices), ExclusiveGroupStruct)> Entities<{1}>()
+        public IndexQueryEnumerable<{1}> Entities<{1}>()
 {2}
         {{
-            if (groupDataList == null)
-                yield break;
-
-            var values = groupDataList.unsafeValues;
-
-            for (int i = 0; i < groupDataList.count; ++i)
-            {{
-                var groupData = values[i];
-                var indices = groupData.filter.filteredIndices;
-
-                if (!groupData.group.IsEnabled() || indices.Count() == 0)
-                    continue;
-
-                var ({3}, _) = context.entitiesDB.QueryEntities<{1}>(groupData.group);
-
-                yield return (({3}, indices), groupData.group);
-            }}
+            return new IndexQueryEnumerable<{1}>(context, groupDataList);
         }}
 ";
 
@@ -51,26 +35,10 @@ namespace Svelto.ECS.Schema.Generator
 ";
 
         const string QueryEntitiesWithGroupsTemplate = @"
-        public IEnumerable<(({0}, FilteredIndices), ExclusiveGroupStruct)> Entities<{1}>(FasterList<ExclusiveGroupStruct> groups)
+        public IndexQueryGroupsEnumerable<{1}> Entities<{1}>(FasterList<ExclusiveGroupStruct> groups)
 {2}
         {{
-            if (groupDataList == null)
-                yield break;
-
-            for (int i = 0; i < groups.count; ++i)
-            {{
-                if (!groupDataList.TryGetValue(groups[i], out var groupData))
-                    continue;
-
-                var indices = groupData.filter.filteredIndices;
-
-                if (!groupData.group.IsEnabled() || indices.Count() == 0)
-                    continue;
-
-                var ({3}, _) = context.entitiesDB.QueryEntities<{1}>(groupData.group);
-
-                yield return (({3}, indices), groupData.group);
-            }}
+            return new IndexQueryGroupsEnumerable<{1}>(context, groupDataList, groups);
         }}
 ";
 
@@ -88,10 +56,10 @@ namespace Svelto.ECS.Schema.Generator
 
         public StringBuilder GenerateQueryEntities(string template, int num)
         {
-            var nativeBufferTypeList = "NB<T{0}>".Join(", ", num);
-            var genericTypeList = "T{0}".Join(", ", num);
-            var typeConstraintList = "                where T{0} : unmanaged, IEntityComponent".Join("\n", num);
-            var componentList = "c{0}".Join(", ", num);
+            var nativeBufferTypeList = "NB<T{0}>".Repeat(", ", num);
+            var genericTypeList = "T{0}".Repeat(", ", num);
+            var typeConstraintList = "                where T{0} : unmanaged, IEntityComponent".Repeat("\n", num);
+            var componentList = "c{0}".Repeat(", ", num);
 
             var builder = new StringBuilder();
             builder.AppendFormat(template, nativeBufferTypeList, genericTypeList, typeConstraintList, componentList);

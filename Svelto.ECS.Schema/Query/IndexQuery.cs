@@ -8,7 +8,7 @@ using Svelto.ECS.DataStructures;
 
 namespace Svelto.ECS.Schema
 {
-    public readonly partial struct IndexQuery<T>
+    public readonly ref struct IndexQuery<T>
         where T : unmanaged, IEntityIndexKey<T>
     {
         internal readonly int indexerId;

@@ -33,18 +33,16 @@ It is not part of this extension, but it is important because it is basically de
 ### Defining Schema
 Let's define simplest Schema.
 ```csharp
-public class GameSchema : IEntitySchema<GameSchema>
+public class GameSchema : IEntitySchema
 {
-    public SchemaContext Context { get; set; }
+    private static Table<CharacterDescriptor> _character = new Table<CharacterDescriptor>();
+    public static Group<CharacterDescriptor> Character => _character.Group();
 
-    static Table<CharacterDescriptor> character = new Table<CharacterDescriptor>();
-    public Group<CharacterDescriptor> Character => character.Group();
-
-    static Table<ItemDescriptor> item = new Table<ItemDescriptor>();
-    public Group<ItemDescriptor> Item => item.Group();
+    private static Table<ItemDescriptor> _item = new Table<ItemDescriptor>();
+    public static Group<ItemDescriptor> Item => _item.Group();
 }
 ```
-`IEntitySchema<TSelf>` represents a class that will hold all defined tables as member. `Context` property is requried by `IEntitySchema<TSelf>`.
+`IEntitySchema` represents a class that will hold all defined tables as static member.
 
 `Table<TDescriptor>` represents underlying `ExclusiveGroup`. Tables should only accept entities using same descriptor, or else the index will break.
 
@@ -53,72 +51,61 @@ Note that tables are defined as static, and only `Group<T>` are exposed. This is
 ### Defining Ranged Table
 Sometimes you'll want many tables of same type, without defining many variables. Simiply pass the number of group you want to be created, and there are multiple separated tables!
 ```csharp
-public class AnotherSchema : IEntitySchema<AnotherSchema>
+public enum ItemType { Potion, Weapon, Armor, MAX };
+
+public class AnotherSchema : IEntitySchema
 {
-    public SchemaContext Context { get; set; }
-
-    public enum ItemType { Potion, Weapon, Armor, MAX };
-
     public const int MaxPlayerCount = 10;
 
-    static Table<ItemDescriptor> items = new Table<ItemDescriptor>((int)ItemType.MAX);
-    public Group<ItemDescriptor> Items(ItemType type) => items.Group((int)type);
+    private static Table<ItemDescriptor> _items = new Table<ItemDescriptor>((int)ItemType.MAX);
+    public static Group<ItemDescriptor> Items(ItemType type) => _items.Group((int)type);
 
-    static Table<PlayerDescriptor> players = new Table<PlayerDescriptor>(MaxPlayerCount);
-    public Group<PlayerDescriptor> Player(int playerId) => players.Group(playerId);
+    private static Table<PlayerDescriptor> _players = new Table<PlayerDescriptor>(MaxPlayerCount);
+    public static Group<PlayerDescriptor> Player(int playerId) => _players.Group(playerId);
 
-    public Groups<PlayerDescriptor> AllPlayers => players.Groups();
+    public static Groups<PlayerDescriptor> AllPlayers { get; } = _players.Groups();
 }
 ```
 Above example shows use case of ranged tables with number or enum.
 
-Note that we also exposes `AnotherSchema.AllPlayers` which represents all player groups. `Groups<T>` is actually a builder for `FasterList<ExclusiveGroupStruct>`. Call `Groups<T>.Build()` and cache the result. Then you can pass the list to `EntitiesDB.QueryEntities`. 
+Note that we also exposes `AnotherSchema.AllPlayers` which represents all player groups. `Groups<T>` has underlying `FasterList<ExclusiveGroupStruct>`. Which means you can directly pass it into `EntitiesDB.QueryEntities`. 
 ```csharp
-// you probably wanna cache this
-FasterList<ExclusiveGroupStruct> allPlayerGroups = schema.AllPlayers.Build();
-
-foreach (var (...) in entitiesDB.QueryEntities<...>(allPlayerGroups)) { }
+foreach (var (...) in entitiesDB.QueryEntities<...>(AnotherSchema.AllPlayers)) { }
 ```
 
 ### Defining Partition
 On the other hand, you will want to group some related tables, and reuse it. We use `Partition<TShard>` for it. First, define a shard, which is logical group of tables.
 ```csharp
-public struct PlayerShard : IEntityShard
+public enum ItemType { Potion, Weapon, Armor, MAX };
+
+public class PlayerShard : IEntityShard
 {
-    public ShardOffset Offset { get; set; }
+    private Table<CharacterDescriptor> _aliveCharacter = new Table<CharacterDescriptor>();
+    public Group<CharacterDescriptor> AliveCharacter => _aliveCharacter.Group();
 
-    public enum ItemType { Potion, Weapon, Armor, MAX };
+    private Table<CharacterDescriptor> _deadCharacter = new Table<CharacterDescriptor>();
+    public Group<CharacterDescriptor> DeadCharacter => _deadCharacter.Group();
 
-    static Table<CharacterDescriptor> aliveCharacter = new Table<CharacterDescriptor>();
-    public Group<CharacterDescriptor> AliveCharacter => aliveCharacter.At(Offset).Group();
-
-    static Table<CharacterDescriptor> deadCharacter = new Table<CharacterDescriptor>();
-    public Group<CharacterDescriptor> DeadCharacter => deadCharacter.At(Offset).Group();
-
-    static Table<ItemDescriptor> items = new Table<ItemDescriptor>((int)ItemType.MAX);
-    public Group<ItemDescriptor> Item(ItemType type) => items.At(Offset).Group((int)type);
+    private Table<ItemDescriptor> _items = new Table<ItemDescriptor>((int)ItemType.MAX);
+    public Group<ItemDescriptor> Item(ItemType type) => _items.Group((int)type);
 }
 ```
-Looks similar to defining schema, but little different. First, `PlayerShard` is `struct`. Second, there is `Offset` property which defined in IEntityShard, and they are passed in properties by `.At(Offset)` before get the underlying group.
-
-Reason of this is `PlayerShard` can be reused but tables will be static. So we need to pass a `Offset` information to get the correct group when accessed from different partition.
+Looks similar to defining schema, except shards should implement IEntityShard and all the fields are non-static.
 
 Now we have Shard, we can define actual partition with `Partition<TShard>` in the schema.
 
 ```csharp
-public class MyGameSchema : IEntitySchema<MyGameSchema>
+public class MyGameSchema : IEntitySchema
 {
     public const int MaxPlayerCount = 10;
 
-    public SchemaContext Context { get; set; }
+    private static Partition<PlayerShard> _ai = new Partition<PlayerShard>();
+    public static PlayerShard AI => _ai.Shard();
 
-    static Partition<PlayerShard> ai = new Partition<PlayerShard>();
-    public PlayerShard AI => ai.Shard();
+    private static Partition<PlayerShard> _players = new Partition<PlayerShard>(MaxPlayerCount);
+    public static PlayerShard Player(int playerId) => _players.Shard(playerId);
 
-    static Partition<PlayerShard> players = new Partition<PlayerShard>(MaxPlayerCount);
-    public PlayerShard Player(int playerId) => players.Shard(playerId);
-
-    public Groups<CharacterDescriptor> AllAliveCharacters =>
+    public static Groups<CharacterDescriptor> AllAliveCharacters { get; } =
         AI.AliveCharacter + players.Shards().Each(x => x.AliveCharacter);
 }
 ```
@@ -127,7 +114,7 @@ Nice. We defined a group for AI, and 10 players. Just like how we expose group i
 ### Applying Schema
 Before we can use schema, we need to call `EnginesRoot.AddSchema<T>()`. When you initializing `EnginesRoot`, do this before any entitiy submission.
 ```csharp
-MyGameSchema schema = enginesRoot.AddSchema<MyGameSchema>();
+SchemaContext schemaContext = enginesRoot.AddSchema<MyGameSchema>();
 ```
 
 Now it's time to fill up your tables with records.
@@ -142,13 +129,13 @@ public class CompositionRoot
         var enginesRoot = new EnginesRoot(submissionScheduler);
 
         var entityFactory = enginesRoot.GenerateEntityFactory();
-        var schema = enginesRoot.AddSchema<MyGameSchema>();
+        var schemaContext = enginesRoot.AddSchema<MyGameSchema>();
 
         for (int i = 0; i < 10; ++i)
-            AddCharacter(entityFactory, schema.AI.AliveCharacter);
+            AddCharacter(entityFactory, MyGameSchema.AI.AliveCharacter);
 
         for (int i = 0; i < 10; ++i)
-            AddCharacter(entityFactory, schema.Player(0).DeadCharacter);
+            AddCharacter(entityFactory, MyGameSchema.Player(0).DeadCharacter);
 
         submissionScheduler.SubmitEntities();
     }
@@ -163,13 +150,8 @@ public class CompositionRoot
 }
 ```
 Above we have example to put 10 characters to alive, AI controlled character group, and put another 10 characters to dead, player 0 controlled character group. You don't have to specify descriptor when call BuildEntity, because group is already implying descriptor type.
-
-Inject schema to your engines. Now you can query this from your desired engine.
 ```csharp
-// you probably wanna cache this
-FastList<ExclusiveGroupStruct> allAliveCharactersGroup = schema.AllAliveCharacters.Build();
-
-foreach (var ((healths, positions, count), group) in entitiesDB.QueryEntities<HealthComponent, PositionComponent>(allAliveCharactersGroup))
+foreach (var ((healths, positions, count), group) in entitiesDB.QueryEntities<HealthComponent, PositionComponent>(MyGameSchema.AllAliveCharacters))
 {
     for (int i = 0; i < count; ++i)
     {
@@ -211,38 +193,32 @@ Real problem is it is not really flexible nor extendible. What if Yellow team is
 
 With Schema extension this would be converted to below.
 ```csharp
-public struct StateShard : IEntityShard
+public class StateShard : IEntityShard
 {
-    public ShardOffset Offset { get; set; }
+    private Table<DoofusEntityDescriptor> _doofus = new Table<DoofusEntityDescriptor>();
+    public Group<DoofusEntityDescriptor> Doofus => _doofus.Group();
 
-    static Table<DoofusEntityDescriptor> doofus = new Table<DoofusEntityDescriptor>();
-    public Group<DoofusEntityDescriptor> Doofus => doofus.At(Offset).Group();
-
-    static Table<FoodEntityDescriptor> food = new Table<FoodEntityDescriptor>();
-    public Group<FoodEntityDescriptor> Food => food.At(Offset).Group();
+    private Table<FoodEntityDescriptor> _food = new Table<FoodEntityDescriptor>();
+    public Group<FoodEntityDescriptor> Food => _food.Group();
 }
 
-public struct TeamShard : IEntityShard
+public class TeamShard : IEntityShard
 {
-    public ShardOffset Offset { get; set; }
+    private Partition<StateShard> _eating = new Partition<StateShard>();
+    public StateShard Eating => _eating.At(Offset).Shard();
 
-    static Partition<StateShard> eating = new Partition<StateShard>();
-    public StateShard Eating => eating.At(Offset).Shard();
-
-    static Partition<StateShard> nonEating = new Partition<StateShard>();
-    public StateShard NonEating => nonEating.At(Offset).Shard();
+    private Partition<StateShard> _nonEating = new Partition<StateShard>();
+    public StateShard NonEating => _nonEating.At(Offset).Shard();
 }
 
 public enum TeamColor { Red, Blue, MAX }
 
-public class GameSchema : IEntitySchema<GameSchema>
+public class GameSchema : IEntitySchema
 {
-    public SchemaContext Context { get; set; }
+    private static Partition<TeamShard> _team = new Partition<TeamShard>((int)TeamColor.MAX);
+    public static TeamShard Team(TeamColor color) => _team.Shard((int)color);
 
-    static Partition<TeamShard> team = new Partition<TeamShard>((int)TeamColor.MAX);
-    public TeamShard Team(TeamColor color) => team.Shard((int)color);
-
-    public Groups<DoofusEntityDescriptor> EatingDoofuses => team.Shards().Each(x => x.Eating.Doofus);
+    public static Groups<DoofusEntityDescriptor> EatingDoofuses { get; } = _team.Shards().Combine(x => x.Eating.Doofus);
 }
 ```
 More code, but you'll thank to some complexity when you have to deal with big design changes!
@@ -252,15 +228,18 @@ When using it, code `GameGroups.RED_DOOFUSES_EATING.Groups` would be equvalent t
 ### Defining Indexes
 Index is wrapper of filters system, but works like indexes in RDBMS. Filters are used to have subset from a group. Indexes are to collect entities by specific key, from a partition or entire schema. Let's take a look. You have to define Key first.
 ```csharp
-public readonly struct Controller : IEntityIndexKey
+public readonly struct CharacterController : IEntityIndexKey<CharacterController>
 {
     public readonly int playerId;
 
-    public int Key => playerId;
-
-    public Controller(int playerId)
+    public CharacterController(int playerId)
     {
         this.playerId = playerId;
+    }
+
+    public bool Equals(CharacterController other)
+    {
+        return playerId == other.playerId;
     }
 }
 ```
@@ -269,22 +248,22 @@ Keys are structs inheriting `IEntityIndexKey`. You can have more members in it, 
 Then, you add `Indexed<TKey>` to your descriptor.
 
 ```csharp
-public class CharacterDescriptor<HealthComponent, PositionComponent, Indexed<Controller>> { }
+public class CharacterDescriptor<HealthComponent, PositionComponent, Indexed<CharacterController>> { }
 ```
-Indexed is special component to make sure that indexes are up-to-date. It has Controller struct as member `Content`, but you cannot change the value unless you use `Indexed<TKey>.Update(SchemaContext, TKey)`. `SchemaContext` is accessable with `IEntitySchema<T>.Context` and represents current state of entity, like indexing.
+Indexed is special component to make sure that indexes are up-to-date. It has Controller struct as member `Content`, but you cannot change the value unless you use `Indexed<TKey>.Update(SchemaContext, TKey)`. `SchemaContext` is returned when `AddSchema<TSchema>()` is executed and represents current state of index table.
 
 Before look into `SchemaContext`, Let's add `Index<TKey>` to our schema.
 ```csharp
-public class IndexedSchema : IEntitySchema<IndexedSchema>
+public class IndexedSchema : IEntitySchema
 {
-    static Table<CharacterDescriptor> flyingCharacter = new Table<CharacterDescriptor>();
-    public Group<CharacterDescriptor> FlyingCharacter => flyingCharacter.Group();
+    private static Table<CharacterDescriptor> _flyingCharacter = new Table<CharacterDescriptor>();
+    public static Group<CharacterDescriptor> FlyingCharacter => _flyingCharacter.Group();
 
-    static Table<CharacterDescriptor> groundCharacter = new Table<CharacterDescriptor>();
-    public Group<CharacterDescriptor> GroundCharacter => flyingCharacter.Group();
+    private static Table<CharacterDescriptor> _groundCharacter = new Table<CharacterDescriptor>();
+    public static Group<CharacterDescriptor> GroundCharacter => _flyingCharacter.Group();
 
-    static Index<Controller> charactersByController = new Index<Controller>();
-    public IndexQuery CharactersByController(int playerId) => charactersByController.Query(playerId);
+    private static Index<CharacterController> _charactersByController = new Index<CharacterController>();
+    public static IndexQuery<ChracterController> CharactersByController(int playerId) => _charactersByController.Query(new CharacterController(playerId));
 }
 ```
 `Index<TKey>` will index any `Indexed<TKey>` component in any tables with same partition. Any child partition will be indexed as well. If `Index<TKey>` is defined in root schema, any table with `Indexed<TKey>` will be indexed. In this example both `FlyingCharacter` and `GroundCharacter` group will be indexed and returned when queried. If you want to index specific groups only, define a partition.
@@ -298,7 +277,7 @@ Now, finally you can iterate over entities with `IndexQuery<TKey>`. You don't ha
 
 Just like when you query with `EntitiesDB`, you query with `SchemaContext`.
 ```csharp
-foreach (var ((health, position, indices), group) in schema.Context.QueryEntities<HealthComponent, PositionComponent>(schema.CharactersByController(3)))
+foreach (var ((health, position, indices), group) in schemaContext.Query(IndexedSchema.CharactersByController(3)).Entities<HealthComponent, PositionComponent>())
 {
     for (int i = 0; i < indices.count(); ++i)
     {
@@ -309,21 +288,21 @@ foreach (var ((health, position, indices), group) in schema.Context.QueryEntitie
 Note that you have to use double indexing like `health[indices[i]]`.  **DO NOT update `Indexed` component while iterating through index query with it.** It is undefined behaviour.
 
 ## Naming Convention
-Below is naming convention suggestions to make schema more readable. Optionally you could apply preceding `_` for private static members.
+Below is naming convention suggestions to make schema more readable.
 
 ### For Tables and Partitions
-* Use `singularNoun` for singluar table.
-* Use `pluralNouns` for ranged table.
+* Use `_singularNoun` for singluar table.
+* Use `_pluralNouns` for ranged table.
 * Use `SingularNoun` for `Group<T>`.
 * Use `PluralNouns` for `Groups<T>`.
 
 ### For Partitions
-* Use `adjective` or `singluarNoun` for singular partition. e.g. `flying`
-* Use `adjective` or `pluralNouns` for ranged partition.
+* Use `_adjective` or `_singluarNoun` for singular partition. e.g. `_flying`
+* Use `_adjective` or `_pluralNouns` for ranged partition.
 * Use `Adjective` or `SingularNoun` for result of `Shard()`. e.g. `Flying`, so you can access like `Flying.Monster`
 * Use `Adjective` or `PluralNouns` for result of `Shards()`.
 
 ### For Indexes
 * Use `TableNameKeyName` for `IEntityIndexKey`. e.g. `ItemHolder`
-* Use `tableNamesByKeyName` for `Index<T>`. e.g. `itemsByHodler`
+* Use `_tableNamesByKeyName` for `Index<T>`. e.g. `_itemsByHodler`
 * Use `TableNameByKeyName` for `IndexQuery`. e.g. `ItemsByHolder`

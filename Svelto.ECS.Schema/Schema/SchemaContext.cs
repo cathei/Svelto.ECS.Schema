@@ -166,7 +166,7 @@ namespace Svelto.ECS.Schema
             return new QueryAccessor(this, query.GetGroupIndexDataList(this));
         }
 
-        public readonly partial struct QueryAccessor
+        public readonly ref partial struct QueryAccessor
         {
             private readonly SchemaContext context;
             private readonly FasterDictionary<ExclusiveGroupStruct, IndexerGroupData> groupDataList;

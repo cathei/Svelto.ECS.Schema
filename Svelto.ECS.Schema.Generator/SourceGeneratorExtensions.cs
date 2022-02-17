@@ -27,7 +27,7 @@ namespace Svelto.ECS.Schema.Generator
             return builder;
         }
 
-        public static StringBuilder Join(this string format, string joiner, int num)
+        public static StringBuilder Repeat(this string format, string joiner, int num)
         {
             StringBuilder builder = new StringBuilder();
 

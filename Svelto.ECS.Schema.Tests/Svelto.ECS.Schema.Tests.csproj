@@ -17,6 +17,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
+    <PackageReference Include="JetBrains.DotMemoryUnit" Version="3.1.20200127.214830" />
   </ItemGroup>
 
   <ItemGroup>
