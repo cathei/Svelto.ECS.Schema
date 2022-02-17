@@ -231,10 +231,10 @@ public class StateShard : IEntityShard
 public class TeamShard : IEntityShard
 {
     private Partition<StateShard> _eating = new Partition<StateShard>();
-    public StateShard Eating => _eating.At(Offset).Shard();
+    public StateShard Eating => _eating.Shard();
 
     private Partition<StateShard> _nonEating = new Partition<StateShard>();
-    public StateShard NonEating => _nonEating.At(Offset).Shard();
+    public StateShard NonEating => _nonEating.Shard();
 }
 
 public enum TeamColor { Red, Blue, MAX }
