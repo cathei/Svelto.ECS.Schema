@@ -44,9 +44,30 @@ public class GameSchema : IEntitySchema
 ```
 `IEntitySchema` represents a class that will hold all defined tables as static member.
 
-`Table<TDescriptor>` represents underlying `ExclusiveGroup`. Tables should only accept entities using same descriptor, or else the index will break.
+`Table<TDescriptor>` represents underlying `ExclusiveGroup`. Groups should only accept entities using same descriptor, or else the iteration index will break. In Schema extension Table has Descriptor type argument, basically preventing the issue.
 
-Note that tables are defined as static, and only `Group<T>` are exposed. This is pattern I recommend, so rest of your code can be kept clean and reslove all schema relatived code in schema class. **Do not make methodes static**, it is not safe to access to schema until it is added to `EnginesRoot`.
+Note that tables are defined as static, and only `Group<T>` are exposed. This is pattern I recommend, so rest of your code can be kept clean and reslove all schema define related code in schema class.
+
+Now to add entity with `Group<T>`, we support two ways. One is original Svelto way:
+```csharp
+var entityBuilder = entityFactory.BuildEntity(entityId, GameSchema.Character);
+```
+The other is Schema extension way (preferred):
+```csharp
+var entityBuilder = GameSchema.Character.Build(entityFactory, entityId);
+```
+Results are the same so it is just different expression.
+
+To query entities of `Group<T>`, also original Svelto way:
+```csharp
+var (egid, count) = entitiesDB.QueryEntities<EGIDComponent>(GameSchema.Character);
+```
+and Schema extension way (preferred):
+```csharp
+var (egid, count) = GameSchema.Character.Entities<EGIDComponent>(entitiesDB);
+```
+
+Reason I decided to have different expression from original Svelto is because we can pass more type information to calls without making it look awkward. C# does not support partial generic type inference, and we don't wanna call like `QueryEntities<EGIDCompoent, CharacterDescriptor>(GameSchema.Character)`.
 
 ### Defining Ranged Table
 Sometimes you'll want many tables of same type, without defining many variables. Simiply pass the number of group you want to be created, and there are multiple separated tables!
@@ -71,6 +92,10 @@ Above example shows use case of ranged tables with number or enum.
 Note that we also exposes `AnotherSchema.AllPlayers` which represents all player groups. `Groups<T>` has underlying `FasterList<ExclusiveGroupStruct>`. Which means you can directly pass it into `EntitiesDB.QueryEntities`. 
 ```csharp
 foreach (var (...) in entitiesDB.QueryEntities<...>(AnotherSchema.AllPlayers)) { }
+```
+Or, in Schema extension way (preferred):
+```csharp
+foreach (var (...) in AnotherSchema.AllPlayers.Entities<...>(entitiesDB)) { }
 ```
 
 ### Defining Partition
@@ -116,6 +141,7 @@ Before we can use schema, we need to call `EnginesRoot.AddSchema<T>()`. When you
 ```csharp
 SchemaContext schemaContext = enginesRoot.AddSchema<MyGameSchema>();
 ```
+Return value, `SchemaContext` will be used to save runtime schema data like indexing.
 
 Now it's time to fill up your tables with records.
 ```csharp
@@ -142,7 +168,7 @@ public class CompositionRoot
 
     private void AddCharacter(IEntityFactory entityFactory, Group<CharacterDescriptor> group)
     {
-        var builder = entityFactory.BuildEntity(eidCounter++, group);
+        var builder = group.Build(entityFactory, eidCounter++);
 
         builder.Init(new HealthComponent(1000));
         builder.Init(new PositionComponent(0, 0));
@@ -151,7 +177,7 @@ public class CompositionRoot
 ```
 Above we have example to put 10 characters to alive, AI controlled character group, and put another 10 characters to dead, player 0 controlled character group. You don't have to specify descriptor when call BuildEntity, because group is already implying descriptor type.
 ```csharp
-foreach (var ((healths, positions, count), group) in entitiesDB.QueryEntities<HealthComponent, PositionComponent>(MyGameSchema.AllAliveCharacters))
+foreach (var ((healths, positions, count), group) in MyGameSchema.AllAliveCharacters.Entities<HealthComponent, PositionComponent>(entitiesDB))
 {
     for (int i = 0; i < count; ++i)
     {
@@ -230,27 +256,27 @@ Index is wrapper of filters system, but works like indexes in RDBMS. Filters are
 ```csharp
 public readonly struct CharacterController : IEntityIndexKey<CharacterController>
 {
-    public readonly int playerId;
+    public readonly int PlayerId;
 
     public CharacterController(int playerId)
     {
-        this.playerId = playerId;
+        PlayerId = playerId;
     }
 
     public bool Equals(CharacterController other)
     {
-        return playerId == other.playerId;
+        return PlayerId == other.PlayerId;
     }
 }
 ```
-Keys are structs inheriting `IEntityIndexKey`. You can have more members in it, but you need to provide which member or combination will be `Key`. If the type is not `int`, consider using `GetHashCode()`. Also key are not meant to be mutable so I added `readonly` constraint but it is your choice.
+Keys are structs inheriting `IEntityIndexKey<TSelf>`. And you have to implement `bool Equals(TSelf)` to check Key equality and optionally implement `int GetHashCode()`. Also keys are not meant to be mutable so I prefer to add `readonly` constraint.
 
 Then, you add `Indexed<TKey>` to your descriptor.
 
 ```csharp
 public class CharacterDescriptor<HealthComponent, PositionComponent, Indexed<CharacterController>> { }
 ```
-Indexed is special component to make sure that indexes are up-to-date. It has Controller struct as member `Content`, but you cannot change the value unless you use `Indexed<TKey>.Update(SchemaContext, TKey)`. `SchemaContext` is returned when `AddSchema<TSchema>()` is executed and represents current state of index table.
+Indexed is special component to make sure that indexes are up-to-date. It has Controller struct as member `Key`, but you cannot change the value unless you use `Indexed<TKey>.Update(SchemaContext, TKey)`. `SchemaContext` is returned when `AddSchema<TSchema>()` is executed and represents runtime state of schema.
 
 Before look into `SchemaContext`, Let's add `Index<TKey>` to our schema.
 ```csharp
@@ -268,16 +294,16 @@ public class IndexedSchema : IEntitySchema
 ```
 `Index<TKey>` will index any `Indexed<TKey>` component in any tables with same partition. Any child partition will be indexed as well. If `Index<TKey>` is defined in root schema, any table with `Indexed<TKey>` will be indexed. In this example both `FlyingCharacter` and `GroundCharacter` group will be indexed and returned when queried. If you want to index specific groups only, define a partition.
 
-Same manner as we expose a group for a table, we'll expose `IndexQuery` for a index. `IndexQuery` is query for a specific key, like 'player id 0'.
+Same manner as we expose a group for a table, we'll expose `IndexQuery<TKey>` for a index. `IndexQuery<TKey>` is query for a specific key, like 'player id 0'.
 
-Though there is no constraint yet, it is not recommended to share `Indexed<TKey>` across other descriptors.
+You can share `Indexed<TKey>` across different descriptors.
 
 ### Querying Indexes
-Now, finally you can iterate over entities with `IndexQuery<TKey>`. You don't have to include `Indexed<TKey>` in the query. You can query any type of component within the descriptor, because as long as you keep a group with single descriptor you can iterate with same filter.
+Now, finally you can iterate over entities with `IndexQuery<TKey>`. You don't have to include `Indexed<TKey>` in the type list. You can query any type of component within the descriptor, because as long as you keep a group with single descriptor you can iterate with same filter.
 
 Just like when you query with `EntitiesDB`, you query with `SchemaContext`.
 ```csharp
-foreach (var ((health, position, indices), group) in schemaContext.Query(IndexedSchema.CharactersByController(3)).Entities<HealthComponent, PositionComponent>())
+foreach (var ((health, position, indices), group) in IndexedSchema.CharactersByController(3).Entities<HealthComponent, PositionComponent>(schemaContext))
 {
     for (int i = 0; i < indices.count(); ++i)
     {
@@ -286,6 +312,13 @@ foreach (var ((health, position, indices), group) in schemaContext.Query(Indexed
 }
 ```
 Note that you have to use double indexing like `health[indices[i]]`.  **DO NOT update `Indexed` component while iterating through index query with it.** It is undefined behaviour.
+
+If you want to query index within specific `Group<T>` or `Groups<T>`, use `From` like this:
+```csharp
+var (health, position, indices) = IndexSchema.CharactersByController(3)
+    .From(IndexSchema.FlyingCharacter)
+    .Entities<HealthComponent, PositionComponent>(schemaContext);
+```
 
 ## Naming Convention
 Below is naming convention suggestions to make schema more readable.
