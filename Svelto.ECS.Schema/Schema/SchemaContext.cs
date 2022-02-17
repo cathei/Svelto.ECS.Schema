@@ -158,24 +158,5 @@ namespace Svelto.ECS.Schema
         {
             return filterIdCounter++;
         }
-
-        private static readonly FilteredIndices EmptyFilteredIndices = new FilteredIndices();
-
-        public QueryAccessor Query<TKey>(IndexQuery<TKey> query) where TKey : unmanaged, IEntityIndexKey<TKey>
-        {
-            return new QueryAccessor(this, query.GetGroupIndexDataList(this));
-        }
-
-        public readonly ref partial struct QueryAccessor
-        {
-            private readonly SchemaContext context;
-            private readonly FasterDictionary<ExclusiveGroupStruct, IndexerGroupData> groupDataList;
-
-            internal QueryAccessor(SchemaContext context, FasterDictionary<ExclusiveGroupStruct, IndexerGroupData> groupDataList)
-            {
-                this.context = context;
-                this.groupDataList = groupDataList;
-            }
-        }
     }
 }

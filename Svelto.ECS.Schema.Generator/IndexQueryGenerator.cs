@@ -8,37 +8,38 @@ namespace Svelto.ECS.Schema.Generator
     public class IndexQueryGenerator : ISourceGenerator
     {
         const string QueryEntitiesTemplate = @"
-        public IndexQueryEnumerable<{1}> Entities<{1}>()
+        public IndexQueryEnumerable<{1}> Entities<{1}>(SchemaContext context)
 {2}
         {{
-            return new IndexQueryEnumerable<{1}>(context, groupDataList);
+            return new IndexQueryEnumerable<{1}>(context, GetGroupIndexDataList(context));
         }}
 ";
 
         const string QueryEntitiesWithGroupTemplate = @"
-        public ({0}, FilteredIndices) Entities<{1}>(in ExclusiveGroupStruct group)
+        public ({0}, FilteredIndices) Entities<{1}>(SchemaContext context)
 {2}
         {{
-            FilteredIndices indices = EmptyFilteredIndices;
+            var groupDataList = _query.GetGroupIndexDataList(context);
 
-            if (groupDataList != null &&
-                groupDataList.TryGetValue(group, out var groupData) &&
-                groupData.group.IsEnabled())
+            var indices = new FilteredIndices();
+
+            if (groupDataList != null && _group.IsEnabled() &&
+                groupDataList.TryGetValue(_group, out var groupData))
             {{
                 indices = groupData.filter.filteredIndices;
             }}
 
-            var ({3}, _) = context.entitiesDB.QueryEntities<{1}>(group);
+            var ({3}, _) = context.entitiesDB.QueryEntities<{1}>(_group);
 
             return ({3}, indices);
         }}
 ";
 
         const string QueryEntitiesWithGroupsTemplate = @"
-        public IndexQueryGroupsEnumerable<{1}> Entities<{1}>(FasterList<ExclusiveGroupStruct> groups)
+        public IndexQueryGroupsEnumerable<{1}> Entities<{1}>(SchemaContext context)
 {2}
         {{
-            return new IndexQueryGroupsEnumerable<{1}>(context, groupDataList, groups);
+            return new IndexQueryGroupsEnumerable<{1}>(context, _query.GetGroupIndexDataList(context), _groups);
         }}
 ";
 
@@ -74,12 +75,17 @@ using Svelto.DataStructures;
 
 namespace Svelto.ECS.Schema
 {{
-    public partial class SchemaContext
+    public partial struct IndexQuery<T>
     {{
-        public partial struct QueryAccessor
-        {{
 {GenerateQueryEntities(QueryEntitiesTemplate)}
+
+        public partial struct FromGroupAccessor<TDesc>
+        {{
 {GenerateQueryEntities(QueryEntitiesWithGroupTemplate)}
+        }}
+
+        public partial struct FromGroupsAccessor<TDesc>
+        {{
 {GenerateQueryEntities(QueryEntitiesWithGroupsTemplate)}
         }}
     }}
