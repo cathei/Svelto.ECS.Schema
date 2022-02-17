@@ -9,7 +9,7 @@
     <Authors>Maxwell Keonwoo Kang</Authors>
     <RepositoryUrl>https://github.com/cathei/Svelto.ECS.Schema</RepositoryUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageReadmeFile>../README.md</PackageReadmeFile>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -23,9 +23,13 @@
   </ItemGroup>
 
   <ItemGroup>
-      <ProjectReference Include="..\Svelto.ECS.Schema.Generator\Svelto.ECS.Schema.Generator.csproj"
-                      OutputItemType="Analyzer"
-                      ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\Svelto.ECS.Schema.Generator\Svelto.ECS.Schema.Generator.csproj"
+                    OutputItemType="Analyzer"
+                    ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 </Project>
