@@ -294,7 +294,7 @@ public class IndexedSchema : IEntitySchema
 ```
 `Index<TKey>` will index any `Indexed<TKey>` component in any tables with same partition. Any child partition will be indexed as well. If `Index<TKey>` is defined in root schema, any table with `Indexed<TKey>` will be indexed. In this example both `FlyingCharacter` and `GroundCharacter` group will be indexed and returned when queried. If you want to index specific groups only, define a partition.
 
-Same manner as we expose a group for a table, we'll expose `IndexQuery<TKey>` for a index. `IndexQuery<TKey>` is query for a specific key, like 'player id 0'.
+Same manner as we expose a group for a table, we'll expose `IndexQuery<TKey>` for a index. `IndexQuery<TKey>` is query for a specific key, like 'entities controlled by player id 0'.
 
 You can share `Indexed<TKey>` across different descriptors.
 
