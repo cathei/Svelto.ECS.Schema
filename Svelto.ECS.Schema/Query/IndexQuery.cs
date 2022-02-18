@@ -8,64 +8,66 @@ using Svelto.ECS.DataStructures;
 
 namespace Svelto.ECS.Schema
 {
-    public readonly ref partial struct IndexQuery<T>
-        where T : unmanaged, IEntityIndexKey<T>
+    public readonly ref partial struct IndexQuery<TKey>
+        where TKey : unmanaged, IEntityIndexKey<TKey>
     {
-        internal readonly int indexerId;
-        internal readonly T key;
+        private readonly int _indexerId;
+        private readonly TKey _key;
 
-        internal IndexQuery(int indexerId, in T key)
+        internal IndexQuery(int indexerId, in TKey key)
         {
-            this.indexerId = indexerId;
-            this.key = key;
+            _indexerId = indexerId;
+            _key = key;
         }
 
         internal FasterDictionary<ExclusiveGroupStruct, SchemaContext.IndexerGroupData> GetGroupIndexDataList(SchemaContext context)
         {
-            if (!context.indexers.ContainsKey(indexerId))
+            if (!context.indexers.ContainsKey(_indexerId))
                 return null;
 
-            var indexerData = (SchemaContext.IndexerData<T>)context.indexers[indexerId];
-            indexerData.TryGetValue(key, out var result);
+            var indexerData = (SchemaContext.IndexerData<TKey>)context.indexers[_indexerId];
+            indexerData.TryGetValue(_key, out var result);
             return result;
         }
 
-        public readonly ref partial struct FromGroupAccessor<TDesc>
+        public IndexGroupQuery<TKey, TDesc> From<TDesc>(in Group<TDesc> group)
             where TDesc : IEntityDescriptor, new()
         {
-            private readonly IndexQuery<T> _query;
-            private readonly ExclusiveGroupStruct _group;
-
-            public FromGroupAccessor(in IndexQuery<T> query, in Group<TDesc> group)
-            {
-                _query = query;
-                _group = group;
-            }
+            return new IndexGroupQuery<TKey, TDesc>(this, group);
         }
 
-        public readonly ref partial struct FromGroupsAccessor<TDesc>
+        public IndexGroupsQuery<TKey, TDesc> From<TDesc>(in Groups<TDesc> groups)
             where TDesc : IEntityDescriptor, new()
         {
-            private readonly IndexQuery<T> _query;
-            private readonly FasterList<ExclusiveGroupStruct> _groups;
-
-            public FromGroupsAccessor(in IndexQuery<T> query, in Groups<TDesc> groups)
-            {
-                _query = query;
-                _groups = groups;
-            }
+            return new IndexGroupsQuery<TKey, TDesc>(this, groups);
         }
+    }
 
-        public FromGroupAccessor<TDesc> From<TDesc>(in Group<TDesc> group)
-            where TDesc : IEntityDescriptor, new()
+    public readonly ref partial struct IndexGroupQuery<TKey, TDesc>
+        where TKey : unmanaged, IEntityIndexKey<TKey>
+        where TDesc : IEntityDescriptor, new()
+    {
+        private readonly IndexQuery<TKey> _query;
+        private readonly Group<TDesc> _group;
+
+        public IndexGroupQuery(in IndexQuery<TKey> query, in Group<TDesc> group)
         {
-            return new FromGroupAccessor<TDesc>(this, group);
+            _query = query;
+            _group = group;
         }
+    }
 
-        public FromGroupsAccessor<TDesc> From<TDesc>(in Groups<TDesc> groups)
-            where TDesc : IEntityDescriptor, new()
+    public readonly ref partial struct IndexGroupsQuery<TKey, TDesc>
+        where TKey : unmanaged, IEntityIndexKey<TKey>
+        where TDesc : IEntityDescriptor, new()
+    {
+        private readonly IndexQuery<TKey> _query;
+        private readonly Groups<TDesc> _groups;
+
+        public IndexGroupsQuery(in IndexQuery<TKey> query, in Groups<TDesc> groups)
         {
-            return new FromGroupsAccessor<TDesc>(this, groups);
+            _query = query;
+            _groups = groups;
         }
     }
 }

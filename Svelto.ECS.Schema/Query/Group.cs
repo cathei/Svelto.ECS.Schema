@@ -1,10 +1,4 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using Svelto.DataStructures;
-using Svelto.ECS;
-using Svelto.ECS.DataStructures;
+using System.Runtime.CompilerServices;
 
 namespace Svelto.ECS.Schema
 {
@@ -24,16 +18,19 @@ namespace Svelto.ECS.Schema
 
         public static implicit operator ExclusiveGroupStruct(in Group<T> group) => group.exclusiveGroup;
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EntityInitializer Build(IEntityFactory factory, uint entityID)
         {
             return factory.BuildEntity<T>(entityID, exclusiveGroup);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Insert(IEntityFunctions functions, EGID fromID)
         {
             functions.SwapEntityGroup<T>(fromID, exclusiveGroup);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Delete(IEntityFunctions functions, uint entityID)
         {
             functions.RemoveEntity<T>(entityID, exclusiveGroup);

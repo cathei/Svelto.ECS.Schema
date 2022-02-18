@@ -43,13 +43,13 @@ namespace Svelto.ECS.Schema.Tests
 
         public MemoryTests() : base()
         {
-            for (int i = 0; i < 1000; ++i)
+            for (int i = 0; i < 100; ++i)
             {
                 TestSchema.Character.Build(_factory, (uint)i);
 
-                for (int j = 0; j < 100; ++j)
+                for (int j = 0; j < 1000; ++j)
                 {
-                    var itemBuilder = TestSchema.Item(j / 10).Build(_factory, (uint)((i * 100) + j));
+                    var itemBuilder = TestSchema.Item(j / 100).Build(_factory, (uint)((i * 1000) + j));
                     itemBuilder.Init(new Indexed<ItemOwner>(new ItemOwner(i)));
                 }
             }
@@ -81,6 +81,8 @@ namespace Svelto.ECS.Schema.Tests
             foreach (var ((indexed, count), group) in TestSchema.AllItems.Entities<Indexed<ItemOwner>>(_entitiesDB))
             {
                 ++loop;
+
+                Assert.Equal(10000, count);
             }
 
             Assert.True(loop > 0);
@@ -89,7 +91,7 @@ namespace Svelto.ECS.Schema.Tests
 
             foreach (var ((indexed, count), group) in TestSchema.AllItems.Entities<Indexed<ItemOwner>>(_entitiesDB))
             {
-                // Assert.Equal(10, count);
+                // do nothing
             }
 
             Assert.True(before + 50 > GC.GetAllocatedBytesForCurrentThread());
@@ -104,6 +106,8 @@ namespace Svelto.ECS.Schema.Tests
             foreach (var ((indexed, indices), group) in TestSchema.ItemsByOwner(0).Entities<Indexed<ItemOwner>>(_schemaContext))
             {
                 ++loop;
+
+                Assert.Equal(100, indices.Count());
             }
 
             Assert.True(loop > 0);

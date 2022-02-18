@@ -8,6 +8,7 @@ namespace Svelto.ECS.Schema.Generator
     public class GroupQueryGenerator : ISourceGenerator
     {
         const string QueryGroupTemplate = @"
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EntityCollection<{0}> Entities<{0}>(EntitiesDB entitiesDB)
 {1}
         {{
@@ -16,6 +17,7 @@ namespace Svelto.ECS.Schema.Generator
 ";
 
         const string QueryGroupsTemplate = @"
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public GroupsEnumerable<{0}> Entities<{0}>(EntitiesDB entitiesDB)
 {1}
         {{
@@ -49,6 +51,7 @@ namespace Svelto.ECS.Schema.Generator
         {
             string source = $@" // Auto-generated code
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using Svelto.DataStructures;
 
 namespace Svelto.ECS.Schema

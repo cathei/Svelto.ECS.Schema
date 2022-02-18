@@ -8,6 +8,7 @@ namespace Svelto.ECS.Schema.Generator
     public class IndexQueryGenerator : ISourceGenerator
     {
         const string QueryEntitiesTemplate = @"
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public IndexQueryEnumerable<{1}> Entities<{1}>(SchemaContext context)
 {2}
         {{
@@ -23,7 +24,7 @@ namespace Svelto.ECS.Schema.Generator
 
             var indices = new FilteredIndices();
 
-            if (groupDataList != null && _group.IsEnabled() &&
+            if (groupDataList != null && _group.exclusiveGroup.IsEnabled() &&
                 groupDataList.TryGetValue(_group, out var groupData))
             {{
                 indices = groupData.filter.filteredIndices;
@@ -36,6 +37,7 @@ namespace Svelto.ECS.Schema.Generator
 ";
 
         const string QueryEntitiesWithGroupsTemplate = @"
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public IndexQueryGroupsEnumerable<{1}> Entities<{1}>(SchemaContext context)
 {2}
         {{
@@ -71,23 +73,24 @@ namespace Svelto.ECS.Schema.Generator
         {
             string source = $@" // Auto-generated code
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using Svelto.DataStructures;
 
 namespace Svelto.ECS.Schema
 {{
-    public partial struct IndexQuery<T>
+    public partial struct IndexQuery<TKey>
     {{
 {GenerateQueryEntities(QueryEntitiesTemplate)}
+    }}
 
-        public partial struct FromGroupAccessor<TDesc>
-        {{
+    public partial struct IndexGroupQuery<TKey, TDesc>
+    {{
 {GenerateQueryEntities(QueryEntitiesWithGroupTemplate)}
-        }}
+    }}
 
-        public partial struct FromGroupsAccessor<TDesc>
-        {{
+    public partial struct IndexGroupsQuery<TKey, TDesc>
+    {{
 {GenerateQueryEntities(QueryEntitiesWithGroupsTemplate)}
-        }}
     }}
 }}";
 

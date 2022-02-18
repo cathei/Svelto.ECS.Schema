@@ -97,7 +97,7 @@ namespace Svelto.ECS.Schema.Tests
 
             Assert.All(queriedComponents.Select(x => x.Key), x => Assert.Equal(0, x.characterId));
 
-            var (buffer, count) = _entitiesDB.QueryEntities<Indexed<ItemOwner>>(TestSchema.Player(0).Item);
+            var (buffer, count) = TestSchema.Player(0).Item.Entities<Indexed<ItemOwner>>(_entitiesDB);
             for (int i = 0; i < count; ++i)
                 buffer[i].Update(_schemaContext, new ItemOwner(1));
 

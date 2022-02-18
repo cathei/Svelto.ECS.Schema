@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using Svelto.DataStructures;
 
@@ -17,6 +18,7 @@ namespace Svelto.ECS.Schema.Definition
         // equvalent to ExclusiveGroupStruct.Generate()
         internal int indexerId = GlobalIndexCount.Generate();
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public IndexQuery<T> Query(in T key)
         {
             return new IndexQuery<T>(indexerId, key);
