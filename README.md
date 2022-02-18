@@ -57,7 +57,7 @@ GameSchema schema = _enginesRoot.GenerateSchema<GameSchema>(indexesDB);
 ```
 Generating `IndexesDB` is required prior to generate schema. It is the class that will hold indexing information of a `EnginesRoot`. We will use this later.
 
-**Do not call new on IEntityScheam directly. It needs to be managed internally by this extension.**
+**Do not call new on IEntitySchema directly. It needs to be managed internally by this extension.**
 
 ### Add Entities to Table
 Now to add entity with `Group<T>`, we support two ways. One is original Svelto way:
