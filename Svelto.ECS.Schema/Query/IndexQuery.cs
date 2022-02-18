@@ -20,12 +20,12 @@ namespace Svelto.ECS.Schema
             _key = key;
         }
 
-        internal FasterDictionary<ExclusiveGroupStruct, SchemaContext.IndexerGroupData> GetGroupIndexDataList(SchemaContext context)
+        internal FasterDictionary<ExclusiveGroupStruct, IndexesDB.IndexerGroupData> GetGroupIndexDataList(IndexesDB indexesDB)
         {
-            if (!context.indexers.ContainsKey(_indexerId))
+            if (!indexesDB.indexers.ContainsKey(_indexerId))
                 return null;
 
-            var indexerData = (SchemaContext.IndexerData<TKey>)context.indexers[_indexerId];
+            var indexerData = (IndexesDB.IndexerData<TKey>)indexesDB.indexers[_indexerId];
             indexerData.TryGetValue(_key, out var result);
             return result;
         }

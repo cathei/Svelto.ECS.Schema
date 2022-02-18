@@ -16,21 +16,21 @@ namespace Svelto.ECS.Schema.Definition
         where T : unmanaged, IEntityIndexKey<T>
     {
         // equvalent to ExclusiveGroupStruct.Generate()
-        internal int indexerId = GlobalIndexCount.Generate();
+        private readonly int _indexerId = GlobalIndexCount.Generate();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public IndexQuery<T> Query(in T key)
         {
-            return new IndexQuery<T>(indexerId, key);
+            return new IndexQuery<T>(_indexerId, key);
         }
 
-        IEngine IEntitySchemaIndex.CreateEngine(SchemaContext context)
+        IEngine IEntitySchemaIndex.CreateEngine(IndexesDB context)
         {
             return new TableIndexingEngine<T>(context);
         }
 
         RefWrapperType IEntitySchemaIndex.KeyType => TypeRefWrapper<T>.wrapper;
 
-        int IEntitySchemaIndex.IndexerId => indexerId;
+        int IEntitySchemaIndex.IndexerId => _indexerId;
     }
 }

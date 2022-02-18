@@ -4,27 +4,18 @@ using Svelto.DataStructures;
 
 namespace Svelto.ECS.Schema
 {
-    public class TableIndexingEngine<T> :
-            IReactOnAddAndRemove<Indexed<T>>, IReactOnSwap<Indexed<T>>, IReactOnSubmission, IQueryingEntitiesEngine
+    internal class TableIndexingEngine<T> : IReactOnAddAndRemove<Indexed<T>>, IReactOnSwap<Indexed<T>>, IReactOnSubmission
         where T : unmanaged, IEntityIndexKey<T>
     {
-        private readonly SchemaContext _context;
+        private readonly IndexesDB _indexesDB;
 
-        public EntitiesDB entitiesDB { private get; set; }
-
-        private readonly HashSet<SchemaContext.IndexerGroupData> _groupsToRebuild = new HashSet<SchemaContext.IndexerGroupData>();
+        private readonly HashSet<IndexesDB.IndexerGroupData> _groupsToRebuild = new HashSet<IndexesDB.IndexerGroupData>();
 
         private static RefWrapperType IndexKeyType => TypeRefWrapper<T>.wrapper;
 
-        public TableIndexingEngine(SchemaContext context)
+        public TableIndexingEngine(IndexesDB indexesDB)
         {
-            _context = context;
-        }
-
-        public void Ready()
-        {
-            // this seems like only way to inject entitiesDB...
-            _context.entitiesDB = entitiesDB;
+            _indexesDB = indexesDB;
         }
 
         public void Add(ref Indexed<T> keyComponent, EGID egid)
@@ -45,7 +36,7 @@ namespace Svelto.ECS.Schema
 
         private void CheckAdd(ref Indexed<T> keyComponent, in ExclusiveGroupStruct groupId)
         {
-            if (_context.TryGetPartition(groupId, out var node))
+            if (_indexesDB.TryGetShard(groupId, out var node))
             {
                 while (node != null)
                 {
@@ -69,16 +60,16 @@ namespace Svelto.ECS.Schema
 
         private void AddToFilter(int indexerId, ref Indexed<T> keyComponent, in ExclusiveGroupStruct groupId)
         {
-            ref var groupData = ref _context.CreateOrGetGroupData(indexerId, keyComponent.Key, groupId);
+            ref var groupData = ref _indexesDB.CreateOrGetGroupData(indexerId, keyComponent.Key, groupId);
 
-            var mapper = entitiesDB.QueryMappedEntities<Indexed<T>>(groupId);
+            var mapper = _indexesDB.entitiesDB.QueryMappedEntities<Indexed<T>>(groupId);
 
             groupData.filter.Add(keyComponent.ID.entityID, mapper);
         }
 
         private void CheckRemove(ref Indexed<T> keyComponent, in ExclusiveGroupStruct groupId)
         {
-            if (_context.TryGetPartition(groupId, out var node))
+            if (_indexesDB.TryGetShard(groupId, out var node))
             {
                 while (node != null)
                 {
@@ -102,7 +93,7 @@ namespace Svelto.ECS.Schema
 
         private void RemoveFromFilter(int indexerId, ref Indexed<T> keyComponent, in ExclusiveGroupStruct groupId)
         {
-            ref var groupData = ref _context.CreateOrGetGroupData<T>(indexerId, keyComponent.Key, groupId);
+            ref var groupData = ref _indexesDB.CreateOrGetGroupData<T>(indexerId, keyComponent.Key, groupId);
 
             groupData.filter.TryRemove(keyComponent.ID.entityID);
 
@@ -114,7 +105,7 @@ namespace Svelto.ECS.Schema
         {
             foreach (var groupData in _groupsToRebuild)
             {
-                var mapper = entitiesDB.QueryMappedEntities<Indexed<T>>(groupData.group);
+                var mapper = _indexesDB.entitiesDB.QueryMappedEntities<Indexed<T>>(groupData.group);
                 groupData.filter.RebuildIndicesOnStructuralChange(mapper);
             }
 

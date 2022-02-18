@@ -10,14 +10,14 @@ namespace Svelto.ECS.Schema
 {
     public readonly partial struct Groups<T> where T : IEntityDescriptor
     {
-        private readonly FasterList<ExclusiveGroupStruct> exclusiveGroups;
+        public readonly FasterReadOnlyList<ExclusiveGroupStruct> exclusiveGroups;
 
         public Groups(FasterList<ExclusiveGroupStruct> exclusiveGroups)
         {
             this.exclusiveGroups = exclusiveGroups;
         }
 
-        public static implicit operator FasterList<ExclusiveGroupStruct>(Groups<T> groups) => groups.exclusiveGroups;
+        public static implicit operator FasterReadOnlyList<ExclusiveGroupStruct>(Groups<T> groups) => groups.exclusiveGroups;
         public static implicit operator LocalFasterReadOnlyList<ExclusiveGroupStruct>(Groups<T> groups) => groups.exclusiveGroups;
     }
 }

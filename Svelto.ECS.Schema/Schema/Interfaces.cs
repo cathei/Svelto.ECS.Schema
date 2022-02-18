@@ -20,14 +20,14 @@ namespace Svelto.ECS.Schema
     {
         RefWrapperType KeyType { get; }
         int IndexerId { get; }
-        IEngine CreateEngine(SchemaContext context);
+        IEngine CreateEngine(IndexesDB indexesDB);
     }
 
-    internal interface IEntitySchemaPartition : IEntitySchemaElement
+    internal interface IEntitySchemaShard : IEntitySchemaElement
     {
-        Type ShardType { get; }
+        Type InnerType { get; }
         int Range { get; }
-        object GetShard(int index);
+        object GetSchema(int index);
     }
 
     public interface IEntityIndexKey<T>
@@ -38,8 +38,6 @@ namespace Svelto.ECS.Schema
         // But if user wants they can always implement
         bool Equals(T other);
     }
-
-    public interface IEntityShard { }
 
     public interface IEntitySchema { }
 }

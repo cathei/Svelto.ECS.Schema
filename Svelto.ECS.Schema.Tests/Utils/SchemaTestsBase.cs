@@ -5,7 +5,7 @@ using Xunit;
 namespace Svelto.ECS.Schema.Tests
 {
     public class SchemaTestsBase<T> : IDisposable
-        where T : class, IEntitySchema
+        where T : class, IEntitySchema, new()
     {
         protected SimpleEntitiesSubmissionScheduler _submissionScheduler;
         protected EnginesRoot _enginesRoot;
@@ -14,7 +14,8 @@ namespace Svelto.ECS.Schema.Tests
         protected IEntityFunctions _functions;
         protected EntitiesDB _entitiesDB;
 
-        protected SchemaContext _schemaContext;
+        protected IndexesDB _indexesDB;
+        protected T _schema;
 
         public SchemaTestsBase()
         {
@@ -25,7 +26,8 @@ namespace Svelto.ECS.Schema.Tests
             _functions = _enginesRoot.GenerateEntityFunctions();
             _entitiesDB = ((IUnitTestingInterface)_enginesRoot).entitiesForTesting;
 
-            _schemaContext = _enginesRoot.AddSchema<T>();
+            _indexesDB = _enginesRoot.GenerateIndexesDB();
+            _schema = _enginesRoot.GenerateSchema<T>(_indexesDB);
         }
 
         public void Dispose()

@@ -22,11 +22,11 @@ namespace Svelto.ECS.Schema
             Key = key;
         }
 
-        public void Update(SchemaContext context, in T key)
+        public void Update(IndexesDB indexesDB, in T key)
         {
             T oldKey = Key;
             Key = key;
-            context.NotifyKeyUpdate(ref this, oldKey, key);
+            indexesDB.NotifyKeyUpdate(ref this, oldKey, key);
         }
     }
 }

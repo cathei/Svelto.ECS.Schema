@@ -9,18 +9,18 @@ namespace Svelto.ECS.Schema.Generator
     {
         const string QueryEntitiesTemplate = @"
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public IndexQueryEnumerable<{1}> Entities<{1}>(SchemaContext context)
+        public IndexQueryEnumerable<{1}> Entities<{1}>(IndexesDB indexesDB)
 {2}
         {{
-            return new IndexQueryEnumerable<{1}>(context, GetGroupIndexDataList(context));
+            return new IndexQueryEnumerable<{1}>(indexesDB, GetGroupIndexDataList(indexesDB));
         }}
 ";
 
         const string QueryEntitiesWithGroupTemplate = @"
-        public ({0}, FilteredIndices) Entities<{1}>(SchemaContext context)
+        public ({0}, FilteredIndices) Entities<{1}>(IndexesDB indexesDB)
 {2}
         {{
-            var groupDataList = _query.GetGroupIndexDataList(context);
+            var groupDataList = _query.GetGroupIndexDataList(indexesDB);
 
             var indices = new FilteredIndices();
 
@@ -30,7 +30,7 @@ namespace Svelto.ECS.Schema.Generator
                 indices = groupData.filter.filteredIndices;
             }}
 
-            var ({3}, _) = context.entitiesDB.QueryEntities<{1}>(_group);
+            var ({3}, _) = indexesDB.entitiesDB.QueryEntities<{1}>(_group);
 
             return ({3}, indices);
         }}
@@ -38,10 +38,10 @@ namespace Svelto.ECS.Schema.Generator
 
         const string QueryEntitiesWithGroupsTemplate = @"
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public IndexQueryGroupsEnumerable<{1}> Entities<{1}>(SchemaContext context)
+        public IndexQueryGroupsEnumerable<{1}> Entities<{1}>(IndexesDB indexesDB)
 {2}
         {{
-            return new IndexQueryGroupsEnumerable<{1}>(context, _query.GetGroupIndexDataList(context), _groups);
+            return new IndexQueryGroupsEnumerable<{1}>(indexesDB, _query.GetGroupIndexDataList(indexesDB), _groups);
         }}
 ";
 

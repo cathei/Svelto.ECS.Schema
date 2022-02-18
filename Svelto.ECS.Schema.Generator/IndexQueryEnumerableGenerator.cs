@@ -11,28 +11,28 @@ namespace Svelto.ECS.Schema.Generator
     public readonly ref struct IndexQueryEnumerable<{1}>
 {2}
     {{
-        private readonly SchemaContext _context;
-        private readonly FasterDictionary<ExclusiveGroupStruct, SchemaContext.IndexerGroupData> _dict;
+        private readonly IndexesDB _indexesDB;
+        private readonly FasterDictionary<ExclusiveGroupStruct, IndexesDB.IndexerGroupData> _dict;
 
-        internal IndexQueryEnumerable(SchemaContext context, FasterDictionary<ExclusiveGroupStruct, SchemaContext.IndexerGroupData> dict)
+        internal IndexQueryEnumerable(IndexesDB indexesDB, FasterDictionary<ExclusiveGroupStruct, IndexesDB.IndexerGroupData> dict)
         {{
-            _context = context;
+            _indexesDB = indexesDB;
             _dict = dict;
         }}
 
-        public RefIterator GetEnumerator() => new RefIterator(_context, _dict);
+        public RefIterator GetEnumerator() => new RefIterator(_indexesDB, _dict);
 
         public ref struct RefIterator
         {{
-            private readonly SchemaContext _context;
-            private readonly FasterDictionary<ExclusiveGroupStruct, SchemaContext.IndexerGroupData> _dict;
+            private readonly IndexesDB _indexesDB;
+            private readonly FasterDictionary<ExclusiveGroupStruct, IndexesDB.IndexerGroupData> _dict;
 
             private EntityCollection<{1}> _collection;
             private int _indexValue;
 
-            internal RefIterator(SchemaContext context, FasterDictionary<ExclusiveGroupStruct, SchemaContext.IndexerGroupData> dict) : this()
+            internal RefIterator(IndexesDB indexesDB, FasterDictionary<ExclusiveGroupStruct, IndexesDB.IndexerGroupData> dict) : this()
             {{
-                _context = context;
+                _indexesDB = indexesDB;
                 _dict = dict;
                 _indexValue = -1;
             }}
@@ -49,7 +49,7 @@ namespace Svelto.ECS.Schema.Generator
                     if (!groupData.group.IsEnabled())
                         continue;
 
-                    EntityCollection<{1}> collection = _context.entitiesDB.QueryEntities<{1}>(groupData.group);
+                    EntityCollection<{1}> collection = _indexesDB.entitiesDB.QueryEntities<{1}>(groupData.group);
 
                     if (groupData.filter.filteredIndices.Count() == 0)
                         continue;
@@ -100,35 +100,35 @@ namespace Svelto.ECS.Schema.Generator
     public readonly ref struct IndexQueryGroupsEnumerable<{1}>
 {2}
     {{
-        private readonly SchemaContext _context;
-        private readonly FasterDictionary<ExclusiveGroupStruct, SchemaContext.IndexerGroupData> _dict;
+        private readonly IndexesDB _indexesDB;
+        private readonly FasterDictionary<ExclusiveGroupStruct, IndexesDB.IndexerGroupData> _dict;
         private readonly LocalFasterReadOnlyList<ExclusiveGroupStruct> _groups;
 
-        internal IndexQueryGroupsEnumerable(SchemaContext context,
-            FasterDictionary<ExclusiveGroupStruct, SchemaContext.IndexerGroupData> dict,
+        internal IndexQueryGroupsEnumerable(IndexesDB indexesDB,
+            FasterDictionary<ExclusiveGroupStruct, IndexesDB.IndexerGroupData> dict,
             in LocalFasterReadOnlyList<ExclusiveGroupStruct> groups)
         {{
-            _context = context;
+            _indexesDB = indexesDB;
             _dict = dict;
             _groups = groups;
         }}
 
-        public RefIterator GetEnumerator() => new RefIterator(_context, _dict, _groups);
+        public RefIterator GetEnumerator() => new RefIterator(_indexesDB, _dict, _groups);
 
         public ref struct RefIterator
         {{
-            private readonly SchemaContext _context;
-            private readonly FasterDictionary<ExclusiveGroupStruct, SchemaContext.IndexerGroupData> _dict;
+            private readonly IndexesDB _indexesDB;
+            private readonly FasterDictionary<ExclusiveGroupStruct, IndexesDB.IndexerGroupData> _dict;
             private readonly LocalFasterReadOnlyList<ExclusiveGroupStruct> _groups;
 
             private EntityCollection<{1}> _collection;
             private int _indexValue;
 
-            internal RefIterator(SchemaContext context,
-                FasterDictionary<ExclusiveGroupStruct, SchemaContext.IndexerGroupData> dict,
+            internal RefIterator(IndexesDB indexesDB,
+                FasterDictionary<ExclusiveGroupStruct, IndexesDB.IndexerGroupData> dict,
                 in LocalFasterReadOnlyList<ExclusiveGroupStruct> groups) : this()
             {{
-                _context = context;
+                _indexesDB = indexesDB;
                 _dict = dict;
                 _groups = groups;
                 _indexValue = -1;
@@ -149,7 +149,7 @@ namespace Svelto.ECS.Schema.Generator
                     if (!groupData.group.IsEnabled() || indices.Count() == 0)
                         continue;
 
-                    EntityCollection<{1}> collection = _context.entitiesDB.QueryEntities<{1}>(groupData.group);
+                    EntityCollection<{1}> collection = _indexesDB.entitiesDB.QueryEntities<{1}>(groupData.group);
 
                     if (groupData.filter.filteredIndices.Count() == 0)
                         continue;

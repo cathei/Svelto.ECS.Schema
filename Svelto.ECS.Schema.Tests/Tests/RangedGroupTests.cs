@@ -13,7 +13,7 @@ namespace Svelto.ECS.Schema.Tests
         public class EquipmentDescriptor : GenericEntityDescriptor<EGIDComponent> { }
         public class ItemDescriptor : GenericEntityDescriptor<EGIDComponent> { }
 
-        public class MerchantShard : IEntityShard
+        public class MerchantSchema : IEntitySchema
         {
             internal Table<ItemDescriptor> _items = new Table<ItemDescriptor>(100);
             public Group<ItemDescriptor> Item(int groupId) => _items.Group(groupId);
@@ -21,27 +21,25 @@ namespace Svelto.ECS.Schema.Tests
 
         public class TestSchema : IEntitySchema
         {
-            public SchemaContext Context { get; set; }
+            internal Table<CharacterDescriptor> _characters = new Table<CharacterDescriptor>(100);
+            public Group<CharacterDescriptor> Character(int groupId) => _characters.Group(groupId);
 
-            internal static Table<CharacterDescriptor> _characters = new Table<CharacterDescriptor>(100);
-            public static Group<CharacterDescriptor> Character(int groupId) => _characters.Group(groupId);
+            internal Table<EquipmentDescriptor> _equipments = new Table<EquipmentDescriptor>(30);
+            public Group<EquipmentDescriptor> Equipment(int groupId) => _equipments.Group(groupId);
 
-            internal static Table<EquipmentDescriptor> _equipments = new Table<EquipmentDescriptor>(30);
-            public static Group<EquipmentDescriptor> Equipment(int groupId) => _equipments.Group(groupId);
-
-            internal static Partition<MerchantShard> _merchants = new Partition<MerchantShard>(50);
-            public static MerchantShard Merchant(int shardId) => _merchants.Shard(shardId);
+            internal Shard<MerchantSchema> _merchants = new Shard<MerchantSchema>(50);
+            public MerchantSchema Merchant(int merchantId) => _merchants.Schema(merchantId);
         }
 
         [Fact]
         public void GroupIndexTests()
         {
-            Assert.Equal(TestSchema._characters.exclusiveGroup + 0, TestSchema.Character(0));
-            Assert.Equal(TestSchema._characters.exclusiveGroup + 10, TestSchema.Character(10));
-            Assert.Equal(TestSchema._equipments.exclusiveGroup + 29, TestSchema.Equipment(29));
+            Assert.Equal(_schema._characters.ExclusiveGroup + 0, _schema.Character(0));
+            Assert.Equal(_schema._characters.ExclusiveGroup + 10, _schema.Character(10));
+            Assert.Equal(_schema._equipments.ExclusiveGroup + 29, _schema.Equipment(29));
 
-            Assert.Equal(TestSchema._merchants.shards[4]._items.exclusiveGroup + 3, TestSchema.Merchant(4).Item(3));
-            Assert.Equal(TestSchema._merchants.shards[31]._items.exclusiveGroup + 10, TestSchema.Merchant(31).Item(10));
+            Assert.Equal(_schema._merchants._schemas[4]._items.ExclusiveGroup + 3, _schema.Merchant(4).Item(3));
+            Assert.Equal(_schema._merchants._schemas[31]._items.ExclusiveGroup + 10, _schema.Merchant(31).Item(10));
         }
     }
 }

@@ -7,12 +7,6 @@ using Svelto.ECS.Schema.Definition;
 
 namespace Svelto.ECS.Schema
 {
-    internal static class SchemaMetadata<T>
-        where T : class, IEntitySchema
-    {
-        public static readonly SchemaMetadata Instance = new SchemaMetadata(typeof(T));
-    }
-
     internal sealed class SchemaMetadata
     {
         internal class Node
@@ -23,75 +17,63 @@ namespace Svelto.ECS.Schema
 
         internal readonly Node root = new Node();
 
-        internal readonly FasterDictionary<ExclusiveGroupStruct, Node> groupToParentPartition;
+        internal readonly FasterDictionary<ExclusiveGroupStruct, Node> groupToParentShard;
         internal readonly FasterDictionary<RefWrapperType, IEntitySchemaIndex> indexersToGenerateEngine;
 
         private static readonly Type ElementBaseType = typeof(IEntitySchemaElement);
         private static readonly Type GenericTableType = typeof(Table<>);
         private static readonly Type GenericIndexType = typeof(Index<>);
-        private static readonly Type GenericPartitionType = typeof(Partition<>);
+        private static readonly Type GenericShardType = typeof(Shard<>);
 
-        internal SchemaMetadata(Type schemaType)
+        internal SchemaMetadata(IEntitySchema schema)
         {
-            groupToParentPartition = new FasterDictionary<ExclusiveGroupStruct, Node>();
+            groupToParentShard = new FasterDictionary<ExclusiveGroupStruct, Node>();
             indexersToGenerateEngine = new FasterDictionary<RefWrapperType, IEntitySchemaIndex>();
 
             root = new Node();
 
-            foreach (var fieldInfo in GetSchemaElementFields(schemaType))
-            {
-                RegisterChild(root, fieldInfo, null);
-            }
+            GenerateChildren(root, schema);
         }
 
-        private void RegisterChild(Node node, FieldInfo fieldInfo, object instance)
+        private void GenerateChildren(Node node, object instance)
         {
-            if (fieldInfo.IsStatic)
+            foreach (var fieldInfo in GetSchemaElementFields(instance.GetType()))
             {
-                if (instance != null)
-                    throw new ECSException($"Static field {fieldInfo.Name} in IEntityShard is not allowed");
-            }
-            else
-            {
-                if (instance == null)
-                    throw new ECSException($"Non-static field {fieldInfo.Name} in IEntitySchema is not allowed");
-            }
+                var genericType = fieldInfo.FieldType.GetGenericTypeDefinition();
 
-            var genericType = fieldInfo.FieldType.GetGenericTypeDefinition();
-
-            if (genericType == GenericTableType)
-            {
-                var element = (IEntitySchemaTable)fieldInfo.GetValue(instance);
-
-                RegisterTable(node, element);
-            }
-            else if (genericType == GenericIndexType)
-            {
-                if (node.indexers == null)
-                    node.indexers = new FasterList<IEntitySchemaIndex>();
-
-                var element = (IEntitySchemaIndex)fieldInfo.GetValue(instance);
-                node.indexers.Add(element);
-
-                RegisterIndexer(element);
-            }
-            else if (genericType == GenericPartitionType)
-            {
-                var element = (IEntitySchemaPartition)fieldInfo.GetValue(instance);
-
-                var shardType = element.ShardType;
-
-                for (int i = 0; i < element.Range; ++i)
+                if (genericType == GenericTableType)
                 {
-                    var child = new Node { parent = node };
+                    var element = (IEntitySchemaTable)fieldInfo.GetValue(instance);
 
-                    foreach (var shardFieldInfo in GetSchemaElementFields(shardType))
-                        RegisterChild(child, shardFieldInfo, element.GetShard(i));
+                    RegisterTable(node, element);
                 }
-            }
-            else
-            {
-                throw new ECSException($"Unknown type detected in schema: {genericType}");
+                else if (genericType == GenericIndexType)
+                {
+                    if (node.indexers == null)
+                        node.indexers = new FasterList<IEntitySchemaIndex>();
+
+                    var element = (IEntitySchemaIndex)fieldInfo.GetValue(instance);
+                    node.indexers.Add(element);
+
+                    RegisterIndexer(element);
+                }
+                else if (genericType == GenericShardType)
+                {
+                    var element = (IEntitySchemaShard)fieldInfo.GetValue(instance);
+
+                    var shardType = element.InnerType;
+
+                    for (int i = 0; i < element.Range; ++i)
+                    {
+                        var child = new Node { parent = node };
+
+                        GenerateChildren(child, element.GetSchema(i));
+                    }
+                }
+                else
+                {
+                    throw new ECSException($"Unknown type detected in schema: {genericType}");
+                }
             }
         }
 
@@ -100,7 +82,7 @@ namespace Svelto.ECS.Schema
             // register all possible groups
             for (ushort i = 0; i < element.Range; ++i)
             {
-                groupToParentPartition[element.ExclusiveGroup + i] = parent;
+                groupToParentShard[element.ExclusiveGroup + i] = parent;
             }
 
             // GroupHashMap is internal class of Svelto.ECS at the time
@@ -119,8 +101,7 @@ namespace Svelto.ECS.Schema
 
         private static IEnumerable<FieldInfo> GetSchemaElementFields(Type type)
         {
-            // we get all the fields first so we can warn if user is not using proper pattern
-            var fieldInfos = type.GetFields(BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            var fieldInfos = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             return fieldInfos.Where(x => ElementBaseType.IsAssignableFrom(x.FieldType));
         }
     }

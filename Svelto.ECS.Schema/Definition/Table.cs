@@ -6,23 +6,23 @@ namespace Svelto.ECS.Schema.Definition
 {
     public sealed class Table<T> : IEntitySchemaTable where T : IEntityDescriptor, new()
     {
-        internal readonly ExclusiveGroup exclusiveGroup;
-        internal readonly int range;
+        private readonly ExclusiveGroup _exclusiveGroup;
+        private readonly int _range;
 
-        public ref readonly ExclusiveGroup ExclusiveGroup => ref exclusiveGroup;
-        public int Range => range;
+        public ref readonly ExclusiveGroup ExclusiveGroup => ref _exclusiveGroup;
+        public int Range => _range;
 
         public Table(int range = 1)
         {
-            this.range = range;
-            exclusiveGroup = new ExclusiveGroup((ushort)range);
+            _range = range;
+            _exclusiveGroup = new ExclusiveGroup((ushort)range);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Group<T> Group(int index = 0) => new Group<T>(GetGroup(index));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public GroupsBuilder<T> Groups() => new GroupsBuilder<T>(GetGroups(Enumerable.Range(0, range)));
+        public GroupsBuilder<T> Groups() => new GroupsBuilder<T>(GetGroups(Enumerable.Range(0, _range)));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public GroupsBuilder<T> Groups(IEnumerable<int> indexes) => new GroupsBuilder<T>(GetGroups(indexes));
@@ -30,13 +30,13 @@ namespace Svelto.ECS.Schema.Definition
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private ExclusiveGroupStruct GetGroup(int index)
         {
-            return exclusiveGroup + (ushort)index;
+            return _exclusiveGroup + (ushort)index;
         }
 
         private IEnumerable<ExclusiveGroupStruct> GetGroups(IEnumerable<int> indexes)
         {
             foreach (int i in indexes)
-                yield return exclusiveGroup + (ushort)i;
+                yield return _exclusiveGroup + (ushort)i;
         }
     }
 }

@@ -9,7 +9,7 @@ using Svelto.ECS.DataStructures;
 
 namespace Svelto.ECS.Schema
 {
-    public partial class SchemaContext
+    public sealed class IndexesDB
     {
         internal struct IndexerGroupData
         {
@@ -57,6 +57,10 @@ namespace Svelto.ECS.Schema
             }
         }
 
+        // combined version of SchemaMetadata.groupToParentShard
+        internal readonly FasterDictionary<ExclusiveGroupStruct, SchemaMetadata.Node> groupToParentShard;
+        internal readonly HashSet<RefWrapperType> createdEngines;
+
         internal readonly FasterDictionary<int, IndexerData> indexers;
 
         // well... let's have some space for user defined filter
@@ -64,18 +68,22 @@ namespace Svelto.ECS.Schema
 
         internal EntitiesDB entitiesDB;
 
-        private readonly SchemaMetadata metadata;
-
-        internal SchemaContext(SchemaMetadata metadata)
+        internal IndexesDB()
         {
-            this.metadata = metadata;
+            groupToParentShard = new FasterDictionary<ExclusiveGroupStruct, SchemaMetadata.Node>();
+            createdEngines = new HashSet<RefWrapperType>();
 
             indexers = new FasterDictionary<int, IndexerData>();
         }
 
-        internal bool TryGetPartition(in ExclusiveGroupStruct group, out SchemaMetadata.Node partition)
+        internal void RegisterSchema(SchemaMetadata metadata)
         {
-            return metadata.groupToParentPartition.TryGetValue(group, out partition);
+            groupToParentShard.Union(metadata.groupToParentShard);
+        }
+
+        internal bool TryGetShard(in ExclusiveGroupStruct group, out SchemaMetadata.Node node)
+        {
+            return groupToParentShard.TryGetValue(group, out node);
         }
 
         // this should be fast enough, no group change means we don't have to rebuild filter
@@ -87,7 +95,7 @@ namespace Svelto.ECS.Schema
                 return;
 
             // index may exist but no table found
-            if (!TryGetPartition(keyComponent.ID.groupID, out var node))
+            if (!TryGetShard(keyComponent.ID.groupID, out var node))
                 return;
 
             var keyType = TypeRefWrapper<T>.wrapper;

@@ -29,27 +29,32 @@ namespace Svelto.ECS.Schema.Tests
 
         public class TestSchema : IEntitySchema
         {
-            internal static Table<CharacterDescriptor> _character = new Table<CharacterDescriptor>();
-            public static Group<CharacterDescriptor> Character => _character.Group();
+            internal Table<CharacterDescriptor> _character = new Table<CharacterDescriptor>();
+            public Group<CharacterDescriptor> Character => _character.Group();
 
-            internal static Table<ItemDescriptor> _item = new Table<ItemDescriptor>(10);
-            public static Group<ItemDescriptor> Item(int groupId) => _item.Group(groupId);
+            internal Table<ItemDescriptor> _items = new Table<ItemDescriptor>(10);
+            public Group<ItemDescriptor> Item(int groupId) => _items.Group(groupId);
 
-            internal static Index<ItemOwner> _itemsByOwner = new Index<ItemOwner>();
-            public static IndexQuery<ItemOwner> ItemsByOwner(int characterId) => _itemsByOwner.Query(new ItemOwner(characterId));
+            internal Index<ItemOwner> _itemsByOwner = new Index<ItemOwner>();
+            public IndexQuery<ItemOwner> ItemsByOwner(int characterId) => _itemsByOwner.Query(new ItemOwner(characterId));
 
-            public static Groups<ItemDescriptor> AllItems { get; } = _item.Groups();
+            public Groups<ItemDescriptor> AllItems { get; }
+
+            public TestSchema()
+            {
+                AllItems = _items.Groups();
+            }
         }
 
         public MemoryTests() : base()
         {
             for (int i = 0; i < 100; ++i)
             {
-                TestSchema.Character.Build(_factory, (uint)i);
+                _schema.Character.Build(_factory, (uint)i);
 
                 for (int j = 0; j < 1000; ++j)
                 {
-                    var itemBuilder = TestSchema.Item(j / 100).Build(_factory, (uint)((i * 1000) + j));
+                    var itemBuilder = _schema.Item(j / 100).Build(_factory, (uint)((i * 1000) + j));
                     itemBuilder.Init(new Indexed<ItemOwner>(new ItemOwner(i)));
                 }
             }
@@ -61,13 +66,13 @@ namespace Svelto.ECS.Schema.Tests
         public void GroupEntitiesTest()
         {
             // warming up
-            var (egid, count) = TestSchema.Character.Entities<EGIDComponent>(_entitiesDB);
-            var (indexed, count2) = TestSchema.Item(0).Entities<Indexed<ItemOwner>>(_entitiesDB);
+            var (egid, count) = _schema.Character.Entities<EGIDComponent>(_entitiesDB);
+            var (indexed, count2) = _schema.Item(0).Entities<Indexed<ItemOwner>>(_entitiesDB);
 
             long before = GC.GetAllocatedBytesForCurrentThread();
 
-            (egid, count) = TestSchema.Character.Entities<EGIDComponent>(_entitiesDB);
-            (indexed, count2) = TestSchema.Item(0).Entities<Indexed<ItemOwner>>(_entitiesDB);
+            (egid, count) = _schema.Character.Entities<EGIDComponent>(_entitiesDB);
+            (indexed, count2) = _schema.Item(0).Entities<Indexed<ItemOwner>>(_entitiesDB);
 
             Assert.True(before + 50 > GC.GetAllocatedBytesForCurrentThread());
         }
@@ -78,7 +83,7 @@ namespace Svelto.ECS.Schema.Tests
             int loop = 0;
 
             // warming up
-            foreach (var ((indexed, count), group) in TestSchema.AllItems.Entities<Indexed<ItemOwner>>(_entitiesDB))
+            foreach (var ((indexed, count), group) in _schema.AllItems.Entities<Indexed<ItemOwner>>(_entitiesDB))
             {
                 ++loop;
 
@@ -89,7 +94,7 @@ namespace Svelto.ECS.Schema.Tests
 
             long before = GC.GetAllocatedBytesForCurrentThread();
 
-            foreach (var ((indexed, count), group) in TestSchema.AllItems.Entities<Indexed<ItemOwner>>(_entitiesDB))
+            foreach (var ((indexed, count), group) in _schema.AllItems.Entities<Indexed<ItemOwner>>(_entitiesDB))
             {
                 // do nothing
             }
@@ -103,7 +108,7 @@ namespace Svelto.ECS.Schema.Tests
             int loop = 0;
 
             // warming up
-            foreach (var ((indexed, indices), group) in TestSchema.ItemsByOwner(0).Entities<Indexed<ItemOwner>>(_schemaContext))
+            foreach (var ((indexed, indices), group) in _schema.ItemsByOwner(0).Entities<Indexed<ItemOwner>>(_indexesDB))
             {
                 ++loop;
 
@@ -114,7 +119,7 @@ namespace Svelto.ECS.Schema.Tests
 
             long before = GC.GetAllocatedBytesForCurrentThread();
 
-            foreach (var ((indexed, indices), group) in TestSchema.ItemsByOwner(0).Entities<Indexed<ItemOwner>>(_schemaContext))
+            foreach (var ((indexed, indices), group) in _schema.ItemsByOwner(0).Entities<Indexed<ItemOwner>>(_indexesDB))
             {
                 // do nothing
             }

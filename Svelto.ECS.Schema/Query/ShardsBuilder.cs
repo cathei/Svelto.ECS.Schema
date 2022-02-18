@@ -8,30 +8,30 @@ using Svelto.ECS.DataStructures;
 
 namespace Svelto.ECS.Schema
 {
-    public readonly struct ShardsBuilder<T> where T : class, IEntityShard
+    public readonly struct ShardsBuilder<T> where T : class, IEntitySchema
     {
-        internal readonly IEnumerable<T> shards;
+        private readonly IEnumerable<T> _schemas;
 
         public delegate GroupsBuilder<TDesc> GroupsBuilderSelector<TDesc>(T shard) where TDesc : IEntityDescriptor, new();
 
-        internal ShardsBuilder(IEnumerable<T> shards)
+        internal ShardsBuilder(IEnumerable<T> schemas)
         {
-            this.shards = shards;
+            _schemas = schemas;
         }
 
-        public ShardsBuilder<TOut> Combine<TOut>(Func<T, TOut> selector) where TOut : class, IEntityShard
+        public ShardsBuilder<TOut> Combine<TOut>(Func<T, TOut> selector) where TOut : class, IEntitySchema
         {
-            return new ShardsBuilder<TOut>(shards.Select(selector));
+            return new ShardsBuilder<TOut>(_schemas.Select(selector));
         }
 
-        public ShardsBuilder<TOut> Combine<TOut>(Func<T, ShardsBuilder<TOut>> selector) where TOut : class, IEntityShard
+        public ShardsBuilder<TOut> Combine<TOut>(Func<T, ShardsBuilder<TOut>> selector) where TOut : class, IEntitySchema
         {
             return new ShardsBuilder<TOut>(Unpack(selector));
         }
 
         public GroupsBuilder<TDesc> Combine<TDesc>(Func<T, Group<TDesc>> selector) where TDesc : IEntityDescriptor, new()
         {
-            return new GroupsBuilder<TDesc>(shards.Select(x => selector(x).exclusiveGroup));
+            return new GroupsBuilder<TDesc>(_schemas.Select(x => selector(x).exclusiveGroup));
         }
 
         public GroupsBuilder<TDesc> Combine<TDesc>(GroupsBuilderSelector<TDesc> selector) where TDesc : IEntityDescriptor, new()
@@ -40,20 +40,20 @@ namespace Svelto.ECS.Schema
         }
 
         // just SelectMany...
-        internal IEnumerable<TOut> Unpack<TOut>(Func<T, ShardsBuilder<TOut>> selector) where TOut : class, IEntityShard
+        internal IEnumerable<TOut> Unpack<TOut>(Func<T, ShardsBuilder<TOut>> selector) where TOut : class, IEntitySchema
         {
-            foreach (var shard in shards)
+            foreach (var schema in _schemas)
             {
-                foreach (var shardOut in selector(shard).shards)
-                    yield return shardOut;
+                foreach (var outSchema in selector(schema)._schemas)
+                    yield return outSchema;
             }
         }
 
         internal IEnumerable<ExclusiveGroupStruct> Unpack<TDesc>(GroupsBuilderSelector<TDesc> selector) where TDesc : IEntityDescriptor, new()
         {
-            foreach (var shard in shards)
+            foreach (var schema in _schemas)
             {
-                foreach (var group in selector(shard).items)
+                foreach (var group in selector(schema).items)
                     yield return group;
             }
         }
