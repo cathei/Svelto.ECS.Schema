@@ -306,7 +306,7 @@ public class IndexedSchema : IEntitySchema
     public Group<CharacterDescriptor> FlyingCharacter => _flyingCharacter.Group();
 
     private Table<CharacterDescriptor> _groundCharacter = new Table<CharacterDescriptor>();
-    public Group<CharacterDescriptor> GroundCharacter => _flyingCharacter.Group();
+    public Group<CharacterDescriptor> GroundCharacter => _groundCharacter.Group();
 
     private Index<CharacterController> _charactersByController = new Index<CharacterController>();
     public IndexQuery<ChracterController> CharactersByController(int playerId) => _charactersByController.Query(new CharacterController(playerId));
