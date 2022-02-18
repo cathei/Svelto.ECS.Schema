@@ -35,5 +35,12 @@ namespace Svelto.ECS.Schema
         {
             functions.RemoveEntity<T>(entityID, exclusiveGroup);
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ref TR Entity<TR>(EntitiesDB entitiesDB, uint entityID)
+            where TR : unmanaged, IEntityComponent
+        {
+            return ref entitiesDB.QueryEntity<TR>(entityID, exclusiveGroup);
+        }
     }
 }
