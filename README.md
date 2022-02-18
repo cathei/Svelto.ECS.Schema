@@ -386,7 +386,7 @@ Below is naming convention suggestions to make schema more readable.
 * Use `_adjective` or `_singluarNoun` for singular shard. e.g. `_flying`
 * Use `_adjective` or `_pluralNouns` for ranged shard.
 * Use `Adjective` or `SingularNoun` for result of `Schema()`. e.g. `Flying`, so you can access like `Flying.Monster`
-* Use `Adjective` or `PluralNouns` for result of `Schema()`.
+* Use `Adjective` or `PluralNouns` for result of `Schemas()`.
 
 ### For Indexes
 * Use `TableNameKeyName` for `IEntityIndexKey`. e.g. `ItemHolder`
