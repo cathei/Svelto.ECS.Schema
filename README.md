@@ -325,13 +325,13 @@ Just like when you query with `EntitiesDB`, you query with `IndexesDB`.
 ```csharp
 foreach (var ((health, position, indices), group) in schema.CharactersByController(3).Entities<HealthComponent, PositionComponent>(indexesDB))
 {
-    for (int i = 0; i < indices.count(); ++i)
+    foreach (var i in indices)
     {
-        health[indices[i]].current += 10;
+        health[i].current += 10;
     }
 }
 ```
-Note that you have to use double indexing like `health[indices[i]]`.  **DO NOT update `Indexed` component while iterating through index query with it.** It is undefined behaviour.
+Note that you can use foreach loop to iterate indices.  **DO NOT update `Indexed` component while iterating through index query with it.** It is undefined behaviour.
 
 If you want to query index within specific `Group<T>` or `Groups<T>`, use `From` like this:
 ```csharp
