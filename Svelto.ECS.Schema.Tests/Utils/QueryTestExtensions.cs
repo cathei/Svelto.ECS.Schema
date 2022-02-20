@@ -8,10 +8,10 @@ namespace Svelto.ECS.Schema.Tests
 {
     public static class QueryTestExtensions
     {
-        public static List<((NB<T>, FilteredIndices), ExclusiveGroupStruct)> ToList<T>(this IndexQueryEnumerable<T> enumerable)
+        public static List<((NB<T>, IndexedIndices), ExclusiveGroupStruct)> ToList<T>(this IndexQueryEnumerable<T> enumerable)
             where T : unmanaged, IEntityComponent
         {
-            var list = new List<((NB<T>, FilteredIndices), ExclusiveGroupStruct)>();
+            var list = new List<((NB<T>, IndexedIndices), ExclusiveGroupStruct)>();
 
             foreach (var value in enumerable)
             {
@@ -22,10 +22,10 @@ namespace Svelto.ECS.Schema.Tests
             return list;
         }
 
-        public static List<((NB<T>, FilteredIndices), ExclusiveGroupStruct)> ToList<T>(this IndexQueryGroupsEnumerable<T> enumerable)
+        public static List<((NB<T>, IndexedIndices), ExclusiveGroupStruct)> ToList<T>(this IndexQueryGroupsEnumerable<T> enumerable)
             where T : unmanaged, IEntityComponent
         {
-            var list = new List<((NB<T>, FilteredIndices), ExclusiveGroupStruct)>();
+            var list = new List<((NB<T>, IndexedIndices), ExclusiveGroupStruct)>();
 
             foreach (var value in enumerable)
             {

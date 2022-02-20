@@ -85,11 +85,11 @@ namespace Svelto.ECS.Schema.Generator
                 _group = group;
             }}
 
-            public void Deconstruct(out ({0}, FilteredIndices indices) tuple, out ExclusiveGroupStruct group)
+            public void Deconstruct(out ({0}, IndexedIndices indices) tuple, out ExclusiveGroupStruct group)
             {{
                 var ({3}, _) = _collection;
 
-                tuple = ({3}, _indices);
+                tuple = ({3}, new IndexedIndices(_indices));
                 group = _group;
             }}
         }}
@@ -185,11 +185,11 @@ namespace Svelto.ECS.Schema.Generator
                 _group = group;
             }}
 
-            public void Deconstruct(out ({0}, FilteredIndices indices) tuple, out ExclusiveGroupStruct group)
+            public void Deconstruct(out ({0}, IndexedIndices indices) tuple, out ExclusiveGroupStruct group)
             {{
                 var ({3}, _) = _collection;
 
-                tuple = ({3}, _indices);
+                tuple = ({3}, new IndexedIndices(_indices));
                 group = _group;
             }}
         }}

@@ -17,7 +17,7 @@ namespace Svelto.ECS.Schema.Generator
 ";
 
         const string QueryEntitiesWithGroupTemplate = @"
-        public ({0}, FilteredIndices) Entities<{1}>(IndexesDB indexesDB)
+        public ({0}, IndexedIndices) Entities<{1}>(IndexesDB indexesDB)
 {2}
         {{
             var groupDataList = _query.GetGroupIndexDataList(indexesDB);
@@ -32,7 +32,7 @@ namespace Svelto.ECS.Schema.Generator
 
             var ({3}, _) = indexesDB.entitiesDB.QueryEntities<{1}>(_group);
 
-            return ({3}, indices);
+            return ({3}, new IndexedIndices(indices));
         }}
 ";
 
