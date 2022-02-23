@@ -52,16 +52,19 @@ namespace Svelto.ECS.Schema.Tests
         {
             var metadata = EntitySchemaHolder<TestSchema>.Metadata;
 
-            Assert.Equal(24 + 3, metadata.groupToParentShard.count);
+            Assert.Equal(24 + 3, metadata.groupToTable.count);
 
-            Assert.Equal(metadata.root, metadata.groupToParentShard[_schema.Dead.Doofus].parent);
-            Assert.Equal(metadata.root, metadata.groupToParentShard[_schema.Team(TeamColor.Red).State(StateType.Eating).Doofus].parent.parent);
+            Assert.Equal(metadata.root, metadata.groupToTable[_schema.Dead.Doofus].parent.parent);
+            Assert.Equal(metadata.root, metadata.groupToTable[_schema.Team(TeamColor.Red).State(StateType.Eating).Doofus].parent.parent.parent);
 
-            Assert.Equal(metadata.groupToParentShard[_schema.Team(TeamColor.Red).State(StateType.Eating).Doofus],
-                metadata.groupToParentShard[_schema.Team(TeamColor.Red).State(StateType.Eating).Food(FoodType.Good)]);
+            Assert.Equal(metadata.groupToTable[_schema.Team(TeamColor.Red).State(StateType.Eating).Doofus].parent,
+                metadata.groupToTable[_schema.Team(TeamColor.Red).State(StateType.Eating).Food(FoodType.Good)].parent);
 
-            Assert.NotEqual(metadata.groupToParentShard[_schema.Team(TeamColor.Red).State(StateType.Eating).Doofus],
-                metadata.groupToParentShard[_schema.Team(TeamColor.Blue).State(StateType.Eating).Food(FoodType.Good)]);
+            Assert.NotEqual(metadata.groupToTable[_schema.Team(TeamColor.Red).State(StateType.Eating).Doofus].parent,
+                metadata.groupToTable[_schema.Team(TeamColor.Blue).State(StateType.Eating).Food(FoodType.Good)].parent);
+
+            Assert.Equal(metadata.groupToTable[_schema.Team(TeamColor.Red).State(StateType.Eating).Food(FoodType.Rotten)],
+                metadata.groupToTable[_schema.Team(TeamColor.Red).State(StateType.Eating).Food(FoodType.Good)]);
 
             Assert.Null(metadata.root.indexers);
             Assert.Equal(0, metadata.indexersToGenerateEngine.count);

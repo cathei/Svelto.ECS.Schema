@@ -9,15 +9,21 @@ namespace Svelto.ECS.Schema
 {
     internal sealed class SchemaMetadata
     {
-        internal class Node
+        internal class TableNode
         {
-            public Node parent;
+            public ShardNode parent;
+            public IEntitySchemaTable table;
+        }
+
+        internal class ShardNode
+        {
+            public ShardNode parent;
             public FasterList<IEntitySchemaIndex> indexers;
         }
 
-        internal readonly Node root = new Node();
+        internal readonly ShardNode root = new ShardNode();
 
-        internal readonly FasterDictionary<ExclusiveGroupStruct, Node> groupToParentShard;
+        internal readonly FasterDictionary<ExclusiveGroupStruct, TableNode> groupToTable;
         internal readonly FasterDictionary<RefWrapperType, IEntitySchemaIndex> indexersToGenerateEngine;
 
         private static readonly Type ElementBaseType = typeof(IEntitySchemaElement);
@@ -27,15 +33,15 @@ namespace Svelto.ECS.Schema
 
         internal SchemaMetadata(IEntitySchema schema)
         {
-            groupToParentShard = new FasterDictionary<ExclusiveGroupStruct, Node>();
+            groupToTable = new FasterDictionary<ExclusiveGroupStruct, TableNode>();
             indexersToGenerateEngine = new FasterDictionary<RefWrapperType, IEntitySchemaIndex>();
 
-            root = new Node();
+            root = new ShardNode();
 
             GenerateChildren(root, schema);
         }
 
-        private void GenerateChildren(Node node, object instance)
+        private void GenerateChildren(ShardNode node, object instance)
         {
             foreach (var fieldInfo in GetSchemaElementFields(instance.GetType()))
             {
@@ -65,7 +71,7 @@ namespace Svelto.ECS.Schema
 
                     for (int i = 0; i < element.Range; ++i)
                     {
-                        var child = new Node { parent = node };
+                        var child = new ShardNode { parent = node };
 
                         GenerateChildren(child, element.GetSchema(i));
                     }
@@ -77,12 +83,18 @@ namespace Svelto.ECS.Schema
             }
         }
 
-        private void RegisterTable(Node parent, IEntitySchemaTable element)
+        private void RegisterTable(ShardNode parent, IEntitySchemaTable element)
         {
+            var node = new TableNode
+            {
+                parent = parent,
+                table = element
+            };
+
             // register all possible groups
             for (ushort i = 0; i < element.Range; ++i)
             {
-                groupToParentShard[element.ExclusiveGroup + i] = parent;
+                groupToTable[element.ExclusiveGroup + i] = node;
             }
 
             // GroupHashMap is internal class of Svelto.ECS at the time

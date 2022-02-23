@@ -57,8 +57,8 @@ namespace Svelto.ECS.Schema
             }
         }
 
-        // combined version of SchemaMetadata.groupToParentShard
-        internal readonly FasterDictionary<ExclusiveGroupStruct, SchemaMetadata.Node> groupToParentShard;
+        // combined version of SchemaMetadata.groupToTable
+        internal readonly FasterDictionary<ExclusiveGroupStruct, SchemaMetadata.TableNode> groupToTable;
         internal readonly HashSet<RefWrapperType> createdEngines;
 
         internal readonly FasterDictionary<int, IndexerData> indexers;
@@ -70,7 +70,7 @@ namespace Svelto.ECS.Schema
 
         internal IndexesDB()
         {
-            groupToParentShard = new FasterDictionary<ExclusiveGroupStruct, SchemaMetadata.Node>();
+            groupToTable = new FasterDictionary<ExclusiveGroupStruct, SchemaMetadata.TableNode>();
             createdEngines = new HashSet<RefWrapperType>();
 
             indexers = new FasterDictionary<int, IndexerData>();
@@ -78,12 +78,19 @@ namespace Svelto.ECS.Schema
 
         internal void RegisterSchema(SchemaMetadata metadata)
         {
-            groupToParentShard.Union(metadata.groupToParentShard);
+            groupToTable.Union(metadata.groupToTable);
         }
 
-        internal bool TryGetShard(in ExclusiveGroupStruct group, out SchemaMetadata.Node node)
+        internal bool TryGetShard(in ExclusiveGroupStruct group, out SchemaMetadata.ShardNode node)
         {
-            return groupToParentShard.TryGetValue(group, out node);
+            if (!groupToTable.TryGetValue(group, out var table))
+            {
+                node = null;
+                return false;
+            }
+
+            node = table.parent;
+            return true;
         }
 
         // this should be fast enough, no group change means we don't have to rebuild filter

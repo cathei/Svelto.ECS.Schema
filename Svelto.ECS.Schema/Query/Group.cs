@@ -31,7 +31,7 @@ namespace Svelto.ECS.Schema
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Delete(IEntityFunctions functions, uint entityID)
+        public void Remove(IEntityFunctions functions, uint entityID)
         {
             functions.RemoveEntity<T>(entityID, exclusiveGroup);
         }

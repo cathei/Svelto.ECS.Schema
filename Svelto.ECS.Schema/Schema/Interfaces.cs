@@ -14,6 +14,8 @@ namespace Svelto.ECS.Schema
     {
         ref readonly ExclusiveGroup ExclusiveGroup { get; }
         int Range { get; }
+
+        void Remove(IEntityFunctions functions, EGID egid);
     }
 
     internal interface IEntitySchemaIndex : IEntitySchemaElement

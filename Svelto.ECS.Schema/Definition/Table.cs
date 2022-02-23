@@ -38,5 +38,11 @@ namespace Svelto.ECS.Schema.Definition
             foreach (int i in indexes)
                 yield return _exclusiveGroup + (ushort)i;
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Remove(IEntityFunctions functions, EGID egid)
+        {
+            functions.RemoveEntity<T>(egid);
+        }
     }
 }
