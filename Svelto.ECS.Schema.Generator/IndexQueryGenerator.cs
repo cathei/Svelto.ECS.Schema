@@ -24,7 +24,7 @@ namespace Svelto.ECS.Schema.Generator
 
             var indices = new FilteredIndices();
 
-            if (groupDataList != null && _group.exclusiveGroup.IsEnabled() &&
+            if (groupDataList != null && _group.ExclusiveGroupStruct.IsEnabled() &&
                 groupDataList.TryGetValue(_group, out var groupData))
             {{
                 indices = groupData.filter.filteredIndices;

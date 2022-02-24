@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 
 namespace Svelto.ECS.Schema.Definition
 {
-    public sealed class Table<T> : IEntitySchemaTable where T : IEntityDescriptor, new()
+    public sealed partial class Table<T> : IEntitySchemaTable where T : IEntityDescriptor, new()
     {
         private readonly ExclusiveGroup _exclusiveGroup;
 

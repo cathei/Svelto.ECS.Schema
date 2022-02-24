@@ -7,16 +7,16 @@ namespace Svelto.ECS.Schema.Generator
     [Generator]
     public class GroupQueryGenerator : ISourceGenerator
     {
-        const string QueryGroupTemplate = @"
+        const string QueryTableTemplate = @"
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EntityCollection<{0}> Entities<{0}>(EntitiesDB entitiesDB)
 {1}
         {{
-            return entitiesDB.QueryEntities<{0}>(exclusiveGroup);
+            return entitiesDB.QueryEntities<{0}>(_exclusiveGroup);
         }}
 ";
 
-        const string QueryGroupsTemplate = @"
+        const string QueryTablesTemplate = @"
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public GroupsEnumerable<{0}> Entities<{0}>(EntitiesDB entitiesDB)
 {1}
@@ -54,20 +54,23 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Svelto.DataStructures;
 
+namespace Svelto.ECS.Schema.Definition
+{{
+    public partial class Table<T>
+    {{
+{GenerateQueryEntities(QueryTableTemplate)}
+    }}
+}}
+
 namespace Svelto.ECS.Schema
 {{
-    public readonly partial struct Group<T>
+    public partial struct Tables<T>
     {{
-{GenerateQueryEntities(QueryGroupTemplate)}
-    }}
-
-    public partial struct Groups<T>
-    {{
-{GenerateQueryEntities(QueryGroupsTemplate)}
+{GenerateQueryEntities(QueryTablesTemplate)}
     }}
 }}";
 
-            context.AddSource("Group.g.cs", source);
+            context.AddSource("TableQuery.g.cs", source);
         }
 
         public void Initialize(GeneratorInitializationContext context)

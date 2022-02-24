@@ -5,6 +5,7 @@ using System.Linq;
 using Svelto.DataStructures;
 using Svelto.ECS;
 using Svelto.ECS.DataStructures;
+using Svelto.ECS.Schema.Definition;
 
 namespace Svelto.ECS.Schema
 {
@@ -30,16 +31,16 @@ namespace Svelto.ECS.Schema
             return result.groups;
         }
 
-        public IndexGroupQuery<TKey, TDesc> From<TDesc>(in Group<TDesc> group)
+        public IndexGroupQuery<TKey, TDesc> From<TDesc>(Table<TDesc> table)
             where TDesc : IEntityDescriptor, new()
         {
-            return new IndexGroupQuery<TKey, TDesc>(this, group);
+            return new IndexGroupQuery<TKey, TDesc>(this, table);
         }
 
-        public IndexGroupsQuery<TKey, TDesc> From<TDesc>(in Tables<TDesc> groups)
+        public IndexGroupsQuery<TKey, TDesc> From<TDesc>(in Tables<TDesc> tables)
             where TDesc : IEntityDescriptor, new()
         {
-            return new IndexGroupsQuery<TKey, TDesc>(this, groups);
+            return new IndexGroupsQuery<TKey, TDesc>(this, tables);
         }
     }
 
@@ -48,12 +49,12 @@ namespace Svelto.ECS.Schema
         where TDesc : IEntityDescriptor, new()
     {
         private readonly IndexQuery<TKey> _query;
-        private readonly Group<TDesc> _group;
+        private readonly Table<TDesc> _group;
 
-        public IndexGroupQuery(in IndexQuery<TKey> query, in Group<TDesc> group)
+        public IndexGroupQuery(in IndexQuery<TKey> query, Table<TDesc> table)
         {
             _query = query;
-            _group = group;
+            _group = table;
         }
     }
 
@@ -64,10 +65,10 @@ namespace Svelto.ECS.Schema
         private readonly IndexQuery<TKey> _query;
         private readonly Tables<TDesc> _groups;
 
-        public IndexGroupsQuery(in IndexQuery<TKey> query, in Tables<TDesc> groups)
+        public IndexGroupsQuery(in IndexQuery<TKey> query, in Tables<TDesc> tables)
         {
             _query = query;
-            _groups = groups;
+            _groups = tables;
         }
     }
 }

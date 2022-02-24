@@ -75,4 +75,4 @@ namespace Svelto.ECS.Schema
             functions.SwapEntityGroup<T>(fromID, toID, mustBeFromGroup.ExclusiveGroupStruct);
         }
     }
-}gw
+}

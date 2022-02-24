@@ -18,32 +18,30 @@ namespace Svelto.ECS.Schema.Tests
 
         public class StateSchema : IEntitySchema
         {
-            internal Table<DoofusEntityDescriptor> _doofus = new Table<DoofusEntityDescriptor>();
-            public Group<DoofusEntityDescriptor> Doofus => _doofus.Group();
+            public readonly Table<DoofusEntityDescriptor> Doofus = new Table<DoofusEntityDescriptor>();
 
-            internal Table<FoodEntityDescriptor> _food = new Table<FoodEntityDescriptor>((int)FoodType.MAX);
-            public Group<FoodEntityDescriptor> Food(FoodType foodType) => _food.Group((int)foodType);
+            public readonly Ranged<Table<FoodEntityDescriptor>, FoodType> Food =
+                new Ranged<Table<FoodEntityDescriptor>, FoodType>((int)FoodType.MAX, x => (int)x);
         }
 
         public class TeamSchema : IEntitySchema
         {
-            internal Ranged<StateSchema> _state = new Ranged<StateSchema>((int)StateType.MAX);
-            public StateSchema State(StateType stateType) => _state.Schema((int)stateType);
+            public readonly Ranged<StateSchema, StateType> State =
+                new Ranged<StateSchema, StateType>((int)StateType.MAX, x => (int)x);
         }
 
         public class TestSchema : IEntitySchema
         {
-            internal Ranged<TeamSchema> _team = new Ranged<TeamSchema>((int)TeamColor.MAX);
-            public TeamSchema Team(TeamColor color) => _team.Schema((int)color);
+            public readonly Ranged<TeamSchema, TeamColor> Team =
+                new Ranged<TeamSchema, TeamColor>((int)TeamColor.MAX, x => (int)x);
 
-            internal Ranged<StateSchema> _dead = new Ranged<StateSchema>();
-            public StateSchema Dead => _dead.Schema();
+            public readonly StateSchema Dead = new StateSchema();
 
-            public Tables<DoofusEntityDescriptor> EatingDoofuses { get; }
+            public readonly Tables<DoofusEntityDescriptor> EatingDoofuses;
 
             public TestSchema()
             {
-                EatingDoofuses = _team.Schemas().Combine(x => x.State(StateType.Eating).Doofus);
+                EatingDoofuses = Team.Combine(x => x.State[StateType.Eating].Doofus);
             }
         }
 
@@ -55,16 +53,16 @@ namespace Svelto.ECS.Schema.Tests
             Assert.Equal(24 + 3, metadata.groupToTable.count);
 
             Assert.Equal(metadata.root, metadata.groupToTable[_schema.Dead.Doofus].parent.parent);
-            Assert.Equal(metadata.root, metadata.groupToTable[_schema.Team(TeamColor.Red).State(StateType.Eating).Doofus].parent.parent.parent);
+            Assert.Equal(metadata.root, metadata.groupToTable[_schema.Team[TeamColor.Red].State[StateType.Eating].Doofus].parent.parent.parent);
 
-            Assert.Equal(metadata.groupToTable[_schema.Team(TeamColor.Red).State(StateType.Eating).Doofus].parent,
-                metadata.groupToTable[_schema.Team(TeamColor.Red).State(StateType.Eating).Food(FoodType.Good)].parent);
+            Assert.Equal(metadata.groupToTable[_schema.Team[TeamColor.Red].State[StateType.Eating].Doofus].parent,
+                metadata.groupToTable[_schema.Team[TeamColor.Red].State[StateType.Eating].Food[FoodType.Good]].parent);
 
-            Assert.NotEqual(metadata.groupToTable[_schema.Team(TeamColor.Red).State(StateType.Eating).Doofus].parent,
-                metadata.groupToTable[_schema.Team(TeamColor.Blue).State(StateType.Eating).Food(FoodType.Good)].parent);
+            Assert.NotEqual(metadata.groupToTable[_schema.Team[TeamColor.Red].State[StateType.Eating].Doofus].parent,
+                metadata.groupToTable[_schema.Team[TeamColor.Blue].State[StateType.Eating].Food[FoodType.Good]].parent);
 
-            Assert.Equal(metadata.groupToTable[_schema.Team(TeamColor.Red).State(StateType.Eating).Food(FoodType.Rotten)],
-                metadata.groupToTable[_schema.Team(TeamColor.Red).State(StateType.Eating).Food(FoodType.Good)]);
+            Assert.Equal(metadata.groupToTable[_schema.Team[TeamColor.Red].State[StateType.Eating].Food[FoodType.Rotten]],
+                metadata.groupToTable[_schema.Team[TeamColor.Red].State[StateType.Eating].Food[FoodType.Good]]);
 
             Assert.Null(metadata.root.indexers);
             Assert.Equal(0, metadata.indexersToGenerateEngine.count);
@@ -73,12 +71,12 @@ namespace Svelto.ECS.Schema.Tests
         [Fact]
         public void GroupIndexTests()
         {
-            Assert.Equal(_schema._dead._schemas[0]._doofus.ExclusiveGroup + 0, _schema.Dead.Doofus);
-            Assert.Equal(_schema._dead._schemas[0]._food.ExclusiveGroup + 0, _schema.Dead.Food(FoodType.Rotten));
-            Assert.Equal(_schema._dead._schemas[0]._food.ExclusiveGroup + 1, _schema.Dead.Food(FoodType.Good));
+            Assert.Equal(_schema.Dead._schemas[0]._doofus.ExclusiveGroup + 0, _schema.Dead.Doofus);
+            Assert.Equal(_schema.Dead._schemas[0]._food.ExclusiveGroup + 0, _schema.Dead.Food[FoodType.Rotten]);
+            Assert.Equal(_schema.Dead._schemas[0]._food.ExclusiveGroup + 1, _schema.Dead.Food[FoodType.Good]);
 
-            Assert.Equal(_schema._team._schemas[0]._state._schemas[0]._food.ExclusiveGroup + 0, _schema.Team(TeamColor.Red).State(StateType.Eating).Food(FoodType.Rotten));
-            Assert.Equal(_schema._team._schemas[2]._state._schemas[1]._food.ExclusiveGroup + 1, _schema.Team(TeamColor.Yellow).State(StateType.NonEating).Food(FoodType.Good));
+            Assert.Equal(_schema._team._schemas[0]._state._schemas[0]._food.ExclusiveGroup + 0, _schema.Team[TeamColor.Red].State[StateType.Eating].Food[FoodType.Rotten]);
+            Assert.Equal(_schema._team._schemas[2]._state._schemas[1]._food.ExclusiveGroup + 1, _schema.Team[TeamColor.Yellow].State[StateType.NonEating].Food[FoodType.Good]);
         }
     }
 }
