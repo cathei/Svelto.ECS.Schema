@@ -39,10 +39,10 @@ namespace Svelto.ECS.Schema.Tests
 
         public class TestSchema : IEntitySchema
         {
-            internal Shard<PlayerSchema> _ai = new Shard<PlayerSchema>();
+            internal Ranged<PlayerSchema> _ai = new Ranged<PlayerSchema>();
             public PlayerSchema AI => _ai.Schema();
 
-            internal Shard<PlayerSchema> _players = new Shard<PlayerSchema>(10);
+            internal Ranged<PlayerSchema> _players = new Ranged<PlayerSchema>(10);
             public PlayerSchema Player(int playerId) => _players.Schema(playerId);
 
             internal Index<ItemOwner> _itemsByOwner = new Index<ItemOwner>();

@@ -3,34 +3,47 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using Svelto.DataStructures;
 
-namespace Svelto.ECS.Schema.Definition
+namespace Svelto.ECS.Schema
 {
-    internal static class GlobalIndexCount
+    namespace Internal
     {
-        private static int Count = 0;
-
-        public static int Generate() => Interlocked.Increment(ref Count);
-    }
-
-    public sealed class Index<T> : IEntitySchemaIndex
-        where T : unmanaged, IEntityIndexKey<T>
-    {
-        // equvalent to ExclusiveGroupStruct.Generate()
-        private readonly int _indexerId = GlobalIndexCount.Generate();
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public IndexQuery<T> Query(in T key)
+        internal static class GlobalIndexCount
         {
-            return new IndexQuery<T>(_indexerId, key);
+            private static int Count = 0;
+
+            public static int Generate() => Interlocked.Increment(ref Count);
         }
 
-        IEngine IEntitySchemaIndex.CreateEngine(IndexesDB context)
+        public class IndexBase<T> : IEntitySchemaIndex
+            where T : unmanaged, IEntityIndexKey<T>
         {
-            return new TableIndexingEngine<T>(context);
+            // equvalent to ExclusiveGroupStruct.Generate()
+            private readonly int _indexerId = GlobalIndexCount.Generate();
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public IndexQuery<T> Query(in T key)
+            {
+                return new IndexQuery<T>(_indexerId, key);
+            }
+
+            IEngine IEntitySchemaIndex.CreateEngine(IndexesDB context)
+            {
+                return new TableIndexingEngine<T>(context);
+            }
+
+            RefWrapperType IEntitySchemaIndex.KeyType => TypeRefWrapper<T>.wrapper;
+
+            int IEntitySchemaIndex.IndexerId => _indexerId;
         }
-
-        RefWrapperType IEntitySchemaIndex.KeyType => TypeRefWrapper<T>.wrapper;
-
-        int IEntitySchemaIndex.IndexerId => _indexerId;
     }
+
+    namespace Definition
+    {
+        public sealed class Index<T> : Internal.IndexBase<T>
+            where T : unmanaged, IEntityIndexKey<T>
+        {
+
+        }
+    }
+
 }

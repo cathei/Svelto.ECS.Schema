@@ -12,7 +12,7 @@ namespace Svelto.ECS.Schema.Definition
         public static int Generate() => Interlocked.Increment(ref Count);
     }
 
-    public sealed class Memo<T> : IEntitySchemaSet
+    public sealed class Memo<T> : IEntitySchemaMemo
         where T : unmanaged, IEntityComponent
     {
         public void Add(IndexesDB indexesDB, EGID egid)

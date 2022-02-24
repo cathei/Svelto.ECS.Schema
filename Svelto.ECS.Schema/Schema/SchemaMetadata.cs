@@ -29,7 +29,7 @@ namespace Svelto.ECS.Schema
         private static readonly Type ElementBaseType = typeof(IEntitySchemaElement);
         private static readonly Type GenericTableType = typeof(Table<>);
         private static readonly Type GenericIndexType = typeof(Index<>);
-        private static readonly Type GenericShardType = typeof(Shard<>);
+        private static readonly Type GenericShardType = typeof(Ranged<,>);
 
         internal SchemaMetadata(IEntitySchema schema)
         {

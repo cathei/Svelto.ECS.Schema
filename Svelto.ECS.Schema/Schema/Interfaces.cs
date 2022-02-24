@@ -30,10 +30,7 @@ namespace Svelto.ECS.Schema
         object GetSchema(int index);
     }
 
-    internal interface IEntitySchemaSet : IEntitySchemaElement
-    {
-
-    }
+    internal interface IEntitySchemaMemo : IEntitySchemaElement { }
 
     public interface IEntityIndexKey<T>
         where T : unmanaged, IEntityIndexKey<T>

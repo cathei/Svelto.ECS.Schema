@@ -49,7 +49,7 @@ namespace Svelto.ECS.Schema
             if (!metadata.groupToTable.TryGetValue(egid.groupID, out var tableNode))
                 throw new ECSException("Group ID is not found on this schema!");
 
-            tableNode.table.Remove(functions, egid);
+            tableNode.table.Remove(functions, egid.entityID);
         }
     }
 }

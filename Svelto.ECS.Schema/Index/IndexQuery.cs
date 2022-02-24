@@ -27,7 +27,7 @@ namespace Svelto.ECS.Schema
 
             var indexerData = (IndexesDB.IndexerData<TKey>)indexesDB.indexers[_indexerId];
             indexerData.TryGetValue(_key, out var result);
-            return result;
+            return result.groups;
         }
 
         public IndexGroupQuery<TKey, TDesc> From<TDesc>(in Group<TDesc> group)

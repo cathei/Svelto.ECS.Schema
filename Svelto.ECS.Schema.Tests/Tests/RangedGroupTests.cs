@@ -27,7 +27,7 @@ namespace Svelto.ECS.Schema.Tests
             internal Table<EquipmentDescriptor> _equipments = new Table<EquipmentDescriptor>(30);
             public Group<EquipmentDescriptor> Equipment(int groupId) => _equipments.Group(groupId);
 
-            internal Shard<MerchantSchema> _merchants = new Shard<MerchantSchema>(50);
+            internal Ranged<MerchantSchema> _merchants = new Ranged<MerchantSchema>(50);
             public MerchantSchema Merchant(int merchantId) => _merchants.Schema(merchantId);
         }
 

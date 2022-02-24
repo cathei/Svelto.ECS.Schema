@@ -5,6 +5,7 @@ using System.Linq;
 using Svelto.DataStructures;
 using Svelto.ECS;
 using Svelto.ECS.DataStructures;
+using Svelto.ECS.Schema.Definition;
 
 namespace Svelto.ECS.Schema
 {
@@ -29,12 +30,12 @@ namespace Svelto.ECS.Schema
 
         public static TablesBuilder<T> operator+(TablesBuilder<T> a, Table<T> b)
         {
-            return new TablesBuilder<T>(a.items.Append(b._exclusiveGroup));
+            return new TablesBuilder<T>(a.items.Append(b.ExclusiveGroupStruct));
         }
 
         public static TablesBuilder<T> operator+(Table<T> a, TablesBuilder<T> b)
         {
-            return new TablesBuilder<T>(b.items.Prepend(a._exclusiveGroup));
+            return new TablesBuilder<T>(b.items.Prepend(a.ExclusiveGroupStruct));
         }
 
         public static implicit operator Tables<T>(in TablesBuilder<T> builder) => builder.Build();

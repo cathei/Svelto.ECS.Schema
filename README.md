@@ -35,11 +35,8 @@ Let's define simplest Schema.
 ```csharp
 public class GameSchema : IEntitySchema
 {
-    private Table<CharacterDescriptor> _character = new Table<CharacterDescriptor>();
-    public Group<CharacterDescriptor> Character => _character.Group();
-
-    private Table<ItemDescriptor> _item = new Table<ItemDescriptor>();
-    public Group<ItemDescriptor> Item => _item.Group();
+    public readonly Table<CharacterDescriptor> Character = new Table<CharacterDescriptor>();
+    public readonly Table<ItemDescriptor> Item = new Table<ItemDescriptor>();
 }
 ```
 `IEntitySchema` is a logical group that can contain tables and indexes as member.
@@ -123,14 +120,11 @@ public enum ItemType { Potion, Weapon, Armor, MAX };
 
 public class PlayerSchema : IEntitySchema
 {
-    private Table<CharacterDescriptor> _aliveCharacter = new Table<CharacterDescriptor>();
-    public Group<CharacterDescriptor> AliveCharacter => _aliveCharacter.Group();
+    public readonly Table<CharacterDescriptor> AliveCharacter = new Table<CharacterDescriptor>();
+    public readonly Table<CharacterDescriptor> DeadCharacter = new Table<CharacterDescriptor>();
 
-    private Table<CharacterDescriptor> _deadCharacter = new Table<CharacterDescriptor>();
-    public Group<CharacterDescriptor> DeadCharacter => _deadCharacter.Group();
-
-    private Table<ItemDescriptor> _items = new Table<ItemDescriptor>((int)ItemType.MAX);
-    public Group<ItemDescriptor> Item(ItemType type) => _items.Group((int)type);
+    // private Table<ItemDescriptor> _items = new Table<ItemDescriptor>((int)ItemType.MAX);
+    // public Group<ItemDescriptor> Item(ItemType type) => _items.Group((int)type);
 }
 ```
 Now we have `PlayerSchema`, we can define shard in the parent schema. with `Shard<PlayerSchema>`.
@@ -146,11 +140,12 @@ public class MyGameSchema : IEntitySchema
     private Shard<PlayerSchema> _players = new Shard<PlayerSchema>(MaxPlayerCount);
     public PlayerSchema Player(int playerId) => _players.Schema(playerId);
 
-    public Groups<CharacterDescriptor> AllAliveCharacters { get; }
+    public Tables<CharacterDescriptor> AllAliveCharacters { get; }
 
     public MyGameSchema()
     {
-        AllAliveCharacters = AI.AliveCharacter + _players.Schemas().Combine(x => x.AliveCharacter);
+        AllAliveCharacters = AI.AliveCharacter +
+            _players.Schemas().Combine(x => x.AliveCharacter);
     }
 }
 ```
@@ -235,11 +230,8 @@ With Schema extension this would be converted to below.
 ```csharp
 public class StateSchema : IEntitySchema
 {
-    private Table<DoofusEntityDescriptor> _doofus = new Table<DoofusEntityDescriptor>();
-    public Group<DoofusEntityDescriptor> Doofus => _doofus.Group();
-
-    private Table<FoodEntityDescriptor> _food = new Table<FoodEntityDescriptor>();
-    public Group<FoodEntityDescriptor> Food => _food.Group();
+    private Table<DoofusEntityDescriptor> Doofus = new Table<DoofusEntityDescriptor>();
+    private Table<FoodEntityDescriptor> Food = new Table<FoodEntityDescriptor>();
 }
 
 public class TeamSchema : IEntitySchema

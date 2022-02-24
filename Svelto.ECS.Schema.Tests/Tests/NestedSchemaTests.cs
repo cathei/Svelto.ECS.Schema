@@ -27,16 +27,16 @@ namespace Svelto.ECS.Schema.Tests
 
         public class TeamSchema : IEntitySchema
         {
-            internal Shard<StateSchema> _state = new Shard<StateSchema>((int)StateType.MAX);
+            internal Ranged<StateSchema> _state = new Ranged<StateSchema>((int)StateType.MAX);
             public StateSchema State(StateType stateType) => _state.Schema((int)stateType);
         }
 
         public class TestSchema : IEntitySchema
         {
-            internal Shard<TeamSchema> _team = new Shard<TeamSchema>((int)TeamColor.MAX);
+            internal Ranged<TeamSchema> _team = new Ranged<TeamSchema>((int)TeamColor.MAX);
             public TeamSchema Team(TeamColor color) => _team.Schema((int)color);
 
-            internal Shard<StateSchema> _dead = new Shard<StateSchema>();
+            internal Ranged<StateSchema> _dead = new Ranged<StateSchema>();
             public StateSchema Dead => _dead.Schema();
 
             public Tables<DoofusEntityDescriptor> EatingDoofuses { get; }

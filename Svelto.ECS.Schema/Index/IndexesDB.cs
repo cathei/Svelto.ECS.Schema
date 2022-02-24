@@ -70,7 +70,7 @@ namespace Svelto.ECS.Schema
         internal readonly HashSet<RefWrapperType> createdEngines;
 
         internal readonly FasterDictionary<int, IndexerData> indexers;
-        internal readonly FasterDictionary<int, IndexerSetData> indexerSets;
+        internal readonly FasterDictionary<int, IndexerSetData> memos;
 
         // well... let's have some space for user defined filter
         private int filterIdCounter = 10000;
@@ -151,7 +151,7 @@ namespace Svelto.ECS.Schema
         {
             var indexerData = CreateOrGetIndexerData<T>(indexerId);
 
-            var groupDict = indexerData.CreateOrGet(key);
+            var groupDict = indexerData.CreateOrGet(key).groups;
 
             return ref groupDict.GetOrCreate(group, () => new IndexerGroupData
             {
