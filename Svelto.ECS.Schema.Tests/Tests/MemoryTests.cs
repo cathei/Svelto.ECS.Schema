@@ -38,7 +38,7 @@ namespace Svelto.ECS.Schema.Tests
             internal Index<ItemOwner> _itemsByOwner = new Index<ItemOwner>();
             public IndexQuery<ItemOwner> ItemsByOwner(int characterId) => _itemsByOwner.Query(new ItemOwner(characterId));
 
-            public Groups<ItemDescriptor> AllItems { get; }
+            public Tables<ItemDescriptor> AllItems { get; }
 
             public TestSchema()
             {

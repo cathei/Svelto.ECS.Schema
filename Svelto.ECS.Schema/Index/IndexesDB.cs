@@ -17,6 +17,11 @@ namespace Svelto.ECS.Schema
             public FilterGroup filter;
         }
 
+        internal struct IndexerSetData
+        {
+            public FasterDictionary<ExclusiveGroupStruct, IndexerGroupData> filters;
+        }
+
         internal abstract class IndexerData {}
 
         internal sealed class IndexerData<TKey> : IndexerData
@@ -62,6 +67,7 @@ namespace Svelto.ECS.Schema
         internal readonly HashSet<RefWrapperType> createdEngines;
 
         internal readonly FasterDictionary<int, IndexerData> indexers;
+        internal readonly FasterDictionary<int, IndexerSetData> indexerSets;
 
         // well... let's have some space for user defined filter
         private int filterIdCounter = 10000;

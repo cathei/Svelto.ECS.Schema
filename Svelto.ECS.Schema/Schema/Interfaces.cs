@@ -13,9 +13,7 @@ namespace Svelto.ECS.Schema
     internal interface IEntitySchemaTable : IEntitySchemaElement
     {
         ref readonly ExclusiveGroup ExclusiveGroup { get; }
-        int Range { get; }
-
-        void Remove(IEntityFunctions functions, EGID egid);
+        void Remove(IEntityFunctions functions, uint entityID);
     }
 
     internal interface IEntitySchemaIndex : IEntitySchemaElement
@@ -30,6 +28,11 @@ namespace Svelto.ECS.Schema
         Type InnerType { get; }
         int Range { get; }
         object GetSchema(int index);
+    }
+
+    internal interface IEntitySchemaSet : IEntitySchemaElement
+    {
+
     }
 
     public interface IEntityIndexKey<T>

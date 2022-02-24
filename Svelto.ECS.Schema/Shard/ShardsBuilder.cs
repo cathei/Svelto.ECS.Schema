@@ -12,7 +12,7 @@ namespace Svelto.ECS.Schema
     {
         private readonly IEnumerable<T> _schemas;
 
-        public delegate GroupsBuilder<TDesc> GroupsBuilderSelector<TDesc>(T shard) where TDesc : IEntityDescriptor, new();
+        public delegate TablesBuilder<TDesc> TablesBuilderSelector<TDesc>(T shard) where TDesc : IEntityDescriptor, new();
 
         internal ShardsBuilder(IEnumerable<T> schemas)
         {
@@ -29,14 +29,14 @@ namespace Svelto.ECS.Schema
             return new ShardsBuilder<TOut>(Unpack(selector));
         }
 
-        public GroupsBuilder<TDesc> Combine<TDesc>(Func<T, Group<TDesc>> selector) where TDesc : IEntityDescriptor, new()
+        public TablesBuilder<TDesc> Combine<TDesc>(Func<T, Table<TDesc>> selector) where TDesc : IEntityDescriptor, new()
         {
-            return new GroupsBuilder<TDesc>(_schemas.Select(x => selector(x).exclusiveGroup));
+            return new TablesBuilder<TDesc>(_schemas.Select(x => selector(x)._exclusiveGroup));
         }
 
-        public GroupsBuilder<TDesc> Combine<TDesc>(GroupsBuilderSelector<TDesc> selector) where TDesc : IEntityDescriptor, new()
+        public TablesBuilder<TDesc> Combine<TDesc>(TablesBuilderSelector<TDesc> selector) where TDesc : IEntityDescriptor, new()
         {
-            return new GroupsBuilder<TDesc>(Unpack(selector));
+            return new TablesBuilder<TDesc>(Unpack(selector));
         }
 
         // just SelectMany...
@@ -49,7 +49,7 @@ namespace Svelto.ECS.Schema
             }
         }
 
-        internal IEnumerable<ExclusiveGroupStruct> Unpack<TDesc>(GroupsBuilderSelector<TDesc> selector) where TDesc : IEntityDescriptor, new()
+        internal IEnumerable<ExclusiveGroupStruct> Unpack<TDesc>(TablesBuilderSelector<TDesc> selector) where TDesc : IEntityDescriptor, new()
         {
             foreach (var schema in _schemas)
             {

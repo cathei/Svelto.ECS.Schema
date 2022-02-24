@@ -39,7 +39,7 @@ namespace Svelto.ECS.Schema.Tests
             internal Shard<StateSchema> _dead = new Shard<StateSchema>();
             public StateSchema Dead => _dead.Schema();
 
-            public Groups<DoofusEntityDescriptor> EatingDoofuses { get; }
+            public Tables<DoofusEntityDescriptor> EatingDoofuses { get; }
 
             public TestSchema()
             {

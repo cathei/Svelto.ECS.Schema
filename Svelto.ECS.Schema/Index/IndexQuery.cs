@@ -36,7 +36,7 @@ namespace Svelto.ECS.Schema
             return new IndexGroupQuery<TKey, TDesc>(this, group);
         }
 
-        public IndexGroupsQuery<TKey, TDesc> From<TDesc>(in Groups<TDesc> groups)
+        public IndexGroupsQuery<TKey, TDesc> From<TDesc>(in Tables<TDesc> groups)
             where TDesc : IEntityDescriptor, new()
         {
             return new IndexGroupsQuery<TKey, TDesc>(this, groups);
@@ -62,9 +62,9 @@ namespace Svelto.ECS.Schema
         where TDesc : IEntityDescriptor, new()
     {
         private readonly IndexQuery<TKey> _query;
-        private readonly Groups<TDesc> _groups;
+        private readonly Tables<TDesc> _groups;
 
-        public IndexGroupsQuery(in IndexQuery<TKey> query, in Groups<TDesc> groups)
+        public IndexGroupsQuery(in IndexQuery<TKey> query, in Tables<TDesc> groups)
         {
             _query = query;
             _groups = groups;

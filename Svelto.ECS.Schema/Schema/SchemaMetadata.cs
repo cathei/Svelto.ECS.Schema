@@ -85,17 +85,11 @@ namespace Svelto.ECS.Schema
 
         private void RegisterTable(ShardNode parent, IEntitySchemaTable element)
         {
-            var node = new TableNode
+            groupToTable[element.ExclusiveGroup] = new TableNode
             {
                 parent = parent,
                 table = element
             };
-
-            // register all possible groups
-            for (ushort i = 0; i < element.Range; ++i)
-            {
-                groupToTable[element.ExclusiveGroup + i] = node;
-            }
 
             // GroupHashMap is internal class of Svelto.ECS at the time
             // GroupHashMap.RegisterGroup(group, UniqueName);
