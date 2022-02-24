@@ -36,7 +36,7 @@ namespace Svelto.ECS.Schema
             var indexesDB = new IndexesDB();
 
             // SchemaContextEngine injects entitiesDB to IndexesDB
-            enginesRoot.AddEngine(new SchemaContextEngine(indexesDB));
+            enginesRoot.AddEngine(new IndexesDBEngine(indexesDB));
 
             return indexesDB;
         }

@@ -5,19 +5,18 @@ using Svelto.DataStructures;
 
 namespace Svelto.ECS.Schema.Definition
 {
-    internal static class GlobalSetCount
+    internal static class GlobalMemoCount
     {
         private static int Count = 0;
 
         public static int Generate() => Interlocked.Increment(ref Count);
     }
 
-    public sealed class Set<T> : IEntitySchemaSet
+    public sealed class Memo<T> : IEntitySchemaSet
         where T : unmanaged, IEntityComponent
     {
         public void Add(IndexesDB indexesDB, EGID egid)
         {
-            // indexesDB.indexerSets.
 
         }
     }

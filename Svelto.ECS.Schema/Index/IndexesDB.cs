@@ -19,7 +19,7 @@ namespace Svelto.ECS.Schema
 
         internal struct IndexerSetData
         {
-            public FasterDictionary<ExclusiveGroupStruct, IndexerGroupData> filters;
+            public FasterDictionary<ExclusiveGroupStruct, IndexerGroupData> groups;
         }
 
         internal abstract class IndexerData {}
@@ -48,15 +48,18 @@ namespace Svelto.ECS.Schema
                 public static implicit operator TKey(KeyWrapper t) => t._value;
             }
 
-            private readonly FasterDictionary<KeyWrapper, FasterDictionary<ExclusiveGroupStruct, IndexerGroupData>> keyToGroups
-                = new FasterDictionary<KeyWrapper, FasterDictionary<ExclusiveGroupStruct, IndexerGroupData>>();
+            private readonly FasterDictionary<KeyWrapper, IndexerSetData> keyToGroups
+                = new FasterDictionary<KeyWrapper, IndexerSetData>();
 
-            public FasterDictionary<ExclusiveGroupStruct, IndexerGroupData> CreateOrGet(in TKey key)
+            public IndexerSetData CreateOrGet(in TKey key)
             {
-                return keyToGroups.GetOrCreate(new KeyWrapper(key), () => new FasterDictionary<ExclusiveGroupStruct, IndexerGroupData>());
+                return keyToGroups.GetOrCreate(new KeyWrapper(key), () => new IndexerSetData
+                {
+                    groups = new FasterDictionary<ExclusiveGroupStruct, IndexerGroupData>()
+                });
             }
 
-            public bool TryGetValue(in TKey key, out FasterDictionary<ExclusiveGroupStruct, IndexerGroupData> result)
+            public bool TryGetValue(in TKey key, out IndexerSetData result)
             {
                 return keyToGroups.TryGetValue(new KeyWrapper(key), out result);
             }

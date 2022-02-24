@@ -4,13 +4,13 @@ using Svelto.DataStructures;
 
 namespace Svelto.ECS.Schema
 {
-    internal class SchemaContextEngine : IQueryingEntitiesEngine
+    internal class IndexesDBEngine : IQueryingEntitiesEngine, IReactOnSubmission
     {
         private readonly IndexesDB _indexesDB;
 
         public EntitiesDB entitiesDB { private get; set; }
 
-        public SchemaContextEngine(IndexesDB indexesDB)
+        public IndexesDBEngine(IndexesDB indexesDB)
         {
             _indexesDB = indexesDB;
         }
@@ -19,6 +19,11 @@ namespace Svelto.ECS.Schema
         {
             // this seems like only way to inject entitiesDB...
             _indexesDB.entitiesDB = entitiesDB;
+        }
+
+        public void EntitiesSubmitted()
+        {
+            _indexesDB.ClearSets();
         }
     }
 }
