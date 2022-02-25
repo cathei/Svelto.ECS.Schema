@@ -27,10 +27,9 @@ namespace Svelto.ECS.Schema
 
             public void Step()
             {
-                var groups = entitiesDB.FindGroups<TParam, IEntityIndexKey<TState>.Component>();
+                var groups = entitiesDB.FindGroups<Component>();
 
-                foreach (var ((param, state, count), group) in
-                    entitiesDB.QueryEntities<TParam, IEntityIndexKey<TState>.Component>(groups))
+                foreach (var ((component, count), group) in entitiesDB.QueryEntities<Component>(groups))
                 {
                     for (int i = 0; i < count; ++i)
                     {

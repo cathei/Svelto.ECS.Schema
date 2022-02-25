@@ -2,19 +2,21 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using Svelto.DataStructures;
+using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema
 {
     public abstract partial class StateMachine<TParam, TState>
-        where TParam : unmanaged, IEntityComponent
-        where TState : unmanaged, IEntityIndexKey<TState>
+        where TParam : unmanaged
+        where TState : unmanaged, IKeyEquatable<TState>
     {
-        protected delegate void Callback(ref TParam param);
+        public delegate bool Condition(in TParam param);
+        public delegate void Callback(ref TParam param);
 
         internal readonly struct TransitionData
         {
-            public readonly IEntityIndexKey<TState>.Wrapper next;
-            public readonly Func<TParam, bool> condition;
+            public readonly IKeyEquatable<TState>.Wrapper next;
+            public readonly Condition condition;
         }
 
         internal struct StateData
@@ -24,7 +26,7 @@ namespace Svelto.ECS.Schema
             public Action onExit;
         }
 
-        internal FasterDictionary<IEntityIndexKey<TState>.Wrapper, StateData> states;
+        internal FasterDictionary<IKeyEquatable<TState>.Wrapper, StateData> states;
 
         protected StateMachine()
         {
@@ -36,7 +38,7 @@ namespace Svelto.ECS.Schema
 
         }
 
-        protected void AddTransition(in TState from, in TState to, Func<TParam, bool> condition)
+        protected void AddTransition(in TState from, in TState to, Condition condition)
         {
 
         }
