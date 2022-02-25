@@ -9,10 +9,10 @@ namespace Svelto.ECS.Schema.Generator
     {
         const string QueryEntitiesTemplate = @"
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static IndexQueryEnumerable<{1}> Entities<{1}>(this IIndexQuery query, IndexesDB indexesDB)
+        public IndexQueryEnumerable<{1}> Entities<{1}>(IndexesDB indexesDB)
 {2}
         {{
-            return new IndexQueryEnumerable<{1}>(indexesDB, query.GetGroupIndexDataList(indexesDB).groups);
+            return new IndexQueryEnumerable<{1}>(indexesDB, GetGroupIndexDataList(indexesDB).groups);
         }}
 ";
 
@@ -79,7 +79,12 @@ using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema
 {{
-    public static partial class IndexQueryExtensions
+    public partial class Memo<T>
+    {{
+{GenerateQueryEntities(QueryEntitiesTemplate)}
+    }}
+
+    public partial struct IndexQuery<TK, TC>
     {{
 {GenerateQueryEntities(QueryEntitiesTemplate)}
     }}

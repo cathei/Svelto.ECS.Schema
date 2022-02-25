@@ -14,6 +14,7 @@ namespace Svelto.ECS.Schema
         // This is not IEquatable because I want to keep it simple.
         // Without verbosely override object.Equals and == operator etc.
         // But if user wants they can always implement
+        // Also prevents primitive type being used as index key
         public interface IKeyEquatable<T>
             where T : unmanaged, IKeyEquatable<T>
         {

@@ -37,7 +37,7 @@ namespace Svelto.ECS.Schema
                 memos.unsafeValues[i].Clear();
         }
 
-        private ref IndexerGroupData CreateOrGetMemoGroup<T>(int memoID, in ExclusiveGroupStruct groupID)
+        internal ref IndexerGroupData CreateOrGetMemoGroup<T>(int memoID, in ExclusiveGroupStruct groupID)
             where T : unmanaged, IEntityComponent
         {
             ref var setData = ref memos.GetOrCreate(memoID, () => new IndexerSetData

@@ -22,12 +22,6 @@ namespace Svelto.ECS.Schema
             protected readonly int _indexerId = GlobalIndexCount.Generate();
 
             internal IndexBase() { }
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public IndexQuery<TK> Query(in TK key)
-            {
-                return new IndexQuery<TK>(_indexerId, key);
-            }
         }
 
         public abstract class IndexBase<TK, TC> : IndexBase<TK>, IEntitySchemaIndex
@@ -41,6 +35,12 @@ namespace Svelto.ECS.Schema
             void IEntitySchemaIndex.AddEngines(EnginesRoot enginesRoot, IndexesDB indexesDB)
             {
                 enginesRoot.AddEngine(new TableIndexingEngine<TK, TC>(indexesDB));
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public IndexQuery<TK, TC> Query(in TK key)
+            {
+                return new IndexQuery<TK, TC>(_indexerId, key);
             }
         }
     }

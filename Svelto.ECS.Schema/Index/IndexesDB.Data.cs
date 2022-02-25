@@ -17,6 +17,10 @@ namespace Svelto.ECS.Schema
         {
             internal FasterDictionary<ExclusiveGroupStruct, IndexerGroupData> groups;
 
+            // Do I want to delete group from dictionary, but only cache filter id?
+            // Can be rewarded in faster iteration
+            // internal FasterDictionary<ExclusiveGroupStruct, int> filterIDs;
+
             public void Clear()
             {
                 for (int i = 0; i < groups.count; ++i)
