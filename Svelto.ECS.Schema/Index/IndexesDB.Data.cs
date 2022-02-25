@@ -29,33 +29,12 @@ namespace Svelto.ECS.Schema
         internal sealed class IndexerData<TKey> : IndexerData
             where TKey : unmanaged, IKeyEquatable<TKey>
         {
-            public readonly struct KeyWrapper : IEquatable<KeyWrapper>
-            {
-                private readonly TKey _value;
-                private readonly int _hashcode;
-
-                public KeyWrapper(TKey value)
-                {
-                    _value = value;
-                    _hashcode = _value.GetHashCode();
-                }
-
-                // this uses IKeyEquatable<T>.Equals
-                public bool Equals(KeyWrapper other) => _value.Equals(other._value);
-
-                public override bool Equals(object obj) => obj is IndexerData<TKey> other && Equals(other);
-
-                public override int GetHashCode() => _hashcode;
-
-                public static implicit operator TKey(KeyWrapper t) => t._value;
-            }
-
-            private readonly FasterDictionary<KeyWrapper, IndexerSetData> keyToGroups
-                = new FasterDictionary<KeyWrapper, IndexerSetData>();
+            private readonly FasterDictionary<IKeyEquatable<TKey>.Wrapper, IndexerSetData> keyToGroups
+                = new FasterDictionary<IKeyEquatable<TKey>.Wrapper, IndexerSetData>();
 
             public ref IndexerSetData CreateOrGet(in TKey key)
             {
-                return ref keyToGroups.GetOrCreate(new KeyWrapper(key), () => new IndexerSetData
+                return ref keyToGroups.GetOrCreate(new IKeyEquatable<TKey>.Wrapper(key), () => new IndexerSetData
                 {
                     groups = new FasterDictionary<ExclusiveGroupStruct, IndexerGroupData>()
                 });
@@ -63,7 +42,7 @@ namespace Svelto.ECS.Schema
 
             public bool TryGetValue(in TKey key, out IndexerSetData result)
             {
-                return keyToGroups.TryGetValue(new KeyWrapper(key), out result);
+                return keyToGroups.TryGetValue(new IKeyEquatable<TKey>.Wrapper(key), out result);
             }
         }
     }
