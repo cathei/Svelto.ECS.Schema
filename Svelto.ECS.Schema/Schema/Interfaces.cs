@@ -19,7 +19,7 @@ namespace Svelto.ECS.Schema
     internal interface IEntitySchemaIndex : IEntitySchemaElement
     {
         RefWrapperType KeyType { get; }
-        int IndexerId { get; }
+        int IndexerID { get; }
         IEngine CreateEngine(IndexesDB indexesDB);
     }
 

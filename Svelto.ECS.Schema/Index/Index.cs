@@ -2,6 +2,7 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using Svelto.DataStructures;
+using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema
 {
@@ -33,19 +34,19 @@ namespace Svelto.ECS.Schema
 
             RefWrapperType IEntitySchemaIndex.KeyType => TypeRefWrapper<T>.wrapper;
 
-            int IEntitySchemaIndex.IndexerId => _indexerId;
+            int IEntitySchemaIndex.IndexerID => _indexerId;
         }
     }
 
     namespace Definition
     {
-        public sealed class Index<T> : Internal.IndexBase<T>
+        public sealed class Index<T> : IndexBase<T>
             where T : unmanaged, IEntityIndexKey<T>
         {
 
         }
 
-        public sealed class Index<T1, T2> : Internal.IndexBase<MultiIndexKey<T1, T2>>
+        public sealed class Index<T1, T2> : IndexBase<MultiIndexKey<T1, T2>>
             where T1 : unmanaged, IEntityIndexKey<T1>
             where T2 : unmanaged, IEntityIndexKey<T2>
         {

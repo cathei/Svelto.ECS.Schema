@@ -25,5 +25,10 @@ namespace Svelto.ECS.Schema.Internal
 
             return true;
         }
+
+        public override int GetHashCode()
+        {
+            return key1.GetHashCode() ^ key2.GetHashCode();
+        }
     }
 }

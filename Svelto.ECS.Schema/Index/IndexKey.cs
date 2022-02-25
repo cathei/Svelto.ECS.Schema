@@ -5,6 +5,7 @@ using System.Linq;
 using Svelto.DataStructures;
 using Svelto.ECS;
 using Svelto.ECS.DataStructures;
+using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema
 {
@@ -20,15 +21,10 @@ namespace Svelto.ECS.Schema
         }
     }
 
-    internal interface IIndexedComponent : IEntityComponent
-    {
-        EGID ID { get; }
-    }
-
-    public interface IEntityIndexKey<T> : Internal.IKeyEquatable<T>
+    public interface IEntityIndexKey<T> : IKeyEquatable<T>
         where T : unmanaged, IEntityIndexKey<T>
     {
-        public struct Component : IIndexedComponent, INeedEGID
+        public struct Component : IEntityComponent, INeedEGID
         {
             public EGID ID { get; set; }
 
@@ -46,6 +42,26 @@ namespace Svelto.ECS.Schema
                 T oldKey = Key;
                 Key = key;
                 indexesDB.NotifyKeyUpdate(ref this, oldKey, key);
+            }
+
+            // this will be called when entity is added to group
+            // interface is required to extract key type data from IIndexedComponent
+            void IIndexedComponent.AddToIndexesDB(IndexesDB indexesDB, int indexerID, in ExclusiveGroupStruct groupID)
+            {
+                ref var groupData = ref indexesDB.CreateOrGetGroupData<Component, T>(indexerID, Key, groupID);
+
+                var mapper = indexesDB.entitiesDB.QueryMappedEntities<Component>(groupID);
+
+                groupData.filter.Add(ID.entityID, mapper);
+            }
+
+            ref IndexesDB.IndexerGroupData IIndexedComponent.RemoveFromIndexesDB(IndexesDB indexesDB, int indexerID, in ExclusiveGroupStruct groupID)
+            {
+                ref var groupData = ref indexesDB.CreateOrGetGroupData<Component, T>(indexerID, Key, groupID);
+
+                groupData.filter.TryRemove(ID.entityID);
+
+                return ref groupData;
             }
         }
     }
