@@ -40,12 +40,19 @@ namespace Svelto.ECS.Schema
                 public static implicit operator T(Wrapper t) => t._value;
             }
         }
+
+        public interface IIndexedComponent<T> : IEntityComponent
+            where T : unmanaged, IKeyEquatable<T>
+        {
+            EGID ID { get; }
+            T Key { get; }
+        }
     }
 
     public interface IEntityIndexKey<T> : IKeyEquatable<T>
         where T : unmanaged, IEntityIndexKey<T>
     {
-        public struct Component : IEntityComponent, INeedEGID
+        public struct Component : IIndexedComponent<T>, INeedEGID
         {
             public EGID ID { get; set; }
 

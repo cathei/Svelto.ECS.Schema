@@ -46,8 +46,9 @@ namespace Svelto.ECS.Schema
         }
 
         // this should be fast enough, no group change means we don't have to rebuild filter
-        internal void NotifyKeyUpdate<T>(ref IEntityIndexKey<T>.Component keyComponent, in T oldKey, in T newKey)
-            where T : unmanaged, IEntityIndexKey<T>
+        internal void NotifyKeyUpdate<TK, TC>(ref TC keyComponent, in TK oldKey, in TK newKey)
+            where TK : unmanaged, IKeyEquatable<TK>
+            where TC : unmanaged, IIndexedComponent<TK>
         {
             // component updated but key didn't change
             if (oldKey.Equals(newKey))
@@ -57,7 +58,7 @@ namespace Svelto.ECS.Schema
             if (!TryGetShard(keyComponent.ID.groupID, out var node))
                 return;
 
-            var keyType = TypeRefWrapper<T>.wrapper;
+            var keyType = TypeRefWrapper<TK>.wrapper;
 
             while (node != null)
             {
@@ -77,22 +78,24 @@ namespace Svelto.ECS.Schema
             }
         }
 
-        private void UpdateFilters<T>(int indexerId, ref IEntityIndexKey<T>.Component keyComponent, in T oldKey, in T newKey)
-            where T : unmanaged, IEntityIndexKey<T>
+        private void UpdateFilters<TK, TC>(int indexerId, ref TC keyComponent, in TK oldKey, in TK newKey)
+            where TK : unmanaged, IKeyEquatable<TK>
+            where TC : unmanaged, IIndexedComponent<TK>
         {
-            ref var oldGroupData = ref CreateOrGetIndexerGroup(indexerId, oldKey, keyComponent.ID.groupID);
-            ref var newGroupData = ref CreateOrGetIndexerGroup(indexerId, newKey, keyComponent.ID.groupID);
+            ref var oldGroupData = ref CreateOrGetIndexerGroup<TK, TC>(indexerId, oldKey, keyComponent.ID.groupID);
+            ref var newGroupData = ref CreateOrGetIndexerGroup<TK, TC>(indexerId, newKey, keyComponent.ID.groupID);
 
-            var mapper = entitiesDB.QueryMappedEntities<IEntityIndexKey<T>.Component>(keyComponent.ID.groupID);
+            var mapper = entitiesDB.QueryMappedEntities<TC>(keyComponent.ID.groupID);
 
             oldGroupData.filter.TryRemove(keyComponent.ID.entityID);
             newGroupData.filter.Add(keyComponent.ID.entityID, mapper);
         }
 
-        internal ref IndexerGroupData CreateOrGetIndexerGroup<T>(int indexerID, in T key, in ExclusiveGroupStruct groupID)
-            where T : unmanaged, IEntityIndexKey<T>
+        internal ref IndexerGroupData CreateOrGetIndexerGroup<TK, TC>(int indexerID, in TK key, in ExclusiveGroupStruct groupID)
+            where TK : unmanaged, IKeyEquatable<TK>
+            where TC : unmanaged, IIndexedComponent<TK>
         {
-            var indexerData = CreateOrGetIndexerData<T>(indexerID);
+            var indexerData = CreateOrGetIndexerData<TK>(indexerID);
 
             var groupDict = indexerData.CreateOrGet(key).groups;
 
@@ -101,27 +104,26 @@ namespace Svelto.ECS.Schema
                 groupDict[groupID] = new IndexerGroupData
                 {
                     group = groupID,
-                    filter = entitiesDB.GetFilters()
-                        .CreateOrGetFilterForGroup<IEntityIndexKey<T>.Component>(GenerateFilterId(), groupID)
+                    filter = entitiesDB.GetFilters().CreateOrGetFilterForGroup<TC>(GenerateFilterId(), groupID)
                 };
             }
 
             return ref groupDict.GetValueByRef(groupID);
         }
 
-        private IndexerData<T> CreateOrGetIndexerData<T>(int indexerId)
-            where T : unmanaged, IEntityIndexKey<T>
+        private IndexerData<TK> CreateOrGetIndexerData<TK>(int indexerId)
+            where TK : unmanaged, IKeyEquatable<TK>
         {
-            IndexerData<T> indexerData;
+            IndexerData<TK> indexerData;
 
             if (!indexers.ContainsKey(indexerId))
             {
-                indexerData = new IndexerData<T>();
+                indexerData = new IndexerData<TK>();
                 indexers[indexerId] = indexerData;
             }
             else
             {
-                indexerData = (IndexerData<T>)indexers[indexerId];
+                indexerData = (IndexerData<TK>)indexers[indexerId];
             }
 
             return indexerData;

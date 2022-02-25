@@ -7,40 +7,41 @@ namespace Svelto.ECS.Schema
 {
     // TODO: if apply new filter system, we can remove 'CheckRemove'
     // but we still need 'CheckAdd' to make sure indexes are up-to-date
-    internal class TableIndexingEngine<T> :
-            IReactOnAddAndRemove<IEntityIndexKey<T>.Component>,
-            IReactOnSwap<IEntityIndexKey<T>.Component>,
+    internal class TableIndexingEngine<TK, TC> :
+            IReactOnAddAndRemove<TC>,
+            IReactOnSwap<TC>,
             IReactOnSubmission
-        where T : unmanaged, IEntityIndexKey<T>
+        where TK : unmanaged, IKeyEquatable<TK>
+        where TC : unmanaged, IIndexedComponent<TK>
     {
         private readonly IndexesDB _indexesDB;
 
         private readonly HashSet<IndexesDB.IndexerGroupData> _groupsToRebuild = new HashSet<IndexesDB.IndexerGroupData>();
 
-        private static RefWrapperType IndexKeyType => TypeRefWrapper<T>.wrapper;
+        private static RefWrapperType IndexKeyType => TypeRefWrapper<TK>.wrapper;
 
         public TableIndexingEngine(IndexesDB indexesDB)
         {
             _indexesDB = indexesDB;
         }
 
-        public void Add(ref IEntityIndexKey<T>.Component keyComponent, EGID egid)
+        public void Add(ref TC keyComponent, EGID egid)
         {
             CheckAdd(ref keyComponent, egid.groupID);
         }
 
-        public void MovedTo(ref IEntityIndexKey<T>.Component keyComponent, ExclusiveGroupStruct previousGroup, EGID egid)
+        public void MovedTo(ref TC keyComponent, ExclusiveGroupStruct previousGroup, EGID egid)
         {
             CheckRemove(ref keyComponent, previousGroup);
             CheckAdd(ref keyComponent, egid.groupID);
         }
 
-        public void Remove(ref IEntityIndexKey<T>.Component keyComponent, EGID egid)
+        public void Remove(ref TC keyComponent, EGID egid)
         {
             CheckRemove(ref keyComponent, egid.groupID);
         }
 
-        private void CheckAdd(ref IEntityIndexKey<T>.Component keyComponent, in ExclusiveGroupStruct groupID)
+        private void CheckAdd(ref TC keyComponent, in ExclusiveGroupStruct groupID)
         {
             if (_indexesDB.TryGetShard(groupID, out var node))
             {
@@ -64,16 +65,17 @@ namespace Svelto.ECS.Schema
             }
         }
 
-        private void AddToFilter(int indexerID, ref IEntityIndexKey<T>.Component keyComponent, in ExclusiveGroupStruct groupID)
+        private void AddToFilter(int indexerID, ref TC keyComponent, in ExclusiveGroupStruct groupID)
         {
-            ref var groupData = ref _indexesDB.CreateOrGetIndexerGroup(indexerID, keyComponent.Key, groupID);
+            ref var groupData = ref _indexesDB.CreateOrGetIndexerGroup<TK, TC>(
+                indexerID, keyComponent.Key, groupID);
 
-            var mapper = _indexesDB.entitiesDB.QueryMappedEntities<IEntityIndexKey<T>.Component>(groupID);
+            var mapper = _indexesDB.entitiesDB.QueryMappedEntities<TC>(groupID);
 
             groupData.filter.Add(keyComponent.ID.entityID, mapper);
         }
 
-        private void CheckRemove(ref IEntityIndexKey<T>.Component keyComponent, in ExclusiveGroupStruct groupID)
+        private void CheckRemove(ref TC keyComponent, in ExclusiveGroupStruct groupID)
         {
             if (_indexesDB.TryGetShard(groupID, out var node))
             {
@@ -97,9 +99,10 @@ namespace Svelto.ECS.Schema
             }
         }
 
-        private void RemoveFromFilter(int indexerID, ref IEntityIndexKey<T>.Component keyComponent, in ExclusiveGroupStruct groupID)
+        private void RemoveFromFilter(int indexerID, ref TC keyComponent, in ExclusiveGroupStruct groupID)
         {
-            ref var groupData = ref _indexesDB.CreateOrGetIndexerGroup(indexerID, keyComponent.Key, groupID);
+            ref var groupData = ref _indexesDB.CreateOrGetIndexerGroup<TK, TC>(
+                indexerID, keyComponent.Key, groupID);
 
             groupData.filter.TryRemove(keyComponent.ID.entityID);
 
@@ -111,7 +114,7 @@ namespace Svelto.ECS.Schema
         {
             foreach (var groupData in _groupsToRebuild)
             {
-                var mapper = _indexesDB.entitiesDB.QueryMappedEntities<IEntityIndexKey<T>.Component>(groupData.group);
+                var mapper = _indexesDB.entitiesDB.QueryMappedEntities<TC>(groupData.group);
                 groupData.filter.RebuildIndicesOnStructuralChange(mapper);
             }
 

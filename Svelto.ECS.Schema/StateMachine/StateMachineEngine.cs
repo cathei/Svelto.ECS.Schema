@@ -4,6 +4,8 @@ namespace Svelto.ECS.Schema
 {
     public partial class StateMachine<TParam, TState>
     {
+        public virtual bool RunEngineOnEntitySubmission => false;
+
         public sealed class Engine : IQueryingEntitiesEngine, IStepEngine, IReactOnSubmission
         {
             private readonly StateMachine<TParam, TState> _fsm;
@@ -33,14 +35,14 @@ namespace Svelto.ECS.Schema
                     for (int i = 0; i < count; ++i)
                     {
                         // validate transition
-
                     }
                 }
             }
 
             public void EntitiesSubmitted()
             {
-                Step();
+                if (_fsm.RunEngineOnEntitySubmission)
+                    Step();
             }
         }
     }

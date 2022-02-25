@@ -15,8 +15,8 @@ namespace Svelto.ECS.Schema
             public static int Generate() => Interlocked.Increment(ref Count);
         }
 
-        public abstract class IndexBase<T>
-            where T : unmanaged, IKeyEquatable<T>
+        public abstract class IndexBase<TK>
+            where TK : unmanaged, IKeyEquatable<TK>
         {
             // equvalent to ExclusiveGroupStruct.Generate()
             protected readonly int _indexerId = GlobalIndexCount.Generate();
@@ -24,26 +24,33 @@ namespace Svelto.ECS.Schema
             internal IndexBase() { }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public IndexQuery<T> Query(in T key)
+            public IndexQuery<TK> Query(in TK key)
             {
-                return new IndexQuery<T>(_indexerId, key);
+                return new IndexQuery<TK>(_indexerId, key);
+            }
+        }
+
+        public abstract class IndexBase<TK, TC> : IndexBase<TK>, IEntitySchemaIndex
+            where TK : unmanaged, IKeyEquatable<TK>
+            where TC : unmanaged, IIndexedComponent<TK>
+        {
+            RefWrapperType IEntitySchemaIndex.KeyType => TypeRefWrapper<TK>.wrapper;
+
+            int IEntitySchemaIndex.IndexerID => _indexerId;
+
+            void IEntitySchemaIndex.AddEngines(EnginesRoot enginesRoot, IndexesDB indexesDB)
+            {
+                enginesRoot.AddEngine(new TableIndexingEngine<TK, TC>(indexesDB));
             }
         }
     }
 
     namespace Definition
     {
-        public sealed class Index<T> : IndexBase<T>, IEntitySchemaIndex
+        public sealed class Index<T> : IndexBase<T, IEntityIndexKey<T>.Component>
             where T : unmanaged, IEntityIndexKey<T>
         {
-            RefWrapperType IEntitySchemaIndex.KeyType => TypeRefWrapper<T>.wrapper;
 
-            int IEntitySchemaIndex.IndexerID => _indexerId;
-
-            void IEntitySchemaIndex.AddEngines(EnginesRoot enginesRoot, IndexesDB indexesDB)
-            {
-                enginesRoot.AddEngine(new TableIndexingEngine<T>(indexesDB));
-            }
         }
     }
 }
