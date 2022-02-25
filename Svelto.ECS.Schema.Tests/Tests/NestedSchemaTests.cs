@@ -20,8 +20,8 @@ namespace Svelto.ECS.Schema.Tests
         {
             public readonly Table<DoofusEntityDescriptor> Doofus = new Table<DoofusEntityDescriptor>();
 
-            public readonly Ranged<Table<FoodEntityDescriptor>, FoodType> Food =
-                new Ranged<Table<FoodEntityDescriptor>, FoodType>((int)FoodType.MAX, x => (int)x);
+            public readonly RangedTable<FoodEntityDescriptor, FoodType> Food =
+                new RangedTable<FoodEntityDescriptor, FoodType>((int)FoodType.MAX, x => (int)x);
         }
 
         public class TeamSchema : IEntitySchema
@@ -42,6 +42,8 @@ namespace Svelto.ECS.Schema.Tests
             public TestSchema()
             {
                 EatingDoofuses = Team.Combine(x => x.State[StateType.Eating].Doofus);
+
+                Team.Combine(x => x.State.Combine(x => x.Food));
             }
         }
 
