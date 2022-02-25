@@ -23,7 +23,7 @@ namespace Svelto.ECS.Schema
 
         public void EntitiesSubmitted()
         {
-            // _indexesDB.ClearSets();
+            _indexesDB.ClearMemos();
         }
     }
 }

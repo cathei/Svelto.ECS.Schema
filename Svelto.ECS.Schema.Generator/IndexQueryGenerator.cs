@@ -9,10 +9,10 @@ namespace Svelto.ECS.Schema.Generator
     {
         const string QueryEntitiesTemplate = @"
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public IndexQueryEnumerable<{1}> Entities<{1}>(IndexesDB indexesDB)
+        public static IndexQueryEnumerable<{1}> Entities<{1}>(this IIndexQuery query, IndexesDB indexesDB)
 {2}
         {{
-            return new IndexQueryEnumerable<{1}>(indexesDB, GetGroupIndexDataList(indexesDB));
+            return new IndexQueryEnumerable<{1}>(indexesDB, query.GetGroupIndexDataList(indexesDB).groups);
         }}
 ";
 
@@ -20,7 +20,7 @@ namespace Svelto.ECS.Schema.Generator
         public ({0}, IndexedIndices) Entities<{1}>(IndexesDB indexesDB)
 {2}
         {{
-            var groupDataList = _query.GetGroupIndexDataList(indexesDB);
+            var groupDataList = _query.GetGroupIndexDataList(indexesDB).groups;
 
             var indices = new FilteredIndices();
 
@@ -41,7 +41,7 @@ namespace Svelto.ECS.Schema.Generator
         public IndexQueryGroupsEnumerable<{1}> Entities<{1}>(IndexesDB indexesDB)
 {2}
         {{
-            return new IndexQueryGroupsEnumerable<{1}>(indexesDB, _query.GetGroupIndexDataList(indexesDB), _groups);
+            return new IndexQueryGroupsEnumerable<{1}>(indexesDB, _query.GetGroupIndexDataList(indexesDB).groups, _groups);
         }}
 ";
 
@@ -75,20 +75,21 @@ namespace Svelto.ECS.Schema.Generator
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Svelto.DataStructures;
+using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema
 {{
-    public partial struct IndexQuery<TKey>
+    public static partial class IndexQueryExtensions
     {{
 {GenerateQueryEntities(QueryEntitiesTemplate)}
     }}
 
-    public partial struct IndexGroupQuery<TKey, TDesc>
+    public partial struct IndexGroupQuery<TQuery, TDesc>
     {{
 {GenerateQueryEntities(QueryEntitiesWithGroupTemplate)}
     }}
 
-    public partial struct IndexGroupsQuery<TKey, TDesc>
+    public partial struct IndexGroupsQuery<TQuery, TDesc>
     {{
 {GenerateQueryEntities(QueryEntitiesWithGroupsTemplate)}
     }}

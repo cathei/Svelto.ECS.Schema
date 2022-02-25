@@ -8,7 +8,7 @@ namespace Svelto.ECS.Schema
 {
     namespace Internal
     {
-        public class RangedTableBase<TDesc> : IEntitySchemaElement
+        public abstract class RangedTableBase<TDesc> : IEntitySchemaElement
             where TDesc : IEntityDescriptor, new()
         {
             internal readonly Table<TDesc>[] _tables;

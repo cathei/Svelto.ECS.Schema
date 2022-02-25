@@ -25,7 +25,7 @@ namespace Svelto.ECS.Schema
                     continue;
 
                 indexesDB.createdEngines.Add(keyType);
-                enginesRoot.AddEngine(indexers[keyType].CreateEngine(indexesDB));
+                indexers[keyType].AddEngines(enginesRoot, indexesDB);
             }
 
             return schema;

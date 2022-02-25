@@ -66,7 +66,7 @@ namespace Svelto.ECS.Schema
 
         private void AddToFilter(int indexerID, ref IEntityIndexKey<T>.Component keyComponent, in ExclusiveGroupStruct groupID)
         {
-            ref var groupData = ref _indexesDB.CreateOrGetGroupData(indexerID, keyComponent.Key, groupID);
+            ref var groupData = ref _indexesDB.CreateOrGetIndexerGroup(indexerID, keyComponent.Key, groupID);
 
             var mapper = _indexesDB.entitiesDB.QueryMappedEntities<IEntityIndexKey<T>.Component>(groupID);
 
@@ -99,7 +99,9 @@ namespace Svelto.ECS.Schema
 
         private void RemoveFromFilter(int indexerID, ref IEntityIndexKey<T>.Component keyComponent, in ExclusiveGroupStruct groupID)
         {
-            ref var groupData = ref keyComponent.RemoveFromIndexesDB(_indexesDB, indexerID, groupID);
+            ref var groupData = ref _indexesDB.CreateOrGetIndexerGroup(indexerID, keyComponent.Key, groupID);
+
+            groupData.filter.TryRemove(keyComponent.ID.entityID);
 
             // filter will be rebuilt when submission is done
             _groupsToRebuild.Add(groupData);
@@ -109,7 +111,7 @@ namespace Svelto.ECS.Schema
         {
             foreach (var groupData in _groupsToRebuild)
             {
-                var mapper = _indexesDB.entitiesDB.QueryMappedEntities<T>(groupData.group);
+                var mapper = _indexesDB.entitiesDB.QueryMappedEntities<IEntityIndexKey<T>.Component>(groupData.group);
                 groupData.filter.RebuildIndicesOnStructuralChange(mapper);
             }
 

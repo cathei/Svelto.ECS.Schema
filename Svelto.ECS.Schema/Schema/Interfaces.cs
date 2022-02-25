@@ -20,7 +20,7 @@ namespace Svelto.ECS.Schema
     {
         RefWrapperType KeyType { get; }
         int IndexerID { get; }
-        IEngine CreateEngine(IndexesDB indexesDB);
+        void AddEngines(EnginesRoot enginesRoot, IndexesDB indexesDB);
     }
 
     internal interface IEntitySchemaShard : IEntitySchemaElement
@@ -30,7 +30,10 @@ namespace Svelto.ECS.Schema
         object GetSchema(int index);
     }
 
-    internal interface IEntitySchemaMemo : IEntitySchemaElement { }
+    internal interface IEntitySchemaMemo : IEntitySchemaElement
+    {
+        int MemoID { get; }
+    }
 
     public interface IEntitySchema { }
 }

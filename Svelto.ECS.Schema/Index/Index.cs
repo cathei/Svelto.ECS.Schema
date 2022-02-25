@@ -15,43 +15,35 @@ namespace Svelto.ECS.Schema
             public static int Generate() => Interlocked.Increment(ref Count);
         }
 
-        public class IndexBase<T> : IEntitySchemaIndex
-            where T : unmanaged, IEntityIndexKey<T>
+        public abstract class IndexBase<T>
+            where T : unmanaged, IKeyEquatable<T>
         {
             // equvalent to ExclusiveGroupStruct.Generate()
-            private readonly int _indexerId = GlobalIndexCount.Generate();
+            protected readonly int _indexerId = GlobalIndexCount.Generate();
+
+            internal IndexBase() { }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public IndexQuery<T> Query(in T key)
             {
                 return new IndexQuery<T>(_indexerId, key);
             }
-
-            IEngine IEntitySchemaIndex.CreateEngine(IndexesDB context)
-            {
-                return new TableIndexingEngine<T>(context);
-            }
-
-            RefWrapperType IEntitySchemaIndex.KeyType => TypeRefWrapper<T>.wrapper;
-
-            int IEntitySchemaIndex.IndexerID => _indexerId;
         }
     }
 
     namespace Definition
     {
-        public sealed class Index<T> : IndexBase<T>
+        public sealed class Index<T> : IndexBase<T>, IEntitySchemaIndex
             where T : unmanaged, IEntityIndexKey<T>
         {
+            RefWrapperType IEntitySchemaIndex.KeyType => TypeRefWrapper<T>.wrapper;
 
-        }
+            int IEntitySchemaIndex.IndexerID => _indexerId;
 
-        public sealed class Index<T1, T2> : IndexBase<MultiIndexKey<T1, T2>>
-            where T1 : unmanaged, IEntityIndexKey<T1>
-            where T2 : unmanaged, IEntityIndexKey<T2>
-        {
-
+            void IEntitySchemaIndex.AddEngines(EnginesRoot enginesRoot, IndexesDB indexesDB)
+            {
+                enginesRoot.AddEngine(new TableIndexingEngine<T>(indexesDB));
+            }
         }
     }
-
 }
