@@ -1,11 +1,7 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
 using Svelto.DataStructures;
-using Svelto.ECS;
-using Svelto.ECS.DataStructures;
+using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema
 {
@@ -25,7 +21,7 @@ namespace Svelto.ECS.Schema
         internal abstract class IndexerData {}
 
         internal sealed class IndexerData<TKey> : IndexerData
-            where TKey : unmanaged, IEntityIndexKey<TKey>
+            where TKey : unmanaged, IKeyEquatable<TKey>
         {
             public readonly struct KeyWrapper : IEquatable<KeyWrapper>
             {
@@ -103,8 +99,9 @@ namespace Svelto.ECS.Schema
         }
 
         // this should be fast enough, no group change means we don't have to rebuild filter
-        internal void NotifyKeyUpdate<T>(ref Indexed<T> keyComponent, in T oldKey, in T newKey)
-            where T : unmanaged, IEntityIndexKey<T>
+        internal void NotifyKeyUpdate<TC, TK>(ref TC keyComponent, in TK oldKey, in TK newKey)
+            where TC : struct, IIndexedComponent
+            where TK : unmanaged, IEntityIndexKey<TK>
         {
             // component updated but key didn't change
             if (oldKey.Equals(newKey))
@@ -114,7 +111,7 @@ namespace Svelto.ECS.Schema
             if (!TryGetShard(keyComponent.ID.groupID, out var node))
                 return;
 
-            var keyType = TypeRefWrapper<T>.wrapper;
+            var keyType = TypeRefWrapper<TK>.wrapper;
 
             while (node != null)
             {
@@ -134,29 +131,31 @@ namespace Svelto.ECS.Schema
             }
         }
 
-        private void UpdateFilters<T>(int indexerId, ref Indexed<T> keyComponent, in T oldKey, in T newKey)
-            where T : unmanaged, IEntityIndexKey<T>
+        private void UpdateFilters<TC, TK>(int indexerId, ref TC keyComponent, in TK oldKey, in TK newKey)
+            where TC : struct, IIndexedComponent
+            where TK : unmanaged, IEntityIndexKey<TK>
         {
-            ref var oldGroupData = ref CreateOrGetGroupData(indexerId, oldKey, keyComponent.ID.groupID);
-            ref var newGroupData = ref CreateOrGetGroupData(indexerId, newKey, keyComponent.ID.groupID);
+            ref var oldGroupData = ref CreateOrGetGroupData<TC, TK>(indexerId, oldKey, keyComponent.ID.groupID);
+            ref var newGroupData = ref CreateOrGetGroupData<TC, TK>(indexerId, newKey, keyComponent.ID.groupID);
 
-            var mapper = entitiesDB.QueryMappedEntities<Indexed<T>>(keyComponent.ID.groupID);
+            var mapper = entitiesDB.QueryMappedEntities<TC>(keyComponent.ID.groupID);
 
             oldGroupData.filter.TryRemove(keyComponent.ID.entityID);
             newGroupData.filter.Add(keyComponent.ID.entityID, mapper);
         }
 
-        internal ref IndexerGroupData CreateOrGetGroupData<T>(int indexerId, in T key, ExclusiveGroupStruct group)
-            where T : unmanaged, IEntityIndexKey<T>
+        internal ref IndexerGroupData CreateOrGetGroupData<TC, TK>(int indexerId, in TK key, ExclusiveGroupStruct group)
+            where TC : struct, IIndexedComponent
+            where TK : unmanaged, IEntityIndexKey<TK>
         {
-            var indexerData = CreateOrGetIndexerData<T>(indexerId);
+            var indexerData = CreateOrGetIndexerData<TK>(indexerId);
 
             var groupDict = indexerData.CreateOrGet(key).groups;
 
             return ref groupDict.GetOrCreate(group, () => new IndexerGroupData
             {
                 group = group,
-                filter = entitiesDB.GetFilters().CreateOrGetFilterForGroup<Indexed<T>>(GenerateFilterId(), group)
+                filter = entitiesDB.GetFilters().CreateOrGetFilterForGroup<TC>(GenerateFilterId(), group)
             });
         }
 

@@ -32,14 +32,5 @@ namespace Svelto.ECS.Schema
 
     internal interface IEntitySchemaMemo : IEntitySchemaElement { }
 
-    public interface IEntityIndexKey<T>
-        where T : unmanaged, IEntityIndexKey<T>
-    {
-        // This is not IEquatable because I want to keep it simple.
-        // Without verbosely override object.Equals and == operator etc.
-        // But if user wants they can always implement
-        bool Equals(T other);
-    }
-
     public interface IEntitySchema { }
 }

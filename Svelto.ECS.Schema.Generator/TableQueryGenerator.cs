@@ -60,10 +60,7 @@ namespace Svelto.ECS.Schema.Definition
     {{
 {GenerateQueryEntities(QueryTableTemplate)}
     }}
-}}
 
-namespace Svelto.ECS.Schema
-{{
     public partial struct Tables<T>
     {{
 {GenerateQueryEntities(QueryTablesTemplate)}

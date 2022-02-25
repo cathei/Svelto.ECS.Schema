@@ -1,6 +1,6 @@
 using Svelto.DataStructures;
 
-namespace Svelto.ECS.Schema
+namespace Svelto.ECS.Schema.Definition
 {
     public readonly partial struct Tables<T> where T : IEntityDescriptor
     {

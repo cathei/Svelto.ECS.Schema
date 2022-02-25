@@ -4,6 +4,8 @@ using Svelto.DataStructures;
 
 namespace Svelto.ECS.Schema
 {
+    // TODO: if apply new filter system, we can remove 'CheckRemove'
+    // but we still need 'CheckAdd' to make sure indexes are up-to-date
     internal class TableIndexingEngine<T> : IReactOnAddAndRemove<Indexed<T>>, IReactOnSwap<Indexed<T>>, IReactOnSubmission
         where T : unmanaged, IEntityIndexKey<T>
     {

@@ -44,6 +44,13 @@ namespace Svelto.ECS.Schema
         {
 
         }
+
+        public sealed class Index<T1, T2> : Internal.IndexBase<MultiIndexKey<T1, T2>>
+            where T1 : unmanaged, IEntityIndexKey<T1>
+            where T2 : unmanaged, IEntityIndexKey<T2>
+        {
+
+        }
     }
 
 }

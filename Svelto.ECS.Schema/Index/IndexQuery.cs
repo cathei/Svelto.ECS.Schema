@@ -6,11 +6,12 @@ using Svelto.DataStructures;
 using Svelto.ECS;
 using Svelto.ECS.DataStructures;
 using Svelto.ECS.Schema.Definition;
+using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema
 {
     public readonly ref partial struct IndexQuery<TKey>
-        where TKey : unmanaged, IEntityIndexKey<TKey>
+        where TKey : unmanaged, IKeyEquatable<TKey>
     {
         private readonly int _indexerId;
         private readonly TKey _key;
@@ -45,7 +46,7 @@ namespace Svelto.ECS.Schema
     }
 
     public readonly ref partial struct IndexGroupQuery<TKey, TDesc>
-        where TKey : unmanaged, IEntityIndexKey<TKey>
+        where TKey : unmanaged, IKeyEquatable<TKey>
         where TDesc : IEntityDescriptor, new()
     {
         private readonly IndexQuery<TKey> _query;
@@ -59,7 +60,7 @@ namespace Svelto.ECS.Schema
     }
 
     public readonly ref partial struct IndexGroupsQuery<TKey, TDesc>
-        where TKey : unmanaged, IEntityIndexKey<TKey>
+        where TKey : unmanaged, IKeyEquatable<TKey>
         where TDesc : IEntityDescriptor, new()
     {
         private readonly IndexQuery<TKey> _query;
