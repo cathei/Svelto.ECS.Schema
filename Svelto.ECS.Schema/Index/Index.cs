@@ -47,7 +47,7 @@ namespace Svelto.ECS.Schema
 
     namespace Definition
     {
-        public sealed class Index<T> : IndexBase<T, IEntityIndexKey<T>.Component>
+        public sealed class Index<T> : IndexBase<T, Indexed<T>>
             where T : unmanaged, IEntityIndexKey<T>
         {
 

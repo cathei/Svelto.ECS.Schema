@@ -19,7 +19,7 @@ namespace Svelto.ECS.Schema
         {
             bool Equals(T other);
 
-            public readonly struct Wrapper : IEquatable<Wrapper>
+            internal readonly struct Wrapper : IEquatable<Wrapper>
             {
                 private readonly T _value;
                 private readonly int _hashcode;
@@ -40,36 +40,11 @@ namespace Svelto.ECS.Schema
                 public static implicit operator T(Wrapper t) => t._value;
             }
         }
-
-        public interface IIndexedComponent<T> : IEntityComponent
-            where T : unmanaged, IKeyEquatable<T>
-        {
-            EGID ID { get; }
-            T Key { get; }
-        }
     }
 
     public interface IEntityIndexKey<T> : IKeyEquatable<T>
         where T : unmanaged, IEntityIndexKey<T>
     {
-        public struct Component : IIndexedComponent<T>, INeedEGID
-        {
-            public EGID ID { get; set; }
 
-            public T Key { get; private set; }
-
-            // constructors should be only called when building entity
-            public Component(in T key) : this()
-            {
-                Key = key;
-            }
-
-            public void Update(IndexesDB indexesDB, in T key)
-            {
-                T oldKey = Key;
-                Key = key;
-                indexesDB.NotifyKeyUpdate(ref this, oldKey, key);
-            }
-        }
     }
 }
