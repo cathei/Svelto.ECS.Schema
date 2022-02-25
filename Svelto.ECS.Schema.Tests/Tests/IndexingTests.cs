@@ -17,6 +17,8 @@ namespace Svelto.ECS.Schema.Tests
             public ItemOwner(int id) => characterId = id;
 
             public bool Equals(ItemOwner other) => characterId == other.characterId;
+
+            public static implicit operator ItemOwner(int value) => new ItemOwner(value);
         }
 
         // descriptors
@@ -27,34 +29,26 @@ namespace Svelto.ECS.Schema.Tests
         // schemas
         public class PlayerSchema : IEntitySchema
         {
-            internal Table<CharacterDescriptor> _character = new Table<CharacterDescriptor>();
-            public Group<CharacterDescriptor> Character => _character.Group();
+            public readonly Table<CharacterDescriptor> Character = new Table<CharacterDescriptor>();
+            public readonly Table<ItemDescriptor> Item = new Table<ItemDescriptor>();
 
-            internal Table<ItemDescriptor> _item = new Table<ItemDescriptor>();
-            public Group<ItemDescriptor> Item => _item.Group();
-
-            internal Index<ItemOwner> _itemsByOwner = new Index<ItemOwner>();
-            public IndexQuery<ItemOwner> ItemsByOwner(int characterId) => _itemsByOwner.Query(new ItemOwner(characterId));
+            public readonly Index<ItemOwner> ItemsByOwner = new Index<ItemOwner>();
         }
 
         public class TestSchema : IEntitySchema
         {
-            internal Ranged<PlayerSchema> _ai = new Ranged<PlayerSchema>();
-            public PlayerSchema AI => _ai.Schema();
+            public readonly PlayerSchema AI = new PlayerSchema();
+            public readonly Ranged<PlayerSchema> Players = new Ranged<PlayerSchema>(10);
 
-            internal Ranged<PlayerSchema> _players = new Ranged<PlayerSchema>(10);
-            public PlayerSchema Player(int playerId) => _players.Schema(playerId);
-
-            internal Index<ItemOwner> _itemsByOwner = new Index<ItemOwner>();
-            public IndexQuery<ItemOwner> ItemsByOwner(int characterId) => _itemsByOwner.Query(new ItemOwner(characterId));
+            public readonly Index<ItemOwner> ItemsByOwner = new Index<ItemOwner>();
 
             public Tables<CharacterDescriptor> AllCharacters { get; }
             public Tables<ItemDescriptor> AllItems { get; }
 
             public TestSchema()
             {
-                AllCharacters = AI.Character + _players.Schemas().Combine(x => x.Character);
-                AllItems = AI.Item + _players.Schemas().Combine(x => x.Item);
+                AllCharacters = AI.Character + Players.Combine(x => x.Character);
+                AllItems = AI.Item + Players.Combine(x => x.Item);
             }
         }
 
@@ -71,19 +65,19 @@ namespace Svelto.ECS.Schema.Tests
 
             for (int i = 0; i < 10; ++i)
             {
-                var itemBuilder = _schema.Player(0).Item.Build(_factory, itemIdCounter++);
+                var itemBuilder = _schema.Players[0].Item.Build(_factory, itemIdCounter++);
                 itemBuilder.Init(new Indexed<ItemOwner>(new ItemOwner(0)));
             }
 
             for (int i = 0; i < 10; ++i)
             {
-                var itemBuilder = _schema.Player(1).Item.Build(_factory, itemIdCounter++);
+                var itemBuilder = _schema.Players[1].Item.Build(_factory, itemIdCounter++);
                 itemBuilder.Init(new Indexed<ItemOwner>(new ItemOwner(0)));
             }
 
             _submissionScheduler.SubmitEntities();
 
-            var queriedGroups = _schema.ItemsByOwner(0)
+            var queriedGroups = _schema.ItemsByOwner.Query(0)
                 .Entities<Indexed<ItemOwner>>(_indexesDB).ToList();
 
             var queriedComponents = queriedGroups
@@ -102,11 +96,11 @@ namespace Svelto.ECS.Schema.Tests
 
             Assert.All(queriedComponents.Select(x => x.Key), x => Assert.Equal(0, x.characterId));
 
-            var (buffer, count) = _schema.Player(0).Item.Entities<Indexed<ItemOwner>>(_entitiesDB);
+            var (buffer, count) = _schema.Players[0].Item.Entities<Indexed<ItemOwner>>(_entitiesDB);
             for (int i = 0; i < count; ++i)
                 buffer[i].Update(_indexesDB, new ItemOwner(1));
 
-            queriedGroups = _schema.ItemsByOwner(0)
+            queriedGroups = _schema.ItemsByOwner.Query(0)
                 .Entities<Indexed<ItemOwner>>(_indexesDB).ToList();
 
             queriedComponents = queriedGroups.Select(x => (buffer: x.Item1.Item1, indices : x.Item1.Item2))
@@ -120,7 +114,7 @@ namespace Svelto.ECS.Schema.Tests
             Assert.DoesNotContain(10u, queriedComponents.Select(x => x.ID.entityID));
             Assert.Contains(20u, queriedComponents.Select(x => x.ID.entityID));
 
-            queriedGroups = _schema.ItemsByOwner(1)
+            queriedGroups = _schema.ItemsByOwner.Query(1)
                 .Entities<Indexed<ItemOwner>>(_indexesDB).ToList();
 
             queriedComponents = queriedGroups.Select(x => (buffer: x.Item1.Item1, indices : x.Item1.Item2))
@@ -148,19 +142,19 @@ namespace Svelto.ECS.Schema.Tests
 
             for (int i = 0; i < 10; ++i)
             {
-                var itemBuilder = _schema.Player(0).Item.Build(_factory, itemIdCounter++);
+                var itemBuilder = _schema.Players[0].Item.Build(_factory, itemIdCounter++);
                 itemBuilder.Init(new Indexed<ItemOwner>(new ItemOwner(0)));
             }
 
             for (int i = 0; i < 10; ++i)
             {
-                var itemBuilder = _schema.Player(1).Item.Build(_factory, itemIdCounter++);
+                var itemBuilder = _schema.Players[1].Item.Build(_factory, itemIdCounter++);
                 itemBuilder.Init(new Indexed<ItemOwner>(new ItemOwner(0)));
             }
 
             _submissionScheduler.SubmitEntities();
 
-            var queriedGroups = _schema.AI.ItemsByOwner(0)
+            var queriedGroups = _schema.AI.ItemsByOwner.Query(0)
                 .Entities<Indexed<ItemOwner>>(_indexesDB).ToList();
 
             var queriedComponents = queriedGroups
@@ -178,11 +172,11 @@ namespace Svelto.ECS.Schema.Tests
 
             var (buffer, count) = _schema.AI.Item.Entities<Indexed<ItemOwner>>(_entitiesDB);
             for (int i = 0; i < count / 2; ++i)
-                _functions.SwapEntityGroup(buffer[i].ID, _schema.Player(1).Item);
+                _functions.SwapEntityGroup(buffer[i].ID, _schema.Players[1].Item);
 
             _submissionScheduler.SubmitEntities();
 
-            queriedGroups = _schema.AI.ItemsByOwner(0)
+            queriedGroups = _schema.AI.ItemsByOwner.Query(0)
                 .Entities<Indexed<ItemOwner>>(_indexesDB).ToList();
 
             queriedComponents = queriedGroups
@@ -196,7 +190,7 @@ namespace Svelto.ECS.Schema.Tests
             Assert.DoesNotContain(0u, queriedComponents.Select(x => x.ID.entityID));
             Assert.Contains(5u, queriedComponents.Select(x => x.ID.entityID));
 
-            queriedGroups = _schema.Player(1).ItemsByOwner(0)
+            queriedGroups = _schema.Players[1].ItemsByOwner.Query(0)
                 .Entities<Indexed<ItemOwner>>(_indexesDB).ToList();
 
             queriedComponents = queriedGroups
@@ -226,27 +220,27 @@ namespace Svelto.ECS.Schema.Tests
 
             for (int i = 0; i < 10; ++i)
             {
-                var itemBuilder = _schema.Player(3).Item.Build(_factory, itemIdCounter++);
+                var itemBuilder = _schema.Players[3].Item.Build(_factory, itemIdCounter++);
                 itemBuilder.Init(new Indexed<ItemOwner>(new ItemOwner(i)));
             }
 
             for (int i = 0; i < 10; ++i)
             {
-                var itemBuilder = _schema.Player(5).Item.Build(_factory, itemIdCounter++);
+                var itemBuilder = _schema.Players[5].Item.Build(_factory, itemIdCounter++);
                 itemBuilder.Init(new Indexed<ItemOwner>(new ItemOwner(i)));
             }
 
             _submissionScheduler.SubmitEntities();
 
-            // var (buffer, indices) = _schema.ItemsByOwner(0).From(_schema.AI.Item)).Entities<Indexed<ItemOwner>>();
-            var (buffer, indices) = _schema.ItemsByOwner(0)
+            // var (buffer, indices) = _schema.ItemsByOwner.Query(0).From(_schema.AI.Item)).Entities<Indexed<ItemOwner>>();
+            var (buffer, indices) = _schema.ItemsByOwner.Query(0)
                 .From(_schema.AI.Item)
                 .Entities<Indexed<ItemOwner>>(_indexesDB);
 
             Assert.Equal(1, indices.Count());
             Assert.Equal(0u, buffer[indices[0]].ID.entityID);
 
-            var queriedGroups = _schema.ItemsByOwner(7)
+            var queriedGroups = _schema.ItemsByOwner.Query(7)
                 .From(_schema.AllItems)
                 .Entities<Indexed<ItemOwner>>(_indexesDB).ToList();
 
