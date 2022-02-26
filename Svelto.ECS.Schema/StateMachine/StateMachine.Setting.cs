@@ -6,12 +6,11 @@ using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema
 {
-    public abstract partial class StateMachine<TState> : IEntityStateMachine
-        where TState : unmanaged, IKeyEquatable<TState>
+    public partial class StateMachine<TState> : IEntityStateMachine
     {
         protected StateBuilder AddState(in TState state)
         {
-            var wrapper = new IKeyEquatable<TState>.Wrapper(state);
+            var wrapper = new IKeyEquatable<Key>.Wrapper(new Key(state));
 
             if (_states.ContainsKey(wrapper))
             {

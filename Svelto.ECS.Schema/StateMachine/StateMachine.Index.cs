@@ -12,33 +12,53 @@ namespace Svelto.ECS.Schema
         // TransitionConfimed + transition index
         internal const int TransitionConfimed = 2;
 
-        public struct Component : IIndexedComponent<TState>
+        public readonly struct Key : IEntityIndexKey<Key>
+        {
+            internal readonly TState _state;
+
+            public Key(TState state)
+            {
+                _state = state;
+            }
+
+            public bool Equals(Key other)
+            {
+                return Comparer.Equals(_state, other._state);
+            }
+
+            public static implicit operator Key(in TState state) => new Key(state);
+            public static implicit operator TState(in Key key) => key._state;
+        }
+
+        public struct Component : IIndexedComponent<Key>
         {
             public EGID ID { get; set; }
 
             internal int nextTransition;
 
-            public TState State { get; private set; }
+            public TState State => _key;
 
-            TState IIndexedComponent<TState>.Key => State;
+            internal Key _key;
+
+            Key IIndexedComponent<Key>.Key => _key;
 
             // constructors should be only called when building entity
             public Component(in TState state) : this()
             {
-                State = state;
+                _key = state;
             }
 
             internal void Update(IndexesDB indexesDB, in TState state)
             {
-                TState oldState = State;
-                State = state;
+                Key oldKey = _key;
+                _key = state;
 
                 // we can directly update our state machine indexer
                 // since it is not attached to any node
-                indexesDB.UpdateFilters(Index._indexerId, ref this, oldState, state);
+                indexesDB.UpdateFilters(Index._indexerId, ref this, oldKey, _key);
 
                 // and, propagate to others indexers in schema (is this even necessary?)
-                indexesDB.NotifyKeyUpdate(ref this, oldState, state);
+                indexesDB.NotifyKeyUpdate(ref this, oldKey, _key);
             }
         }
 
@@ -46,7 +66,7 @@ namespace Svelto.ECS.Schema
         // it is static member here so user can easily access :)
         public static StateMachineIndex Index = new StateMachineIndex();
 
-        public sealed class StateMachineIndex : IndexBase<TState, Component>
+        public sealed class StateMachineIndex : IndexBase<Key, Component>
         {
         }
     }

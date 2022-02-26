@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using Svelto.DataStructures;
@@ -6,14 +7,20 @@ using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema
 {
+    /// <summary>
+    /// State machine on Svelto ECS
+    /// </summary>
+    /// <typeparam name="TState">Value type representing a state. Assumed as enum.</typeparam>
     public abstract partial class StateMachine<TState> : IEntityStateMachine
-        where TState : unmanaged, IKeyEquatable<TState>
+        where TState : unmanaged
     {
-        internal FasterDictionary<IKeyEquatable<TState>.Wrapper, StateConfig> _states;
+        internal FasterDictionary<IKeyEquatable<Key>.Wrapper, StateConfig> _states;
+
+        internal static EqualityComparer<TState> Comparer = EqualityComparer<TState>.Default;
 
         protected StateMachine()
         {
-            _states = new FasterDictionary<IKeyEquatable<TState>.Wrapper, StateConfig>();
+            _states = new FasterDictionary<IKeyEquatable<Key>.Wrapper, StateConfig>();
         }
 
         protected internal delegate bool Predicate<TComponent>(ref TComponent component)
