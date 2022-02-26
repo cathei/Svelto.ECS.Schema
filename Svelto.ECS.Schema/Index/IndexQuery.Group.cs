@@ -10,48 +10,55 @@ using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema
 {
-    public readonly ref partial struct IndexGroupQuery<TQuery, TDesc>
+    public readonly ref partial struct IndexGroupQuery<TQuery>
         where TQuery : IEntityIndexQuery
-        where TDesc : IEntityDescriptor, new()
     {
         private readonly TQuery _query;
-        private readonly Table<TDesc> _group;
+        private readonly ExclusiveGroupStruct _group;
 
-        public IndexGroupQuery(in TQuery query, Table<TDesc> table)
+        public IndexGroupQuery(in TQuery query, in ExclusiveGroupStruct table)
         {
             _query = query;
             _group = table;
         }
+
+        public IndexedIndices Indices(IndexesDB indexesDB)
+        {
+            var setData = _query.GetGroupIndexDataList(indexesDB);
+
+            if (!setData.groups.TryGetValue(_group, out var groupData))
+                return default;
+
+            return new IndexedIndices(groupData.filter.filteredIndices);
+        }
     }
 
-    public readonly ref partial struct IndexGroupsQuery<TQuery, TDesc>
+    public readonly ref partial struct IndexGroupsQuery<TQuery>
         where TQuery : IEntityIndexQuery
-        where TDesc : IEntityDescriptor, new()
     {
         private readonly TQuery _query;
-        private readonly Tables<TDesc> _groups;
+        private readonly LocalFasterReadOnlyList<ExclusiveGroupStruct> _groups;
 
-        public IndexGroupsQuery(in TQuery query, in Tables<TDesc> tables)
+        public IndexGroupsQuery(in TQuery query, in LocalFasterReadOnlyList<ExclusiveGroupStruct> groups)
         {
             _query = query;
-            _groups = tables;
+            _groups = groups;
         }
     }
 
     public static partial class IndexQueryExtensions
     {
-        public static IndexGroupQuery<TQuery, TDesc> From<TQuery, TDesc>(this TQuery query, Table<TDesc> table)
+        public static IndexGroupQuery<TQuery> From<TQuery>(this TQuery query, in ExclusiveGroupStruct group)
             where TQuery : IEntityIndexQuery
-            where TDesc : IEntityDescriptor, new()
         {
-            return new IndexGroupQuery<TQuery, TDesc>(query, table);
+            return new IndexGroupQuery<TQuery>(query, group);
         }
 
-        public static IndexGroupsQuery<TQuery, TDesc> From<TQuery, TDesc>(this TQuery query, Tables<TDesc> tables)
+        public static IndexGroupsQuery<TQuery> From<TQuery>(this TQuery query,
+                in LocalFasterReadOnlyList<ExclusiveGroupStruct> groups)
             where TQuery : IEntityIndexQuery
-            where TDesc : IEntityDescriptor, new()
         {
-            return new IndexGroupsQuery<TQuery, TDesc>(query, tables);
+            return new IndexGroupsQuery<TQuery>(query, groups);
         }
     }
 }

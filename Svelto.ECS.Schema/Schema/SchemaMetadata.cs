@@ -77,7 +77,7 @@ namespace Svelto.ECS.Schema
                         break;
 
                     case ISchemaDefinitionMemo memo:
-                    case ISchemaDefinitionStateMachine stateMachine:
+                    // case ISchemaDefinitionStateMachine stateMachine:
                         break;
 
                     default:

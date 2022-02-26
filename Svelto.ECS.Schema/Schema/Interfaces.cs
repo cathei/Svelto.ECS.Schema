@@ -43,7 +43,7 @@ namespace Svelto.ECS.Schema
             int MemoID { get; }
         }
 
-        internal interface ISchemaDefinitionStateMachine : ISchemaDefinition { }
+        // internal interface ISchemaDefinitionStateMachine : ISchemaDefinition { }
     }
 
     public interface IEntitySchema : Internal.ISchemaDefinition { }
