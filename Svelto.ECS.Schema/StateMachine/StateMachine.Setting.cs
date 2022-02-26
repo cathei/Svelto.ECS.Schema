@@ -17,7 +17,7 @@ namespace Svelto.ECS.Schema
                 throw new ECSException($"State {state} already exsists!");
             }
 
-            var stateConfig = new StateConfig(state);
+            var stateConfig = new StateConfig(this, state);
             _states[wrapper] = stateConfig;
 
             return new StateBuilder(stateConfig);
@@ -32,38 +32,69 @@ namespace Svelto.ECS.Schema
                 _state = stateConfig;
             }
 
-            public StateTransitionBuilder AddTransition(in TState next)
+            public TransitionBuilder AddTransition(in TState next)
             {
-                var transition = new TransitionConfig(_state, _state._transitions.count, next);
+                var transition = new TransitionConfig(_state._fsm, _state._transitions.count, next);
                 _state._transitions.Add(transition);
-                return new StateTransitionBuilder(this, transition);
+                return new TransitionBuilder(transition);
+            }
+
+            public TransitionBuilder AddTransition(in StateBuilder next)
+                => AddTransition(next._state._state);
+
+            public StateBuilder ExecuteOnExit<TComponent>(Callback<TComponent> callback)
+                where TComponent : unmanaged, IEntityComponent
+            {
+                var config = new CallbackConfig<TComponent>(callback);
+                _state._onExit.Add(config);
+                return this;
+            }
+
+            public StateBuilder ExecuteOnEnter<TComponent>(Callback<TComponent> callback)
+                where TComponent : unmanaged, IEntityComponent
+            {
+                var config = new CallbackConfig<TComponent>(callback);
+                _state._onEnter.Add(config);
+                return this;
             }
         }
 
-        protected readonly ref struct StateTransitionBuilder
+        protected readonly ref struct TransitionBuilder
         {
-            internal readonly StateBuilder _state;
             internal readonly TransitionConfig _transition;
 
-            internal StateTransitionBuilder(in StateBuilder stateBuilder, TransitionConfig transitionConfig)
+            internal TransitionBuilder(TransitionConfig transitionConfig)
             {
-                _state = stateBuilder;
                 _transition = transitionConfig;
             }
 
-            public StateTransitionBuilder AddCondition<TComponent>(Predicate<TComponent> preciate)
+            public TransitionBuilder AddCondition<TComponent>(Predicate<TComponent> preciate)
                 where TComponent : unmanaged, IEntityComponent
             {
                 var condition = new ConditionConfig<TComponent>(preciate);
                 _transition._conditions.Add(condition);
                 return this;
             }
+        }
 
-            // fluent api
-            public StateTransitionBuilder AddTransition(in TState next)
+        protected readonly ref struct AnyStateBuilder
+        {
+            internal readonly AnyStateConfig _state;
+
+            internal AnyStateBuilder(AnyStateConfig stateConfig)
             {
-                return _state.AddTransition(next);
+                _state = stateConfig;
             }
+
+            public TransitionBuilder AddTransition(in TState next)
+            {
+                var transition = new TransitionConfig(_state._fsm, _state._transitions.count, next);
+                _state._transitions.Add(transition);
+                return new TransitionBuilder(transition);
+            }
+
+            public TransitionBuilder AddTransition(in StateBuilder next)
+                => AddTransition(next._state._state);
         }
     }
 }

@@ -11,10 +11,10 @@ namespace Svelto.ECS.Schema
         /// </summary>
         public virtual bool RunEngineOnEntitySubmission => true;
 
-        IStepEngine IEntityStateMachine.AddEngines(IndexesDB indexesDB)
+        IStepEngine IEntityStateMachine.AddEngines(EnginesRoot enginesRoot, IndexesDB indexesDB)
         {
             // this is required to handle added entity or removal
-            indexesDB.enginesRoot.AddEngine(new TableIndexingEngine<TState, Component>(indexesDB));
+            enginesRoot.AddEngine(new TableIndexingEngine<Key, Component>(indexesDB));
 
             // this is required to validate and change state
             var engine = new Engine(this, indexesDB);
@@ -22,7 +22,7 @@ namespace Svelto.ECS.Schema
             // order would be important here ...
             // for now we don't want to be in-between of IReactAdd and IReactSubmission
             // TODO: after new filter appplied this can move up to ensure initial state
-            indexesDB.enginesRoot.AddEngine(engine);
+            enginesRoot.AddEngine(engine);
 
             return engine;
         }
@@ -58,21 +58,19 @@ namespace Svelto.ECS.Schema
                         _fsm._states.unsafeValues[i].Evaluate(_indexesDB, component, group);
                     }
 
-                    for (int i = 0; i < count; ++i)
+                    // any state transition has lower priority
+                    _fsm._anyState.Evaluate(_indexesDB, component, count, group);
+
+                    // check for exit candidates
+                    for (int i = 0; i < _fsm._states.count; ++i)
                     {
-                        // this means transition condition has met
-                        if (component[i].nextTransition >= TransitionConfimed)
-                        {
-                            var transitionID = component[i].nextTransition - TransitionConfimed;
+                        _fsm._states.unsafeValues[i].ProcessExit(_indexesDB, group);
+                    }
 
-                            var wrapper = new IKeyEquatable<TState>.Wrapper(component[i].State);
-                            var nextState = _fsm._states[wrapper]._transitions[transitionID]._next;
-
-                            // this group will not be visited again
-                            // see you next step
-                            component[i].nextTransition = TransitionAvailable;
-                            component[i].Update(_indexesDB, nextState);
-                        }
+                    // check for enter candidates
+                    for (int i = 0; i < _fsm._states.count; ++i)
+                    {
+                        _fsm._states.unsafeValues[i].ProcessEnter(_indexesDB, component, group);
                     }
                 }
             }

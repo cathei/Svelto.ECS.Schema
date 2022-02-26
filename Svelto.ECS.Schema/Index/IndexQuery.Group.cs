@@ -16,17 +16,17 @@ namespace Svelto.ECS.Schema
         private readonly TQuery _query;
         private readonly ExclusiveGroupStruct _group;
 
-        public IndexGroupQuery(in TQuery query, in ExclusiveGroupStruct table)
+        public IndexGroupQuery(in TQuery query, in ExclusiveGroupStruct group)
         {
             _query = query;
-            _group = table;
+            _group = group;
         }
 
         public IndexedIndices Indices(IndexesDB indexesDB)
         {
             var setData = _query.GetGroupIndexDataList(indexesDB);
 
-            if (!setData.groups.TryGetValue(_group, out var groupData))
+            if (setData.groups == null || !setData.groups.TryGetValue(_group, out var groupData))
                 return default;
 
             return new IndexedIndices(groupData.filter.filteredIndices);

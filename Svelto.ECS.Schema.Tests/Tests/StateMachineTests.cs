@@ -30,39 +30,73 @@ namespace Svelto.ECS.Schema.Tests
         {
             public CharacterFSM()
             {
-                AddState(CharacterState.Normal)
-                    .AddTransition(CharacterState.Upset)
-                        .AddCondition((ref RageComponent rage) => rage.value >= 10)
-                    .AddTransition(CharacterState.Special)
-                        .AddCondition((ref RageComponent rage) => rage.value < 0)
-                        .AddCondition((ref TriggerComponent trigger) => trigger.value);
+                var stateNormal = AddState(CharacterState.Normal);
+                var stateUpset = AddState(CharacterState.Upset);
+                var stateAngry = AddState(CharacterState.Angry);
+                var stateSpecial = AddState(CharacterState.Special);
 
-                AddState(CharacterState.Upset)
-                    .AddTransition(CharacterState.Normal)
-                        .AddCondition((ref RageComponent rage) => rage.value < 10)
-                    .AddTransition(CharacterState.Angry)
-                        .AddCondition((ref RageComponent rage) => rage.value >= 20);
+                stateNormal.AddTransition(stateUpset)
+                    .AddCondition((ref RageComponent rage) => rage.value >= 10);
 
-                AddState(CharacterState.Angry)
-                    .AddTransition(CharacterState.Normal)
-                        .AddCondition((ref RageComponent rage) => rage.value < 20);
+                stateNormal.AddTransition(stateSpecial)
+                    .AddCondition((ref RageComponent rage) => rage.value < 0)
+                    .AddCondition((ref TriggerComponent trigger) => trigger.value);
 
-                AddState(CharacterState.Special)
-                    .AddTransition(CharacterState.Normal)
-                        .AddCondition((ref SpecialTimerComponent timer) => timer.timer > 1);
+                stateUpset.AddTransition(stateAngry)
+                    .AddCondition((ref RageComponent rage) => rage.value >= 20);
+
+                stateSpecial.AddTransition(stateNormal)
+                    .AddCondition((ref SpecialTimerComponent timer) => timer.timer > 1);
+
+                stateSpecial
+                    .ExecuteOnEnter((ref TriggerComponent trigger) => trigger.value = false)
+                    .ExecuteOnExit((ref RageComponent rage) => rage.value = 5);
+
+                // any state but special
+                AnyState.AddTransition(stateNormal)
+                    .AddCondition((ref Component self) => self.State != CharacterState.Special)
+                    .AddCondition((ref RageComponent rage) => rage.value < 10);
             }
         }
 
         public class CharacterDescriptor : GenericEntityDescriptor<
-            RageComponent, TriggerComponent, SpecialTimerComponent, CharacterFSM.Component>
-        {
-
-        }
+            RageComponent, TriggerComponent, SpecialTimerComponent, CharacterFSM.Component> { }
 
         public class TestSchema : IEntitySchema
         {
             public readonly Table<CharacterDescriptor> Character = new Table<CharacterDescriptor>();
         }
 
+        public StateMachineTests() : base()
+        {
+            _enginesRoot.AddStateMachine<CharacterFSM>(_indexesDB);
+        }
+
+        [Fact]
+        public void NormalToUpsetTest()
+        {
+            for (uint i = 0; i < 10; ++i)
+            {
+                var character = _schema.Character.Build(_factory, i);
+                character.Init(new CharacterFSM.Component(CharacterState.Normal));
+            }
+
+            _submissionScheduler.SubmitEntities();
+
+            var (rage, fsm, count) = _schema.Character.Entities<RageComponent, CharacterFSM.Component>(_entitiesDB);
+
+            for (int i = 0; i < count; ++i)
+            {
+                Assert.Equal(CharacterState.Normal, fsm[i].State);
+                rage[i].value = i * 2;
+            }
+
+            _submissionScheduler.SubmitEntities();
+
+            for (int i = 0; i < count; ++i)
+            {
+                Assert.Equal(i < 5 ? CharacterState.Normal : CharacterState.Upset, fsm[i].State);
+            }
+        }
     }
 }

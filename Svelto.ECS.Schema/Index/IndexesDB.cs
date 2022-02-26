@@ -17,13 +17,10 @@ namespace Svelto.ECS.Schema
         // well... let's have some space for user defined filter
         private int filterIdCounter = 10000;
 
-        internal EnginesRoot enginesRoot;
         internal EntitiesDB entitiesDB;
 
-        internal IndexesDB(EnginesRoot enginesRoot)
+        internal IndexesDB()
         {
-            this.enginesRoot = enginesRoot;
-
             groupToTable = new FasterDictionary<ExclusiveGroupStruct, SchemaMetadata.TableNode>();
             createdIndexerEngines = new HashSet<RefWrapperType>();
 

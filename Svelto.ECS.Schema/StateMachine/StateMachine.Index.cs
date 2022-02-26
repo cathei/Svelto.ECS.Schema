@@ -6,11 +6,12 @@ namespace Svelto.ECS.Schema
     public partial class StateMachine<TState>
     {
         // 'available' has to be default (0)
-        internal const int TransitionAvailable = 0;
-        internal const int TransitionAborted = 1;
-
-        // TransitionConfimed + transition index
-        internal const int TransitionConfimed = 2;
+        internal enum TransitionState
+        {
+            Available,
+            Aborted,
+            Confirmed
+        }
 
         public readonly struct Key : IEntityIndexKey<Key>
         {
@@ -34,7 +35,7 @@ namespace Svelto.ECS.Schema
         {
             public EGID ID { get; set; }
 
-            internal int nextTransition;
+            internal TransitionState transitionState;
 
             public TState State => _key;
 

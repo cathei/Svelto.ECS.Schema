@@ -22,7 +22,7 @@ namespace Svelto.ECS.Schema
         {
             RefWrapperType KeyType { get; }
             int IndexerID { get; }
-            void AddEngines(IndexesDB indexesDB);
+            void AddEngines(EnginesRoot enginesRoot, IndexesDB indexesDB);
         }
 
         internal interface ISchemaDefinitionRangedTable : ISchemaDefinition
@@ -48,6 +48,6 @@ namespace Svelto.ECS.Schema
 
     public interface IEntityStateMachine
     {
-        IStepEngine AddEngines(IndexesDB indexesDB);
+        IStepEngine AddEngines(EnginesRoot enginesRoot, IndexesDB indexesDB);
     }
 }

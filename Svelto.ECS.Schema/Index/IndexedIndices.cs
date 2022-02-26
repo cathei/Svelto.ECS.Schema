@@ -6,10 +6,27 @@ using System.Runtime.CompilerServices;
 using Svelto.DataStructures;
 using Svelto.ECS;
 using Svelto.ECS.DataStructures;
+using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema
 {
-    public ref struct FilteredIndicesEnumerator
+    namespace Internal
+    {
+        public interface IIndicesEnumerator
+        {
+            bool MoveNext();
+            void Reset();
+            int Current { get; }
+        }
+
+        public interface IIndicesEnumerable<TIter>
+            where TIter : struct, IIndicesEnumerator
+        {
+            TIter GetEnumerator();
+        }
+    }
+
+    public struct FilteredIndicesEnumerator : IIndicesEnumerator
     {
         private readonly FilteredIndices _indices;
         private int _index;
@@ -25,11 +42,16 @@ namespace Svelto.ECS.Schema
             return ++_index < _indices.Count();
         }
 
-        public uint Current => _indices[_index];
+        public void Reset()
+        {
+            _index = -1;
+        }
+
+        public int Current => (int)_indices[_index];
     }
 
     // To iterate over FilteredIndices with foreach
-    public readonly struct IndexedIndices
+    public readonly struct IndexedIndices : IIndicesEnumerable<FilteredIndicesEnumerator>
     {
         private readonly FilteredIndices _indices;
 

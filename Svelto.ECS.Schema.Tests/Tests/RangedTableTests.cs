@@ -27,7 +27,7 @@ namespace Svelto.ECS.Schema.Tests
         }
 
         [Fact]
-        public void GroupNameTests()
+        public void GroupNameTest()
         {
             var schemaName = typeof(TestSchema).FullName;
 

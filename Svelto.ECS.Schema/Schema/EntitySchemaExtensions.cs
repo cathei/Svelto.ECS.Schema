@@ -37,7 +37,7 @@ namespace Svelto.ECS.Schema
 
     public static class EntitySchemaExtensions
     {
-        public static T AddSchema<T>(this IndexesDB indexesDB)
+        public static T AddSchema<T>(this EnginesRoot enginesRoot, IndexesDB indexesDB)
             where T : class, IEntitySchema, new()
         {
             // Root schema - metadata pair will not be directly created
@@ -56,7 +56,7 @@ namespace Svelto.ECS.Schema
                     continue;
 
                 indexesDB.createdIndexerEngines.Add(keyType);
-                indexers[keyType].AddEngines(indexesDB);
+                indexers[keyType].AddEngines(enginesRoot, indexesDB);
             }
 
             return schema;
@@ -66,18 +66,18 @@ namespace Svelto.ECS.Schema
         /// return value is IStepEngine runs state machine transition
         /// it is executed on entity submission by default
         /// </summary>
-        public static IStepEngine AddStateMachine<T>(this IndexesDB indexesDB)
+        public static IStepEngine AddStateMachine<T>(this EnginesRoot enginesRoot, IndexesDB indexesDB)
             where T : class, IEntityStateMachine, new()
         {
             // State machine will not be directly created
             var stateMachine = EntityStateMachineHolder<T>.StateMachine;
 
-            return stateMachine.AddEngines(indexesDB);
+            return stateMachine.AddEngines(enginesRoot, indexesDB);
         }
 
         public static IndexesDB GenerateIndexesDB(this EnginesRoot enginesRoot)
         {
-            var indexesDB = new IndexesDB(enginesRoot);
+            var indexesDB = new IndexesDB();
 
             // SchemaContextEngine injects EntitiesDB to IndexesDB
             enginesRoot.AddEngine(new IndexesDBEngine(indexesDB));

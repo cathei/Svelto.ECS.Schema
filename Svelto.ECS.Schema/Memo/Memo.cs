@@ -52,6 +52,10 @@ namespace Svelto.ECS.Schema.Definition
         {
             var queryData = query.GetGroupIndexDataList(indexesDB).groups;
 
+            // if empty nothing to add
+            if (queryData == null)
+                return;
+
             for (int groupIndex = 0; groupIndex < queryData.count; ++groupIndex)
             {
                 var queryGroupData = queryData.unsafeValues[groupIndex];
@@ -76,7 +80,19 @@ namespace Svelto.ECS.Schema.Definition
             where TC : unmanaged, IIndexedComponent<TK>
         {
             var originalData = GetGroupIndexDataList(indexesDB).groups;
+
+            // if empty nothing to intersect
+            if (originalData == null)
+                return;
+
             var queryData = query.GetGroupIndexDataList(indexesDB).groups;
+
+            // if empty nothing to intersect
+            if (queryData == null)
+            {
+                Clear(indexesDB);
+                return;
+            }
 
             for (int groupIndex = 0; groupIndex < originalData.count; ++groupIndex)
             {
@@ -101,7 +117,7 @@ namespace Svelto.ECS.Schema.Definition
                 // since I cannot change filter while iteration
                 FasterList<uint> entityIDsToDelete = new FasterList<uint>();
 
-                foreach (var i in new IndexedIndices(originalGroupData.filter.filteredIndices))
+                foreach (uint i in new IndexedIndices(originalGroupData.filter.filteredIndices))
                 {
                     if (!queryGroupData.filter.Exists(components[i].ID.entityID))
                         entityIDsToDelete.Add(i);

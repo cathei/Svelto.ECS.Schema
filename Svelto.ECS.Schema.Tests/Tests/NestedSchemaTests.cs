@@ -69,15 +69,12 @@ namespace Svelto.ECS.Schema.Tests
             Assert.NotEqual(metadata.groupToTable[_schema.Team[TeamColor.Red].State[StateType.Eating].Doofus].parent,
                 metadata.groupToTable[_schema.Team[TeamColor.Blue].State[StateType.Eating].Food[FoodType.Good]].parent);
 
-            // Assert.Equal(metadata.groupToTable[_schema.Team[TeamColor.Red].State[StateType.Eating].Food[FoodType.Rotten]],
-            //     metadata.groupToTable[_schema.Team[TeamColor.Red].State[StateType.Eating].Food[FoodType.Good]]);
-
             Assert.Null(metadata.root.indexers);
             Assert.Equal(0, metadata.indexersToGenerateEngine.count);
         }
 
         [Fact]
-        public void GroupNameTests()
+        public void GroupNameTest()
         {
             var schemaName = typeof(TestSchema).FullName;
 
