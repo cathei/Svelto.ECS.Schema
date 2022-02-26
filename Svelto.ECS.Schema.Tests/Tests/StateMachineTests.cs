@@ -21,14 +21,16 @@ namespace Svelto.ECS.Schema.Tests
 
         public struct SpecialTimerComponent : IEntityComponent
         {
-            public float timer = 0;
+            public float value = 0;
         }
 
         public enum CharacterState { Normal, Upset, Angry, Special, MAX }
 
-        public class CharacterFSM : StateMachine<CharacterState>
+        public class CharacterFSM : StateMachine<CharacterState, CharacterFSM.Unique>
         {
-            public CharacterFSM()
+            public struct Unique : IUnique {}
+
+            protected override void Configure()
             {
                 var stateNormal = AddState(CharacterState.Normal);
                 var stateUpset = AddState(CharacterState.Upset);
@@ -46,10 +48,11 @@ namespace Svelto.ECS.Schema.Tests
                     .AddCondition((ref RageComponent rage) => rage.value >= 20);
 
                 stateSpecial.AddTransition(stateNormal)
-                    .AddCondition((ref SpecialTimerComponent timer) => timer.timer > 1);
+                    .AddCondition((ref SpecialTimerComponent timer) => timer.value <= 0);
 
                 stateSpecial
                     .ExecuteOnEnter((ref TriggerComponent trigger) => trigger.value = false)
+                    .ExecuteOnEnter((ref SpecialTimerComponent timer) => timer.value = 1)
                     .ExecuteOnExit((ref RageComponent rage) => rage.value = 5);
 
                 // any state but special
@@ -127,6 +130,91 @@ namespace Svelto.ECS.Schema.Tests
             for (int i = 0; i < count; ++i)
             {
                 Assert.Equal(i < 5 ? CharacterState.Normal : CharacterState.Upset, fsm[i].State);
+            }
+        }
+
+        [Fact]
+        public void NormalToAngryTest()
+        {
+            for (uint i = 0; i < 10; ++i)
+            {
+                var character = _schema.Character.Build(_factory, i);
+                character.Init(new CharacterFSM.Component(CharacterState.Normal));
+                character.Init(new RageComponent { value = 100 });
+            }
+
+            _submissionScheduler.SubmitEntities();
+
+            var (rage, fsm, count) = _schema.Character.Entities<RageComponent, CharacterFSM.Component>(_entitiesDB);
+
+            AssertIndexer();
+
+            for (int i = 0; i < count; ++i)
+            {
+                Assert.Equal(CharacterState.Normal, fsm[i].State);
+            }
+
+            _characterFSM.Engine.Step();
+
+            AssertIndexer();
+
+            for (int i = 0; i < count; ++i)
+            {
+                Assert.Equal(CharacterState.Upset, fsm[i].State);
+            }
+
+            _characterFSM.Engine.Step();
+
+            AssertIndexer();
+
+            for (int i = 0; i < count; ++i)
+            {
+                Assert.Equal(CharacterState.Angry, fsm[i].State);
+            }
+        }
+
+        [Fact]
+        public void NormalToSpecialTest()
+        {
+            for (uint i = 0; i < 100; ++i)
+            {
+                var character = _schema.Character.Build(_factory, i);
+                character.Init(new CharacterFSM.Component(CharacterState.Normal));
+                character.Init(new RageComponent { value = -1 });
+                character.Init(new TriggerComponent { value = i % 2 == 0 });
+            }
+
+            _submissionScheduler.SubmitEntities();
+
+            var (rage, trigger, timer, fsm, count) = _schema.Character.Entities<
+                RageComponent, TriggerComponent, SpecialTimerComponent, CharacterFSM.Component>(_entitiesDB);
+
+            _characterFSM.Engine.Step();
+
+            AssertIndexer();
+
+            for (int i = 0; i < count; ++i)
+            {
+                Assert.Equal(i % 2 == 0 ? CharacterState.Special : CharacterState.Normal, fsm[i].State);
+
+                // must assigned when ExecuteOnEnter
+                Assert.False(trigger[i].value);
+                Assert.Equal(i % 2 == 0 ? 1 : 0, timer[i].value);
+
+                if (i % 3 == 0)
+                    timer[i].value = 0;
+            }
+
+            _characterFSM.Engine.Step();
+
+            AssertIndexer();
+
+            for (int i = 0; i < count; ++i)
+            {
+                Assert.Equal(i % 3 != 0 && i % 2 == 0 ? CharacterState.Special : CharacterState.Normal, fsm[i].State);
+
+                // must assigned when ExecuteOnExit
+                Assert.Equal(i % 3 == 0 && i % 2 == 0 ? 5 : -1, rage[i].value);
             }
         }
     }

@@ -38,7 +38,7 @@ namespace Svelto.ECS.Schema.Definition
 
         internal void Set<TQuery, TK, TC>(IndexesDB indexesDB, TQuery query)
             where TQuery : IEntityIndexQuery<TK, TC>
-            where TK : unmanaged, IKeyEquatable<TK>
+            where TK : unmanaged
             where TC : unmanaged, IIndexedComponent<TK>
         {
             Clear(indexesDB);
@@ -47,7 +47,7 @@ namespace Svelto.ECS.Schema.Definition
 
         internal void Union<TQuery, TK, TC>(IndexesDB indexesDB, TQuery query)
             where TQuery : IEntityIndexQuery<TK, TC>
-            where TK : unmanaged, IKeyEquatable<TK>
+            where TK : unmanaged
             where TC : unmanaged, IIndexedComponent<TK>
         {
             var queryData = query.GetGroupIndexDataList(indexesDB).groups;
@@ -78,7 +78,7 @@ namespace Svelto.ECS.Schema.Definition
 
         internal void Intersect<TQuery, TK, TC>(IndexesDB indexesDB, TQuery query)
             where TQuery : IEntityIndexQuery<TK, TC>
-            where TK : unmanaged, IKeyEquatable<TK>
+            where TK : unmanaged
             where TC : unmanaged, IIndexedComponent<TK>
         {
             var originalData = GetGroupIndexDataList(indexesDB).groups;

@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using Svelto.DataStructures;
 using Svelto.ECS.Schema.Definition;
@@ -13,7 +14,7 @@ namespace Svelto.ECS.Schema
         }
 
         public interface IEntityIndexQuery<TK, TC> : IEntityIndexQuery
-            where TK : unmanaged, IKeyEquatable<TK>
+            where TK : unmanaged
             where TC : unmanaged, IIndexedComponent<TK>
         {
             NB<TC> GetComponents(IndexesDB indexesDB, in ExclusiveGroupStruct groupID);
@@ -21,7 +22,7 @@ namespace Svelto.ECS.Schema
     }
 
     public readonly partial struct IndexQuery<TK, TC> : IEntityIndexQuery<TK, TC>
-        where TK : unmanaged, IKeyEquatable<TK>
+        where TK : unmanaged
         where TC : unmanaged, IIndexedComponent<TK>
     {
         private readonly int _indexerId;

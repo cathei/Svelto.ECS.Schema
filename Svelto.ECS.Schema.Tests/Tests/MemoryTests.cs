@@ -9,32 +9,20 @@ namespace Svelto.ECS.Schema.Tests
     // just to make sure it does not take excessive memory
     public class MemoryTests : SchemaTestsBase<MemoryTests.TestSchema>
     {
-        public readonly struct ItemOwner : IEntityIndexKey<ItemOwner>
+        public class ItemOwner : IndexTag<int, ItemOwner.Unique>
         {
-            public readonly int characterId;
-
-            public ItemOwner(int characterId)
-            {
-                this.characterId = characterId;
-            }
-
-            public bool Equals(ItemOwner other)
-            {
-                return characterId.Equals(other.characterId);
-            }
-
-            public static implicit operator ItemOwner(int value) => new ItemOwner(value);
+            public struct Unique : IUnique {}
         }
 
         public class CharacterDescriptor : GenericEntityDescriptor<EGIDComponent> { }
-        public class ItemDescriptor : GenericEntityDescriptor<Indexed<ItemOwner>> { }
+        public class ItemDescriptor : GenericEntityDescriptor<ItemOwner.Component> { }
 
         public class TestSchema : IEntitySchema
         {
             public readonly Table<CharacterDescriptor> Character = new Table<CharacterDescriptor>();
             public readonly RangedTable<ItemDescriptor> Items = new RangedTable<ItemDescriptor>(10);
 
-            public readonly Index<ItemOwner> ItemsByOwner = new Index<ItemOwner>();
+            public readonly ItemOwner.Index ItemsByOwner = new ItemOwner.Index();
 
             public Tables<ItemDescriptor> AllItems { get; }
 
@@ -53,7 +41,7 @@ namespace Svelto.ECS.Schema.Tests
                 for (int j = 0; j < 1000; ++j)
                 {
                     var itemBuilder = _schema.Items[j / 100].Build(_factory, (uint)((i * 1000) + j));
-                    itemBuilder.Init(new Indexed<ItemOwner>(i));
+                    itemBuilder.Init(new ItemOwner.Component(i));
                 }
             }
 
@@ -65,12 +53,12 @@ namespace Svelto.ECS.Schema.Tests
         {
             // warming up
             var (egid, count) = _schema.Character.Entities<EGIDComponent>(_entitiesDB);
-            var (indexed, count2) = _schema.Items[0].Entities<Indexed<ItemOwner>>(_entitiesDB);
+            var (indexed, count2) = _schema.Items[0].Entities<ItemOwner.Component>(_entitiesDB);
 
             long before = GC.GetAllocatedBytesForCurrentThread();
 
             (egid, count) = _schema.Character.Entities<EGIDComponent>(_entitiesDB);
-            (indexed, count2) = _schema.Items[0].Entities<Indexed<ItemOwner>>(_entitiesDB);
+            (indexed, count2) = _schema.Items[0].Entities<ItemOwner.Component>(_entitiesDB);
 
             Assert.True(before + 50 > GC.GetAllocatedBytesForCurrentThread());
         }
@@ -81,7 +69,7 @@ namespace Svelto.ECS.Schema.Tests
             int loop = 0;
 
             // warming up
-            foreach (var ((indexed, count), group) in _schema.AllItems.Entities<Indexed<ItemOwner>>(_entitiesDB))
+            foreach (var ((indexed, count), group) in _schema.AllItems.Entities<ItemOwner.Component>(_entitiesDB))
             {
                 ++loop;
 
@@ -94,7 +82,7 @@ namespace Svelto.ECS.Schema.Tests
 
             long before = GC.GetAllocatedBytesForCurrentThread();
 
-            foreach (var ((indexed, count), group) in _schema.AllItems.Entities<Indexed<ItemOwner>>(_entitiesDB))
+            foreach (var ((indexed, count), group) in _schema.AllItems.Entities<ItemOwner.Component>(_entitiesDB))
             {
                 ++loop;
             }
@@ -110,7 +98,7 @@ namespace Svelto.ECS.Schema.Tests
             int loop = 0;
 
             // warming up
-            foreach (var ((indexed, indices), group) in _schema.ItemsByOwner.Query(0).Entities<Indexed<ItemOwner>>(_indexesDB))
+            foreach (var ((indexed, indices), group) in _schema.ItemsByOwner.Query(0).Entities<ItemOwner.Component>(_indexesDB))
             {
                 ++loop;
 
@@ -123,7 +111,7 @@ namespace Svelto.ECS.Schema.Tests
 
             long before = GC.GetAllocatedBytesForCurrentThread();
 
-            foreach (var ((indexed, indices), group) in _schema.ItemsByOwner.Query(0).Entities<Indexed<ItemOwner>>(_indexesDB))
+            foreach (var ((indexed, indices), group) in _schema.ItemsByOwner.Query(0).Entities<ItemOwner.Component>(_indexesDB))
             {
                 ++loop;
             }

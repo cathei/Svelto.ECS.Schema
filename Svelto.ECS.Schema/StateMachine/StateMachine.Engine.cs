@@ -3,15 +3,15 @@ using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema
 {
-    public partial class StateMachine<TState>
+    public partial class StateMachine<TState, TUnique>
     {
         void IEntityStateMachine.AddEngines(EnginesRoot enginesRoot, IndexesDB indexesDB)
         {
             // this is required to handle added or removed entities
-            enginesRoot.AddEngine(new TableIndexingEngine<Key, Component>(indexesDB));
+            enginesRoot.AddEngine(new TableIndexingEngine<TState, Component>(indexesDB));
 
             // this is required to validate and change state
-            Engine = new TransitionEngine(this, indexesDB);
+            Engine = new TransitionEngine(indexesDB);
 
             enginesRoot.AddEngine(Engine);
         }
@@ -20,14 +20,12 @@ namespace Svelto.ECS.Schema
         {
             private readonly IndexesDB _indexesDB;
 
-            public string name { get; }
+            public string name { get; } = $"{typeof(TUnique).Name}.TransitionEngine";
 
             public EntitiesDB entitiesDB { private get; set; }
 
-            public TransitionEngine(StateMachine<TState> fsm, IndexesDB indexesDB)
+            internal TransitionEngine(IndexesDB indexesDB)
             {
-                name = $"{fsm.GetType().Name}.Engine";
-
                 _indexesDB = indexesDB;
             }
 

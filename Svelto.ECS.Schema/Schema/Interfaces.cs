@@ -1,10 +1,6 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 using Svelto.DataStructures;
-using Svelto.ECS;
-using Svelto.ECS.DataStructures;
+using Svelto.ECS.Schema.Definition;
 using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema
@@ -21,7 +17,7 @@ namespace Svelto.ECS.Schema
 
         public interface ISchemaDefinitionIndex : ISchemaDefinition
         {
-            RefWrapperType KeyType { get; }
+            RefWrapperType ComponentType { get; }
             int IndexerID { get; }
             void AddEngines(EnginesRoot enginesRoot, IndexesDB indexesDB);
         }
@@ -51,5 +47,11 @@ namespace Svelto.ECS.Schema
         }
     }
 
-    public interface IEntitySchema : ISchemaDefinition { }
+    namespace Definition
+    {
+        // I cannot ensure uniqueness with type argument only
+        public interface IUniqueTag {}
+
+        public interface IEntitySchema : ISchemaDefinition { }
+    }
 }

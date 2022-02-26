@@ -1,6 +1,6 @@
 using System;
 using Svelto.ECS.Schedulers;
-using Xunit;
+using Svelto.ECS.Schema.Definition;
 
 namespace Svelto.ECS.Schema.Tests
 {

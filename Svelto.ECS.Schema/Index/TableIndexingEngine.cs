@@ -11,14 +11,14 @@ namespace Svelto.ECS.Schema
             IReactOnAddAndRemove<TC>,
             IReactOnSwap<TC>,
             IReactOnSubmission
-        where TK : unmanaged, IKeyEquatable<TK>
+        where TK : unmanaged
         where TC : unmanaged, IIndexedComponent<TK>
     {
         private readonly IndexesDB _indexesDB;
 
         private readonly HashSet<IndexesDB.IndexerGroupData> _groupsToRebuild = new HashSet<IndexesDB.IndexerGroupData>();
 
-        private static RefWrapperType IndexKeyType => TypeRefWrapper<TK>.wrapper;
+        private static RefWrapperType IndexComponentType => TypeRefWrapper<TC>.wrapper;
 
         public TableIndexingEngine(IndexesDB indexesDB)
         {
@@ -53,7 +53,7 @@ namespace Svelto.ECS.Schema
                         {
                             var indexer = node.indexers[i];
 
-                            if (indexer.KeyType.Equals(IndexKeyType))
+                            if (indexer.ComponentType.Equals(IndexComponentType))
                             {
                                 AddToFilter(indexer.IndexerID, ref keyComponent, groupID);
                             }
@@ -68,7 +68,7 @@ namespace Svelto.ECS.Schema
             {
                 var indexer = _indexesDB.stateMachineIndexers[i];
 
-                if (indexer.KeyType.Equals(IndexKeyType))
+                if (indexer.ComponentType.Equals(IndexComponentType))
                 {
                     AddToFilter(indexer.IndexerID, ref keyComponent, groupID);
                 }
@@ -78,7 +78,7 @@ namespace Svelto.ECS.Schema
         private void AddToFilter(int indexerID, ref TC keyComponent, in ExclusiveGroupStruct groupID)
         {
             ref var groupData = ref _indexesDB.CreateOrGetIndexerGroup<TK, TC>(
-                indexerID, keyComponent.Key, groupID);
+                indexerID, keyComponent.Value, groupID);
 
             var mapper = _indexesDB.entitiesDB.QueryMappedEntities<TC>(groupID);
 
@@ -97,7 +97,7 @@ namespace Svelto.ECS.Schema
                         {
                             var indexer = node.indexers[i];
 
-                            if (indexer.KeyType.Equals(IndexKeyType))
+                            if (indexer.ComponentType.Equals(IndexComponentType))
                             {
                                 RemoveFromFilter(indexer.IndexerID, ref keyComponent, groupID);
                             }
@@ -112,7 +112,7 @@ namespace Svelto.ECS.Schema
             {
                 var indexer = _indexesDB.stateMachineIndexers[i];
 
-                if (indexer.KeyType.Equals(IndexKeyType))
+                if (indexer.ComponentType.Equals(IndexComponentType))
                 {
                     RemoveFromFilter(indexer.IndexerID, ref keyComponent, groupID);
                 }
@@ -122,7 +122,7 @@ namespace Svelto.ECS.Schema
         private void RemoveFromFilter(int indexerID, ref TC keyComponent, in ExclusiveGroupStruct groupID)
         {
             ref var groupData = ref _indexesDB.CreateOrGetIndexerGroup<TK, TC>(
-                indexerID, keyComponent.Key, groupID);
+                indexerID, keyComponent.Value, groupID);
 
             groupData.filter.TryRemove(keyComponent.ID.entityID);
 

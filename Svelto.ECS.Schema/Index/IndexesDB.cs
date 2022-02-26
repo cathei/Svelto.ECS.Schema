@@ -50,14 +50,14 @@ namespace Svelto.ECS.Schema
 
         // this should be fast enough, no group change means we don't have to rebuild filter
         internal void NotifyKeyUpdate<TK, TC>(ref TC keyComponent, in TK oldKey, in TK newKey)
-            where TK : unmanaged, IKeyEquatable<TK>
+            where TK : unmanaged
             where TC : unmanaged, IIndexedComponent<TK>
         {
             // component updated but key didn't change
             if (oldKey.Equals(newKey))
                 return;
 
-            var keyType = TypeRefWrapper<TK>.wrapper;
+            var componentType = TypeRefWrapper<TC>.wrapper;
 
             if (TryGetShard(keyComponent.ID.groupID, out var node))
             {
@@ -70,7 +70,7 @@ namespace Svelto.ECS.Schema
                         {
                             var indexer = node.indexers[i];
 
-                            if (indexer.KeyType.Equals(keyType))
+                            if (indexer.ComponentType.Equals(componentType))
                                 UpdateFilters(indexer.IndexerID, ref keyComponent, oldKey, newKey);
                         }
                     }
@@ -84,13 +84,13 @@ namespace Svelto.ECS.Schema
             {
                 var indexer = stateMachineIndexers[i];
 
-                if (indexer.KeyType.Equals(keyType))
+                if (indexer.ComponentType.Equals(componentType))
                     UpdateFilters(indexer.IndexerID, ref keyComponent, oldKey, newKey);
             }
         }
 
         internal void UpdateFilters<TK, TC>(int indexerId, ref TC keyComponent, in TK oldKey, in TK newKey)
-            where TK : unmanaged, IKeyEquatable<TK>
+            where TK : unmanaged
             where TC : unmanaged, IIndexedComponent<TK>
         {
             ref var oldGroupData = ref CreateOrGetIndexerGroup<TK, TC>(indexerId, oldKey, keyComponent.ID.groupID);
@@ -103,7 +103,7 @@ namespace Svelto.ECS.Schema
         }
 
         internal ref IndexerGroupData CreateOrGetIndexerGroup<TK, TC>(int indexerID, in TK key, in ExclusiveGroupStruct groupID)
-            where TK : unmanaged, IKeyEquatable<TK>
+            where TK : unmanaged
             where TC : unmanaged, IIndexedComponent<TK>
         {
             var indexerData = CreateOrGetIndexerData<TK>(indexerID);
@@ -123,7 +123,7 @@ namespace Svelto.ECS.Schema
         }
 
         private IndexerData<TK> CreateOrGetIndexerData<TK>(int indexerId)
-            where TK : unmanaged, IKeyEquatable<TK>
+            where TK : unmanaged
         {
             IndexerData<TK> indexerData;
 

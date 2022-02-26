@@ -108,12 +108,12 @@ namespace Svelto.ECS.Schema
             node.indexers ??= new FasterList<ISchemaDefinitionIndex>();
             node.indexers.Add(indexer);
 
-            var keyType = indexer.KeyType;
+            var componentType = indexer.ComponentType;
 
-            if (indexersToGenerateEngine.ContainsKey(keyType))
+            if (indexersToGenerateEngine.ContainsKey(componentType))
                 return;
 
-            indexersToGenerateEngine[keyType] = indexer;
+            indexersToGenerateEngine[componentType] = indexer;
         }
 
         private static IEnumerable<FieldInfo> GetSchemaElementFields(Type type)

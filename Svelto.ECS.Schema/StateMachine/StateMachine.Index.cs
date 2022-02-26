@@ -3,7 +3,7 @@ using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema
 {
-    public partial class StateMachine<TState>
+    public partial class StateMachine<TState, TUnique>
     {
         // 'available' has to be default (0)
         internal enum TransitionState
@@ -13,58 +13,39 @@ namespace Svelto.ECS.Schema
             Confirmed
         }
 
-        public readonly struct Key : IEntityIndexKey<Key>
-        {
-            internal readonly TState _state;
-
-            public Key(TState state)
-            {
-                _state = state;
-            }
-
-            public bool Equals(Key other)
-            {
-                return Comparer.Equals(_state, other._state);
-            }
-
-            public static implicit operator Key(in TState state) => new Key(state);
-            public static implicit operator TState(in Key key) => key._state;
-        }
-
-        public struct Component : IIndexedComponent<Key>, INeedEGID
+        public struct Component : IIndexedComponent<TState>, INeedEGID
         {
             public EGID ID { get; set; }
 
             internal TransitionState transitionState;
 
-            public TState State => _key;
+            private TState _state;
+            public TState State => _state;
 
-            internal Key _key;
-
-            Key IIndexedComponent<Key>.Key => _key;
+            TState IIndexedComponent<TState>.Value => _state;
 
             // constructors should be only called when building entity
             public Component(in TState state) : this()
             {
-                _key = state;
+                _state = state;
             }
 
             internal void Update(IndexesDB indexesDB, in TState state)
             {
-                Key oldKey = _key;
-                _key = state;
+                var oldState = _state;
+                _state = state;
 
                 // propagate to fsm index and others indexers in schema
-                indexesDB.NotifyKeyUpdate(ref this, oldKey, _key);
+                indexesDB.NotifyKeyUpdate(ref this, oldState, _state);
             }
         }
 
-        internal sealed class Index : IndexBase<Key, Component>
+        public sealed class Index : IndexBase<TState, Component>
         {
         }
 
         ISchemaDefinitionIndex IEntityStateMachine.Index => Config.Index;
 
-        public IndexQuery<Key, Component> Query(TState state) => Config.Index.Query(state);
+        public IndexQuery<TState, Component> Query(TState state) => Config.Index.Query(state);
     }
 }

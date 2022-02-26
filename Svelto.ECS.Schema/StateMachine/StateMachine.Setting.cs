@@ -6,20 +6,20 @@ using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema
 {
-    public partial class StateMachine<TState> : IEntityStateMachine
+    public partial class StateMachine<TState, TUnique>
     {
         protected AnyStateBuilder AnyState => new AnyStateBuilder(Config.AnyState);
 
         protected StateBuilder AddState(in TState state)
         {
-            var wrapper = new IKeyEquatable<Key>.Wrapper(new Key(state));
+            var wrapper = new KeyWrapper<TState>(state);
 
             if (Config.States.ContainsKey(wrapper))
             {
                 throw new ECSException($"State {state} already exsists!");
             }
 
-            var stateConfig = new StateConfig(this, state);
+            var stateConfig = new StateConfig(state);
             Config.States[wrapper] = stateConfig;
 
             return new StateBuilder(stateConfig);

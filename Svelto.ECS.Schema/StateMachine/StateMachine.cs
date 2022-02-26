@@ -11,12 +11,14 @@ namespace Svelto.ECS.Schema
     /// <summary>
     /// State machine on Svelto ECS
     /// </summary>
-    /// <typeparam name="TState">Value type representing a state. Assumed as enum. Must be unique per state machine.</typeparam>
-    public abstract partial class StateMachine<TState> : IEntityStateMachine
+    /// <typeparam name="TState">Value type representing a state. Usually enum type.</typeparam>
+    /// <typeparam name="TUnique">Type to ensure uniqueness. It can be done with TSelf, but IsUnmanagedEx is on the way</typeparam>
+    public abstract partial class StateMachine<TState, TUnique> : IEntityStateMachine
         where TState : unmanaged
+        where TUnique : unmanaged, StateMachine<TState, TUnique>.IUnique
     {
-        // lock is not needed unlike EntitySchemaHolder
-        // because no shared memory or reflection etc involved
+        public interface IUnique {}
+
         internal static readonly StateMachineConfig Config = new StateMachineConfig();
         internal static readonly EqualityComparer<TState> Comparer = EqualityComparer<TState>.Default;
 
@@ -24,7 +26,20 @@ namespace Svelto.ECS.Schema
 
         protected StateMachine()
         {
+            if (Config.configured)
+                return;
+
+            lock (Config)
+            {
+                if (Config.configured)
+                    return;
+
+                Config.configured = true;
+                Configure();
+            }
         }
+
+        protected abstract void Configure();
 
         protected internal delegate bool Predicate<TComponent>(ref TComponent component)
             where TComponent : unmanaged, IEntityComponent;
@@ -140,8 +155,8 @@ namespace Svelto.ECS.Schema
                     {
                         component[i].transitionState = TransitionState.Confirmed;
 
-                        var currentState = new IKeyEquatable<Key>.Wrapper(component[i]._key);
-                        var nextState = new IKeyEquatable<Key>.Wrapper(_next);
+                        var currentState = new KeyWrapper<TState>(component[i].State);
+                        var nextState = new KeyWrapper<TState>(_next);
 
                         Config.States[currentState]._exitCandidates.Add(indexesDB, component[i].ID);
                         Config.States[nextState]._enterCandidates.Add(indexesDB, component[i].ID);
@@ -152,7 +167,6 @@ namespace Svelto.ECS.Schema
 
         internal sealed class StateConfig
         {
-            internal readonly StateMachine<TState> _fsm;
             internal readonly TState _state;
             internal readonly FasterList<TransitionConfig> _transitions;
 
@@ -162,9 +176,8 @@ namespace Svelto.ECS.Schema
             internal readonly FasterList<CallbackConfig> _onExit;
             internal readonly FasterList<CallbackConfig> _onEnter;
 
-            internal StateConfig(StateMachine<TState> fsm, in TState state)
+            internal StateConfig(in TState state)
             {
-                _fsm = fsm;
                 _state = state;
                 _transitions = new FasterList<TransitionConfig>();
 
@@ -248,7 +261,9 @@ namespace Svelto.ECS.Schema
 
         internal sealed class StateMachineConfig
         {
-            internal readonly FasterDictionary<IKeyEquatable<Key>.Wrapper, StateConfig> States;
+            internal bool configured = false;
+
+            internal readonly FasterDictionary<KeyWrapper<TState>, StateConfig> States;
             internal readonly AnyStateConfig AnyState;
 
             // this will manage filters for state machine
@@ -256,7 +271,7 @@ namespace Svelto.ECS.Schema
 
             public StateMachineConfig()
             {
-                States = new FasterDictionary<IKeyEquatable<Key>.Wrapper, StateConfig>();
+                States = new FasterDictionary<KeyWrapper<TState>, StateConfig>();
                 AnyState = new AnyStateConfig();
 
                 Index = new Index();

@@ -33,14 +33,14 @@ namespace Svelto.ECS.Schema
         internal abstract class IndexerData {}
 
         internal sealed class IndexerData<TKey> : IndexerData
-            where TKey : unmanaged, IKeyEquatable<TKey>
+            where TKey : unmanaged
         {
-            private readonly FasterDictionary<IKeyEquatable<TKey>.Wrapper, IndexerSetData> keyToGroups
-                = new FasterDictionary<IKeyEquatable<TKey>.Wrapper, IndexerSetData>();
+            private readonly FasterDictionary<KeyWrapper<TKey>, IndexerSetData> keyToGroups
+                = new FasterDictionary<KeyWrapper<TKey>, IndexerSetData>();
 
             public ref IndexerSetData CreateOrGet(in TKey key)
             {
-                return ref keyToGroups.GetOrCreate(new IKeyEquatable<TKey>.Wrapper(key), () => new IndexerSetData
+                return ref keyToGroups.GetOrCreate(new KeyWrapper<TKey>(key), () => new IndexerSetData
                 {
                     groups = new FasterDictionary<ExclusiveGroupStruct, IndexerGroupData>()
                 });
@@ -48,7 +48,7 @@ namespace Svelto.ECS.Schema
 
             public bool TryGetValue(in TKey key, out IndexerSetData result)
             {
-                return keyToGroups.TryGetValue(new IKeyEquatable<TKey>.Wrapper(key), out result);
+                return keyToGroups.TryGetValue(new KeyWrapper<TKey>(key), out result);
             }
         }
     }
