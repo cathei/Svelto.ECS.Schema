@@ -13,7 +13,7 @@ namespace Svelto.ECS.Schema.Definition
         public static int Generate() => Interlocked.Increment(ref Count);
     }
 
-    public sealed partial class Memo<T> : ISchemaDefinitionMemo, IEntityIndexQuery
+    public sealed partial class Memo<T> : ISchemaDefinitionMemo, IEntityIndexQuery<T>
         where T : unmanaged, IEntityComponent
     {
         // equvalent to ExclusiveGroupStruct.Generate()
@@ -36,19 +36,19 @@ namespace Svelto.ECS.Schema.Definition
             indexesDB.ClearMemo(this);
         }
 
-        internal void Set<TQuery, TK, TC>(IndexesDB indexesDB, TQuery query)
-            where TQuery : IEntityIndexQuery<TK, TC>
-            where TK : unmanaged
-            where TC : unmanaged, IIndexedComponent<TK>
+        // we have type constraints because it requires INeedEGID
+        // it won't be necessary when Svelto update it's filter utility functions
+        internal void Set<TQuery, TC>(IndexesDB indexesDB, TQuery query)
+            where TQuery : IEntityIndexQuery<TC>
+            where TC : unmanaged, IEntityComponent, INeedEGID
         {
             Clear(indexesDB);
-            Union<TQuery, TK, TC>(indexesDB, query);
+            Union<TQuery, TC>(indexesDB, query);
         }
 
-        internal void Union<TQuery, TK, TC>(IndexesDB indexesDB, TQuery query)
-            where TQuery : IEntityIndexQuery<TK, TC>
-            where TK : unmanaged
-            where TC : unmanaged, IIndexedComponent<TK>
+        internal void Union<TQuery, TC>(IndexesDB indexesDB, TQuery query)
+            where TQuery : IEntityIndexQuery<TC>
+            where TC : unmanaged, IEntityComponent, INeedEGID
         {
             var queryData = query.GetGroupIndexDataList(indexesDB).groups;
 
@@ -76,10 +76,9 @@ namespace Svelto.ECS.Schema.Definition
             }
         }
 
-        internal void Intersect<TQuery, TK, TC>(IndexesDB indexesDB, TQuery query)
-            where TQuery : IEntityIndexQuery<TK, TC>
-            where TK : unmanaged
-            where TC : unmanaged, IIndexedComponent<TK>
+        internal void Intersect<TQuery, TC>(IndexesDB indexesDB, TQuery query)
+            where TQuery : IEntityIndexQuery<TC>
+            where TC : unmanaged, IEntityComponent, INeedEGID
         {
             var originalData = GetGroupIndexDataList(indexesDB).groups;
 
@@ -118,12 +117,13 @@ namespace Svelto.ECS.Schema.Definition
 
                 // ugh I have to check what to delete
                 // since I cannot change filter while iteration
+                // this will be removed when Svelto updates it's filter system
                 FasterList<uint> entityIDsToDelete = new FasterList<uint>();
 
                 foreach (uint i in new IndexedIndices(originalGroupData.filter.filteredIndices))
                 {
                     if (!queryGroupData.filter.Exists(components[i].ID.entityID))
-                        entityIDsToDelete.Add(i);
+                        entityIDsToDelete.Add(components[i].ID.entityID);
                 }
 
                 for (int i = 0; i < entityIDsToDelete.count; ++i)
@@ -141,5 +141,10 @@ namespace Svelto.ECS.Schema.Definition
 
         IndexesDB.IndexerSetData IEntityIndexQuery.GetGroupIndexDataList(IndexesDB indexesDB)
             => GetGroupIndexDataList(indexesDB);
+
+        NB<T> IEntityIndexQuery<T>.GetComponents(IndexesDB indexesDB, in ExclusiveGroupStruct groupID)
+        {
+            return indexesDB.entitiesDB.QueryEntities<T>(groupID).ToBuffer().buffer;
+        }
     }
 }

@@ -14,10 +14,9 @@ namespace Svelto.ECS.Schema.Internal
         public static int Generate() => Interlocked.Increment(ref Count);
     }
 
-    public interface IIndexedComponent<T> : IEntityComponent
+    public interface IIndexedComponent<T> : IEntityComponent, INeedEGID
         where T : unmanaged
     {
-        EGID ID { get; }
         T Value { get; }
     }
 

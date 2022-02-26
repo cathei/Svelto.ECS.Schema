@@ -13,7 +13,7 @@ namespace Svelto.ECS.Schema
             Confirmed
         }
 
-        public struct Component : IIndexedComponent<TState>, INeedEGID
+        public struct Component : IIndexedComponent<TState>
         {
             public EGID ID { get; set; }
 

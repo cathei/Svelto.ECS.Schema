@@ -20,7 +20,6 @@ namespace Svelto.ECS.Schema
         public interface IUnique {}
 
         internal static readonly StateMachineConfig Config = new StateMachineConfig();
-        internal static readonly EqualityComparer<TState> Comparer = EqualityComparer<TState>.Default;
 
         public TransitionEngine Engine { get; internal set; }
 

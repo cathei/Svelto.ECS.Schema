@@ -15,7 +15,6 @@ namespace Svelto.ECS.Schema
             internal readonly Table<TDesc>[] _tables;
             internal readonly int _range;
 
-            public Type InnerType => typeof(TDesc);
             public int Range => _range;
 
             internal RangedTableBase(int range)

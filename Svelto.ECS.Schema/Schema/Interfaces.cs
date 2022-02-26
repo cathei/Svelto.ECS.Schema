@@ -30,7 +30,6 @@ namespace Svelto.ECS.Schema
 
         internal interface ISchemaDefinitionRangedSchema : ISchemaDefinition
         {
-            Type InnerType { get; }
             int Range { get; }
             IEntitySchema GetSchema(int index);
         }

@@ -1,9 +1,13 @@
 using System;
 using Svelto.ECS.Schedulers;
 using Svelto.ECS.Schema.Definition;
+using Xunit;
 
 namespace Svelto.ECS.Schema.Tests
 {
+    // we have to put test collection to prevent tests running in pararell.
+    // because Svelto EntityComponentIDMap.Register is not threadsafe.
+    [Collection("Schema Test Collection")]
     public class SchemaTestsBase<T> : IDisposable
         where T : class, IEntitySchema, new()
     {

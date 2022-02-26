@@ -14,7 +14,7 @@ namespace Svelto.ECS.Schema.Definition
         public interface IUnique {}
 
         // simple implementation to force index update
-        public struct Component : IIndexedComponent<TValue>, INeedEGID
+        public struct Component : IIndexedComponent<TValue>
         {
             public EGID ID { get; set; }
 

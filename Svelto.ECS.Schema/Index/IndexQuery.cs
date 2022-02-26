@@ -13,15 +13,14 @@ namespace Svelto.ECS.Schema
             IndexesDB.IndexerSetData GetGroupIndexDataList(IndexesDB indexesDB);
         }
 
-        public interface IEntityIndexQuery<TK, TC> : IEntityIndexQuery
-            where TK : unmanaged
-            where TC : unmanaged, IIndexedComponent<TK>
+        public interface IEntityIndexQuery<TC> : IEntityIndexQuery
+            where TC : unmanaged, IEntityComponent
         {
             NB<TC> GetComponents(IndexesDB indexesDB, in ExclusiveGroupStruct groupID);
         }
     }
 
-    public readonly partial struct IndexQuery<TK, TC> : IEntityIndexQuery<TK, TC>
+    public readonly partial struct IndexQuery<TK, TC> : IEntityIndexQuery<TC>
         where TK : unmanaged
         where TC : unmanaged, IIndexedComponent<TK>
     {
@@ -34,7 +33,7 @@ namespace Svelto.ECS.Schema
             _key = key;
         }
 
-        NB<TC> IEntityIndexQuery<TK, TC>.GetComponents(IndexesDB indexesDB, in ExclusiveGroupStruct groupID)
+        NB<TC> IEntityIndexQuery<TC>.GetComponents(IndexesDB indexesDB, in ExclusiveGroupStruct groupID)
         {
             return indexesDB.entitiesDB.QueryEntities<TC>(groupID).ToBuffer().buffer;
         }
@@ -55,19 +54,19 @@ namespace Svelto.ECS.Schema
         public void Set<T>(IndexesDB indexesDB, Memo<T> memo)
             where T : unmanaged, IEntityComponent
         {
-            memo.Set<IndexQuery<TK, TC>, TK, TC>(indexesDB, this);
+            memo.Set<IndexQuery<TK, TC>, TC>(indexesDB, this);
         }
 
         public void Union<T>(IndexesDB indexesDB, Memo<T> memo)
             where T : unmanaged, IEntityComponent
         {
-            memo.Union<IndexQuery<TK, TC>, TK, TC>(indexesDB, this);
+            memo.Union<IndexQuery<TK, TC>, TC>(indexesDB, this);
         }
 
         public void Intersect<T>(IndexesDB indexesDB, Memo<T> memo)
             where T : unmanaged, IEntityComponent
         {
-            memo.Intersect<IndexQuery<TK, TC>, TK, TC>(indexesDB, this);
+            memo.Intersect<IndexQuery<TK, TC>, TC>(indexesDB, this);
         }
     }
 }

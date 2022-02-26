@@ -15,7 +15,6 @@ namespace Svelto.ECS.Schema
             internal readonly TSchema[] _schemas;
             internal readonly int _range;
 
-            public Type InnerType => typeof(TSchema);
             public int Range => _range;
 
             internal RangedSchemaBase(int range)
