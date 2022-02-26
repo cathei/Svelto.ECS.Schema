@@ -9,7 +9,7 @@ namespace Svelto.ECS.Schema
     {
         // combined version of SchemaMetadata.groupToTable
         internal readonly FasterDictionary<ExclusiveGroupStruct, SchemaMetadata.TableNode> groupToTable;
-        internal readonly HashSet<RefWrapperType> createdEngines;
+        internal readonly HashSet<RefWrapperType> createdIndexerEngines;
 
         internal readonly FasterDictionary<int, IndexerData> indexers;
         internal readonly FasterDictionary<int, IndexerSetData> memos;
@@ -17,12 +17,15 @@ namespace Svelto.ECS.Schema
         // well... let's have some space for user defined filter
         private int filterIdCounter = 10000;
 
+        internal EnginesRoot enginesRoot;
         internal EntitiesDB entitiesDB;
 
-        internal IndexesDB()
+        internal IndexesDB(EnginesRoot enginesRoot)
         {
+            this.enginesRoot = enginesRoot;
+
             groupToTable = new FasterDictionary<ExclusiveGroupStruct, SchemaMetadata.TableNode>();
-            createdEngines = new HashSet<RefWrapperType>();
+            createdIndexerEngines = new HashSet<RefWrapperType>();
 
             indexers = new FasterDictionary<int, IndexerData>();
             memos = new FasterDictionary<int, IndexerSetData>();
@@ -78,7 +81,7 @@ namespace Svelto.ECS.Schema
             }
         }
 
-        private void UpdateFilters<TK, TC>(int indexerId, ref TC keyComponent, in TK oldKey, in TK newKey)
+        internal void UpdateFilters<TK, TC>(int indexerId, ref TC keyComponent, in TK oldKey, in TK newKey)
             where TK : unmanaged, IKeyEquatable<TK>
             where TC : unmanaged, IIndexedComponent<TK>
         {

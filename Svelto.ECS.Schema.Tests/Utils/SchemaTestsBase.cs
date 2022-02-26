@@ -27,7 +27,7 @@ namespace Svelto.ECS.Schema.Tests
             _entitiesDB = ((IUnitTestingInterface)_enginesRoot).entitiesForTesting;
 
             _indexesDB = _enginesRoot.GenerateIndexesDB();
-            _schema = _enginesRoot.GenerateSchema<T>(_indexesDB);
+            _schema = _indexesDB.AddSchema<T>();
         }
 
         public void Dispose()

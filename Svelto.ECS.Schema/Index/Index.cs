@@ -19,7 +19,7 @@ namespace Svelto.ECS.Schema
             where TK : unmanaged, IKeyEquatable<TK>
         {
             // equvalent to ExclusiveGroupStruct.Generate()
-            protected readonly int _indexerId = GlobalIndexCount.Generate();
+            protected internal readonly int _indexerId = GlobalIndexCount.Generate();
 
             internal IndexBase() { }
         }
@@ -32,9 +32,9 @@ namespace Svelto.ECS.Schema
 
             int ISchemaDefinitionIndex.IndexerID => _indexerId;
 
-            void ISchemaDefinitionIndex.AddEngines(EnginesRoot enginesRoot, IndexesDB indexesDB)
+            void ISchemaDefinitionIndex.AddEngines(IndexesDB indexesDB)
             {
-                enginesRoot.AddEngine(new TableIndexingEngine<TK, TC>(indexesDB));
+                indexesDB.enginesRoot.AddEngine(new TableIndexingEngine<TK, TC>(indexesDB));
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]

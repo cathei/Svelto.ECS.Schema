@@ -32,14 +32,21 @@ namespace Svelto.ECS.Schema
             {
                 TState oldState = State;
                 State = state;
+
+                // we can directly update our state machine indexer
+                // since it is not attached to any node
+                indexesDB.UpdateFilters(Index._indexerId, ref this, oldState, state);
+
+                // and, propagate to others indexers in schema (is this even necessary?)
                 indexesDB.NotifyKeyUpdate(ref this, oldState, state);
             }
         }
 
         // this will manage filters for state machine
-        internal Index _stateIndex = new Index();
+        // it is static member here so user can easily access :)
+        public static StateMachineIndex Index = new StateMachineIndex();
 
-        public sealed class Index : IndexBase<TState, Component>
+        public sealed class StateMachineIndex : IndexBase<TState, Component>
         {
         }
     }

@@ -1,3 +1,5 @@
+using Svelto.ECS.Schema.Internal;
+
 namespace Svelto.ECS.Schema
 {
     internal class EntitySchemaLock
@@ -25,12 +27,20 @@ namespace Svelto.ECS.Schema
         }
     }
 
+    internal static class EntityStateMachineHolder<T>
+        where T : class, IEntityStateMachine, new()
+    {
+        // lock is not needed unlike EntitySchemaHolder
+        // because no shared memory or reflection etc involved
+        public static readonly T StateMachine = new T();
+    }
+
     public static class EntitySchemaExtensions
     {
-        public static T GenerateSchema<T>(this EnginesRoot enginesRoot, IndexesDB indexesDB)
+        public static T AddSchema<T>(this IndexesDB indexesDB)
             where T : class, IEntitySchema, new()
         {
-            // Root schema - metadata pair will not directly created
+            // Root schema - metadata pair will not be directly created
             EntitySchemaHolder<T>.Create();
 
             var schema = EntitySchemaHolder<T>.Schema;
@@ -42,21 +52,34 @@ namespace Svelto.ECS.Schema
 
             foreach (var keyType in indexers.keys)
             {
-                if (indexesDB.createdEngines.Contains(keyType))
+                if (indexesDB.createdIndexerEngines.Contains(keyType))
                     continue;
 
-                indexesDB.createdEngines.Add(keyType);
-                indexers[keyType].AddEngines(enginesRoot, indexesDB);
+                indexesDB.createdIndexerEngines.Add(keyType);
+                indexers[keyType].AddEngines(indexesDB);
             }
 
             return schema;
         }
 
+        /// <summary>
+        /// return value is IStepEngine runs state machine transition
+        /// it is executed on entity submission by default
+        /// </summary>
+        public static IStepEngine AddStateMachine<T>(this IndexesDB indexesDB)
+            where T : class, IEntityStateMachine, new()
+        {
+            // State machine will not be directly created
+            var stateMachine = EntityStateMachineHolder<T>.StateMachine;
+
+            return stateMachine.AddEngines(indexesDB);
+        }
+
         public static IndexesDB GenerateIndexesDB(this EnginesRoot enginesRoot)
         {
-            var indexesDB = new IndexesDB();
+            var indexesDB = new IndexesDB(enginesRoot);
 
-            // SchemaContextEngine injects entitiesDB to IndexesDB
+            // SchemaContextEngine injects EntitiesDB to IndexesDB
             enginesRoot.AddEngine(new IndexesDBEngine(indexesDB));
 
             return indexesDB;

@@ -11,6 +11,22 @@ namespace Svelto.ECS.Schema
         /// </summary>
         public virtual bool RunEngineOnEntitySubmission => true;
 
+        IStepEngine IEntityStateMachine.AddEngines(IndexesDB indexesDB)
+        {
+            // this is required to handle added entity or removal
+            indexesDB.enginesRoot.AddEngine(new TableIndexingEngine<TState, Component>(indexesDB));
+
+            // this is required to validate and change state
+            var engine = new Engine(this, indexesDB);
+
+            // order would be important here ...
+            // for now we don't want to be in-between of IReactAdd and IReactSubmission
+            // TODO: after new filter appplied this can move up to ensure initial state
+            indexesDB.enginesRoot.AddEngine(engine);
+
+            return engine;
+        }
+
         public sealed class Engine : IQueryingEntitiesEngine, IStepEngine, IReactOnSubmission
         {
             private readonly StateMachine<TState> _fsm;
