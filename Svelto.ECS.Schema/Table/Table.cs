@@ -1,15 +1,16 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema.Definition
 {
-    public sealed partial class Table<T> : IEntitySchemaTable where T : IEntityDescriptor, new()
+    public sealed partial class Table<T> : ISchemaDefinitionTable
+        where T : IEntityDescriptor, new()
     {
-        private readonly ExclusiveGroup _exclusiveGroup;
+        private readonly ExclusiveGroupStruct _exclusiveGroup;
 
-        public ref readonly ExclusiveGroup ExclusiveGroup => ref _exclusiveGroup;
-        public ExclusiveGroupStruct ExclusiveGroupStruct => _exclusiveGroup;
+        public ref readonly ExclusiveGroupStruct ExclusiveGroup => ref _exclusiveGroup;
 
         public Table()
         {

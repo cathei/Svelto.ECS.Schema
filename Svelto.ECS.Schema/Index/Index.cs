@@ -24,15 +24,15 @@ namespace Svelto.ECS.Schema
             internal IndexBase() { }
         }
 
-        public abstract class IndexBase<TK, TC> : IndexBase<TK>, IEntitySchemaIndex
+        public abstract class IndexBase<TK, TC> : IndexBase<TK>, ISchemaDefinitionIndex
             where TK : unmanaged, IKeyEquatable<TK>
             where TC : unmanaged, IIndexedComponent<TK>
         {
-            RefWrapperType IEntitySchemaIndex.KeyType => TypeRefWrapper<TK>.wrapper;
+            RefWrapperType ISchemaDefinitionIndex.KeyType => TypeRefWrapper<TK>.wrapper;
 
-            int IEntitySchemaIndex.IndexerID => _indexerId;
+            int ISchemaDefinitionIndex.IndexerID => _indexerId;
 
-            void IEntitySchemaIndex.AddEngines(EnginesRoot enginesRoot, IndexesDB indexesDB)
+            void ISchemaDefinitionIndex.AddEngines(EnginesRoot enginesRoot, IndexesDB indexesDB)
             {
                 enginesRoot.AddEngine(new TableIndexingEngine<TK, TC>(indexesDB));
             }

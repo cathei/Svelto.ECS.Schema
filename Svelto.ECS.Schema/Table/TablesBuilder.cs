@@ -30,12 +30,12 @@ namespace Svelto.ECS.Schema
 
         public static TablesBuilder<T> operator+(TablesBuilder<T> a, Table<T> b)
         {
-            return new TablesBuilder<T>(a.items.Append(b.ExclusiveGroupStruct));
+            return new TablesBuilder<T>(a.items.Append(b.ExclusiveGroup));
         }
 
         public static TablesBuilder<T> operator+(Table<T> a, TablesBuilder<T> b)
         {
-            return new TablesBuilder<T>(b.items.Prepend(a.ExclusiveGroupStruct));
+            return new TablesBuilder<T>(b.items.Prepend(a.ExclusiveGroup));
         }
 
         public static implicit operator Tables<T>(in TablesBuilder<T> builder) => builder.Build();

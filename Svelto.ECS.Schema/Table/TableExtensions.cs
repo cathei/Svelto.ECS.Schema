@@ -23,56 +23,56 @@ namespace Svelto.ECS.Schema
                 uint entityID, Table<T> group, IEnumerable<object> implementors = null)
             where T : IEntityDescriptor, new()
         {
-            return factory.BuildEntity<T>(entityID, group.ExclusiveGroupStruct, implementors);
+            return factory.BuildEntity<T>(entityID, group.ExclusiveGroup, implementors);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void RemoveEntity<T>(this IEntityFunctions functions, uint entityID, in Table<T> group)
             where T : IEntityDescriptor, new()
         {
-            functions.RemoveEntity<T>(entityID, group.ExclusiveGroupStruct);
+            functions.RemoveEntity<T>(entityID, group.ExclusiveGroup);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void RemoveEntitiesFromGroup<T>(this IEntityFunctions functions, in Table<T> group)
             where T : IEntityDescriptor, new()
         {
-            functions.RemoveEntitiesFromGroup(group.ExclusiveGroupStruct);
+            functions.RemoveEntitiesFromGroup(group.ExclusiveGroup);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void SwapEntitiesInGroup<T>(this IEntityFunctions functions, in Table<T> fromGroup, in Table<T> toGroup)
             where T : IEntityDescriptor, new()
         {
-            functions.SwapEntitiesInGroup<T>(fromGroup.ExclusiveGroupStruct, toGroup.ExclusiveGroupStruct);
+            functions.SwapEntitiesInGroup<T>(fromGroup.ExclusiveGroup, toGroup.ExclusiveGroup);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void SwapEntityGroup<T>(this IEntityFunctions functions, uint entityID, in Table<T> fromGroup, in Table<T> toGroup)
             where T : IEntityDescriptor, new()
         {
-            functions.SwapEntityGroup<T>(entityID, fromGroup.ExclusiveGroupStruct, toGroup.ExclusiveGroupStruct);
+            functions.SwapEntityGroup<T>(entityID, fromGroup.ExclusiveGroup, toGroup.ExclusiveGroup);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void SwapEntityGroup<T>(this IEntityFunctions functions, EGID fromID, in Table<T> toGroup)
             where T : IEntityDescriptor, new()
         {
-            functions.SwapEntityGroup<T>(fromID, toGroup.ExclusiveGroupStruct);
+            functions.SwapEntityGroup<T>(fromID, toGroup.ExclusiveGroup);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void SwapEntityGroup<T>(this IEntityFunctions functions, EGID fromID, in Table<T> fromGroup, in Table<T> toGroup)
             where T : IEntityDescriptor, new()
         {
-            functions.SwapEntityGroup<T>(fromID, fromGroup.ExclusiveGroupStruct, toGroup.ExclusiveGroupStruct);
+            functions.SwapEntityGroup<T>(fromID, fromGroup.ExclusiveGroup, toGroup.ExclusiveGroup);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void SwapEntityGroup<T>(this IEntityFunctions functions, EGID fromID, EGID toID, in Table<T> mustBeFromGroup)
             where T : IEntityDescriptor, new()
         {
-            functions.SwapEntityGroup<T>(fromID, toID, mustBeFromGroup.ExclusiveGroupStruct);
+            functions.SwapEntityGroup<T>(fromID, toID, mustBeFromGroup.ExclusiveGroup);
         }
     }
 }

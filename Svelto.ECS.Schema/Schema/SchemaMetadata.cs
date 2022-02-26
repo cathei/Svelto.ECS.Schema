@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using Svelto.DataStructures;
 using Svelto.ECS.Schema.Definition;
+using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema
 {
@@ -12,97 +13,107 @@ namespace Svelto.ECS.Schema
         internal class TableNode
         {
             public ShardNode parent;
-            public IEntitySchemaTable table;
+            public ISchemaDefinitionTable table;
         }
 
         internal class ShardNode
         {
             public ShardNode parent;
-            public FasterList<IEntitySchemaIndex> indexers;
+            public FasterList<ISchemaDefinitionIndex> indexers;
+
+            public ShardNode(ShardNode parent)
+            {
+                this.parent = parent;
+            }
         }
 
-        internal readonly ShardNode root = new ShardNode();
+        internal readonly ShardNode root;
 
         internal readonly FasterDictionary<ExclusiveGroupStruct, TableNode> groupToTable;
-        internal readonly FasterDictionary<RefWrapperType, IEntitySchemaIndex> indexersToGenerateEngine;
+        internal readonly FasterDictionary<RefWrapperType, ISchemaDefinitionIndex> indexersToGenerateEngine;
 
-        private static readonly Type ElementBaseType = typeof(IEntitySchemaElement);
-        private static readonly Type GenericTableType = typeof(Table<>);
-        private static readonly Type GenericIndexType = typeof(Index<>);
-        private static readonly Type GenericShardType = typeof(Ranged<,>);
+        private static readonly Type ElementBaseType = typeof(ISchemaDefinition);
 
         internal SchemaMetadata(IEntitySchema schema)
         {
             groupToTable = new FasterDictionary<ExclusiveGroupStruct, TableNode>();
-            indexersToGenerateEngine = new FasterDictionary<RefWrapperType, IEntitySchemaIndex>();
+            indexersToGenerateEngine = new FasterDictionary<RefWrapperType, ISchemaDefinitionIndex>();
 
-            root = new ShardNode();
-
-            GenerateChildren(root, schema);
+            root = new ShardNode(null);
+            GenerateChildren(root, schema, schema.GetType().FullName);
         }
 
-        private void GenerateChildren(ShardNode node, object instance)
+        private void GenerateChildren(ShardNode node, object instance, string name)
         {
             foreach (var fieldInfo in GetSchemaElementFields(instance.GetType()))
             {
-                var genericType = fieldInfo.FieldType.GetGenericTypeDefinition();
+                var element = fieldInfo.GetValue(instance);
 
-                if (genericType == GenericTableType)
+                if (element == null)
+                    throw new ECSException("Schema element must not be null!");
+
+                switch (element)
                 {
-                    var element = (IEntitySchemaTable)fieldInfo.GetValue(instance);
+                    case ISchemaDefinitionTable table:
+                        RegisterTable(node, table, $"{name}.{fieldInfo.Name}");
+                        break;
 
-                    RegisterTable(node, element);
-                }
-                else if (genericType == GenericIndexType)
-                {
-                    if (node.indexers == null)
-                        node.indexers = new FasterList<IEntitySchemaIndex>();
+                    case ISchemaDefinitionRangedTable rangedTable:
+                        for (int i = 0; i < rangedTable.Range; ++i)
+                            RegisterTable(node, rangedTable.GetTable(i), $"{name}.{fieldInfo.Name}.{i}");
+                        break;
 
-                    var element = (IEntitySchemaIndex)fieldInfo.GetValue(instance);
-                    node.indexers.Add(element);
+                    case ISchemaDefinitionIndex indexer:
+                        RegisterIndexer(node, indexer);
+                        break;
 
-                    RegisterIndexer(element);
-                }
-                else if (genericType == GenericShardType)
-                {
-                    var element = (IEntitySchemaShard)fieldInfo.GetValue(instance);
+                    case IEntitySchema schema:
+                        GenerateChildren(new ShardNode(node), element, $"{name}.{fieldInfo.Name}");
+                        break;
 
-                    var shardType = element.InnerType;
+                    case ISchemaDefinitionRangedSchema rangedSchema:
+                        for (int i = 0; i < rangedSchema.Range; ++i)
+                            GenerateChildren(new ShardNode(node), rangedSchema.GetSchema(i), $"{name}.{fieldInfo.Name}.{i}");
+                        break;
 
-                    for (int i = 0; i < element.Range; ++i)
-                    {
-                        var child = new ShardNode { parent = node };
+                    case ISchemaDefinitionMemo memo:
+                    case ISchemaDefinitionStateMachine stateMachine:
+                        break;
 
-                        GenerateChildren(child, element.GetSchema(i));
-                    }
-                }
-                else
-                {
-                    throw new ECSException($"Unknown type detected in schema: {genericType}");
+                    default:
+                        throw new ECSException($"Unknown type detected in schema: {fieldInfo.FieldType.Name} {fieldInfo.Name}");
                 }
             }
         }
 
-        private void RegisterTable(ShardNode parent, IEntitySchemaTable element)
+        private void RegisterTable(ShardNode parent, ISchemaDefinitionTable table, string name)
         {
-            groupToTable[element.ExclusiveGroup] = new TableNode
+            groupToTable[table.ExclusiveGroup] = new TableNode
             {
                 parent = parent,
-                table = element
+                table = table
             };
+
+            // ok we have to set three internal Svelto Dictionary here to support serialization
+            // GroupHashMap
+            // GroupNamesMap.idToName
+            // ExclusiveGroup._knownGroups
 
             // GroupHashMap is internal class of Svelto.ECS at the time
             // GroupHashMap.RegisterGroup(group, UniqueName);
         }
 
-        private void RegisterIndexer(IEntitySchemaIndex element)
+        private void RegisterIndexer(ShardNode node, ISchemaDefinitionIndex indexer)
         {
-            var keyType = element.KeyType;
+            node.indexers ??= new FasterList<ISchemaDefinitionIndex>();
+            node.indexers.Add(indexer);
+
+            var keyType = indexer.KeyType;
 
             if (indexersToGenerateEngine.ContainsKey(keyType))
                 return;
 
-            indexersToGenerateEngine[keyType] = element;
+            indexersToGenerateEngine[keyType] = indexer;
         }
 
         private static IEnumerable<FieldInfo> GetSchemaElementFields(Type type)

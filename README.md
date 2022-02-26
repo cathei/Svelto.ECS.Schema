@@ -43,7 +43,7 @@ public class GameSchema : IEntitySchema
 
 `Table<TDescriptor>` represents underlying `ExclusiveGroup`. Groups should only accept entities using same descriptor, or else the iteration index will break. In Schema extension Table has Descriptor type argument, basically preventing the issue.
 
-Note that tables are defined as private, and only `Group<T>` are exposed. This is pattern I recommend, so rest of your code can be kept clean and reslove all schema definition related code in schema classes.
+Note that tables are public readonly fields. Tables should not be changed, and properties are not supported by Schema extension for now.
 
 ### Generating Schema
 Now we defined a schema, we can generate on through `EnginesRoot`, do this before any entitiy submission.
@@ -57,7 +57,7 @@ Generating `IndexesDB` is required prior to generate schema. It is the class tha
 **Do not call new on IEntitySchema directly. It needs to be managed internally by this extension.**
 
 ### Add Entities to Table
-Now to add entity with `Group<T>`, we support two ways. One is original Svelto way:
+Now to add entity with `Table<T>`, we support two ways. One is original Svelto way:
 ```csharp
 var entityBuilder = entityFactory.BuildEntity(entityId, schema.Character);
 ```
@@ -68,7 +68,7 @@ var entityBuilder = schema.Character.Build(entityFactory, entityId);
 Results are the same so it is just different expression.
 
 ### Query Entities from Table
-To query entities of `Group<T>`, also original Svelto way:
+To query entities of `Table<T>`, also original Svelto way:
 ```csharp
 var (egid, count) = entitiesDB.QueryEntities<EGIDComponent>(schema.Character);
 ```
@@ -77,7 +77,7 @@ and Schema extension way (preferred):
 var (egid, count) = schema.Character.Entities<EGIDComponent>(entitiesDB);
 ```
 
-Reason I decided to have different expression from original Svelto is because we can pass more type information to calls without making it look awkward. C# does not support partial generic type inference, and we don't wanna verbosely pass type information around like `QueryEntities<EGIDCompoent, CharacterDescriptor>(GameSchema.Character)`.
+Reason I decided to have different expression from original Svelto is because we can pass more type information to calls without making it look awkward. C# does not support partial generic type inference, and we don't wanna verbosely pass type information around like `QueryEntities<EGIDCompoent, CharacterDescriptor>(schema.Character)`.
 
 ### Defining Ranged Table
 Sometimes you'll want many tables of same type, without defining many variables. Simiply pass the number of group you want to be created, and there are multiple separated tables!
@@ -88,23 +88,23 @@ public class AnotherSchema : IEntitySchema
 {
     public const int MaxPlayerCount = 10;
 
-    private Table<ItemDescriptor> _items = new Table<ItemDescriptor>((int)ItemType.MAX);
-    public Group<ItemDescriptor> Items(ItemType type) => _items.Group((int)type);
+    public readonly RangedTable<PlayerDescriptor> Players =
+        new RangedTable<PlayerDescriptor>(MaxPlayerCount);
 
-    private Table<PlayerDescriptor> _players = new Table<PlayerDescriptor>(MaxPlayerCount);
-    public Group<PlayerDescriptor> Player(int playerId) => _players.Group(playerId);
+    public readonly RangedTable<ItemDescriptor, ItemType> Items =
+        new RangedTable<ItemDescriptor, ItemType>((int)ItemType.MAX, itemType => (int)itemType);
 
-    public Groups<PlayerDescriptor> AllPlayers { get; }
+    public readonly Tables<PlayerDescriptor> AllPlayers;
 
     public AnotherSchema()
     {
-        AllPlayers = _players.Groups();
+        AllPlayers = Players;
     }
 }
 ```
-Above example shows use case of ranged tables with number or enum.
+Above example shows use case of ranged tables with number or enum. `Players` has one argument since it is using integer, and `Items` has a mapping function to access inner table easily. Both tables are accessable by `Players[0]` or `Items[0]`. Additionally, item tables are accessible with `ItemType` like `Items[ItemType.Potion]`.
 
-Note that we also exposes `AnotherSchema.AllPlayers` which represents all player groups. `Groups<T>` has underlying `FasterList<ExclusiveGroupStruct>`. Which means you can directly pass it into `EntitiesDB.QueryEntities`. 
+Note that we also exposes `AnotherSchema.AllPlayers` which represents all player groups. `Tables<T>` has underlying `FasterList<ExclusiveGroupStruct>`. Which means you can directly pass it into `EntitiesDB.QueryEntities`. 
 ```csharp
 foreach (var (...) in entitiesDB.QueryEntities<...>(schema.AllPlayers)) { }
 ```
@@ -123,8 +123,8 @@ public class PlayerSchema : IEntitySchema
     public readonly Table<CharacterDescriptor> AliveCharacter = new Table<CharacterDescriptor>();
     public readonly Table<CharacterDescriptor> DeadCharacter = new Table<CharacterDescriptor>();
 
-    // private Table<ItemDescriptor> _items = new Table<ItemDescriptor>((int)ItemType.MAX);
-    // public Group<ItemDescriptor> Item(ItemType type) => _items.Group((int)type);
+    public readonly RangedTable<ItemDescriptor, ItemType> Items =
+        new RangedTable<ItemDescriptor, ItemType>((int)ItemType.MAX, itemType => (int)itemType);
 }
 ```
 Now we have `PlayerSchema`, we can define shard in the parent schema. with `Shard<PlayerSchema>`.
@@ -134,18 +134,15 @@ public class MyGameSchema : IEntitySchema
 {
     public const int MaxPlayerCount = 10;
 
-    private Shard<PlayerSchema> _ai = new Shard<PlayerSchema>();
-    public PlayerSchema AI => _ai.Schema();
+    public readonly PlayerSchema AI = new PlayerSchema();
 
-    private Shard<PlayerSchema> _players = new Shard<PlayerSchema>(MaxPlayerCount);
-    public PlayerSchema Player(int playerId) => _players.Schema(playerId);
+    public readonly Ranged<PlayerSchema> Players = new Ranged<PlayerSchema>(MaxPlayerCount);
 
     public Tables<CharacterDescriptor> AllAliveCharacters { get; }
 
     public MyGameSchema()
     {
-        AllAliveCharacters = AI.AliveCharacter +
-            _players.Schemas().Combine(x => x.AliveCharacter);
+        AllAliveCharacters = AI.AliveCharacter + Players.Combine(x => x.AliveCharacter);
     }
 }
 ```
@@ -170,14 +167,14 @@ public class CompositionRoot
             AddCharacter(entityFactory, schema.AI.AliveCharacter);
 
         for (int i = 0; i < 10; ++i)
-            AddCharacter(entityFactory, schema.Player(0).DeadCharacter);
+            AddCharacter(entityFactory, schema.Player[0].DeadCharacter);
 
         submissionScheduler.SubmitEntities();
     }
 
-    private void AddCharacter(IEntityFactory entityFactory, Group<CharacterDescriptor> group)
+    private void AddCharacter(IEntityFactory entityFactory, Table<CharacterDescriptor> table)
     {
-        var builder = group.Build(entityFactory, eidCounter++);
+        var builder = table.Build(entityFactory, eidCounter++);
 
         builder.Init(new HealthComponent(1000));
         builder.Init(new PositionComponent(0, 0));
@@ -230,37 +227,34 @@ With Schema extension this would be converted to below.
 ```csharp
 public class StateSchema : IEntitySchema
 {
-    private Table<DoofusEntityDescriptor> Doofus = new Table<DoofusEntityDescriptor>();
-    private Table<FoodEntityDescriptor> Food = new Table<FoodEntityDescriptor>();
+    public readonly Table<DoofusEntityDescriptor> Doofus = new Table<DoofusEntityDescriptor>();
+    public readonly Table<FoodEntityDescriptor> Food = new Table<FoodEntityDescriptor>();
 }
 
 public class TeamSchema : IEntitySchema
 {
-    private Shard<StateSchema> _eating = new Shard<StateSchema>();
-    public StateSchema Eating => _eating.Schema();
-
-    private Shard<StateSchema> _nonEating = new Shard<StateSchema>();
-    public StateSchema NonEating => _nonEating.Schema();
+    public readonly StateSchema Eating = new StateSchema();
+    public readonly StateSchema NonEating = new StateSchema();
 }
 
 public enum TeamColor { Red, Blue, MAX }
 
 public class GameSchema : IEntitySchema
 {
-    private Shard<TeamSchema> _team = new Shard<TeamSchema>((int)TeamColor.MAX);
-    public TeamSchema Team(TeamColor color) => _team.Schema((int)color);
+    public readonly Ranged<TeamSchema, TeamColor> Teams =
+        new Ranged<TeamSchema, TeamColor>((int)TeamColor.MAX, teamColor => (int)teamColor);
 
-    public Groups<DoofusEntityDescriptor> EatingDoofuses { get; }
+    public readonly Tables<DoofusEntityDescriptor> EatingDoofuses;
 
     public GameSchema()
     {
-        EatingDoofuses = _team.Schemas().Combine(x => x.Eating.Doofus);
+        EatingDoofuses = Teams.Combine(x => x.Eating.Doofus);
     }
 }
 ```
-More code, but you'll thank to some complexity when you have to deal with big design changes!
+Not that hard, you'll thank to some complexity when you have to deal with big design changes!
 
-When using it, code `GameGroups.RED_DOOFUSES_EATING.Groups` would be equvalent to `GameSchema.Team(TeamColor.Red).Eating.Doofus`.
+When using it, code `GameGroups.RED_DOOFUSES_EATING.Groups` would be equvalent to `GameSchema.Teams[TeamColor.Red].Eating.Doofus`.
 
 ## Index Usage
 ### Defining Indexes
@@ -279,6 +273,9 @@ public readonly struct CharacterController : IEntityIndexKey<CharacterController
     {
         return PlayerId == other.PlayerId;
     }
+
+    public static implicit operator CharacterController(int value)
+        => CharacterController(value);
 }
 ```
 Keys are structs inheriting `IEntityIndexKey<TSelf>`. And you have to implement `bool Equals(TSelf)` to check Key equality and optionally implement `int GetHashCode()`. Also keys are not meant to be mutable so I prefer to add `readonly` constraint.
@@ -325,7 +322,7 @@ foreach (var ((health, position, indices), group) in schema.CharactersByControll
 ```
 Note that you can use foreach loop to iterate indices.  **DO NOT update `Indexed` component while iterating through index query with it.** It is undefined behaviour.
 
-If you want to query index within specific `Group<T>` or `Groups<T>`, use `From` like this:
+If you want to query index within specific `Table<T>` or `Groups<T>`, use `From` like this:
 ```csharp
 var (health, position, indices) = IndexedSchema.CharactersByController(3)
     .From(IndexedSchema.FlyingCharacter)
@@ -371,7 +368,7 @@ Below is naming convention suggestions to make schema more readable.
 ### For Tables
 * Use `_singularNoun` for singluar table.
 * Use `_pluralNouns` for ranged table.
-* Use `SingularNoun` for `Group<T>`.
+* Use `SingularNoun` for `Table<T>`.
 * Use `PluralNouns` for `Groups<T>`.
 
 ### For Shards

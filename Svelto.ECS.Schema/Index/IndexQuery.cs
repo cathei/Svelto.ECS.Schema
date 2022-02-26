@@ -7,12 +7,12 @@ namespace Svelto.ECS.Schema
 {
     namespace Internal
     {
-        public interface IIndexQuery
+        public interface IEntityIndexQuery
         {
             IndexesDB.IndexerSetData GetGroupIndexDataList(IndexesDB indexesDB);
         }
 
-        public interface IIndexQuery<TK, TC> : IIndexQuery
+        public interface IEntityIndexQuery<TK, TC> : IEntityIndexQuery
             where TK : unmanaged, IKeyEquatable<TK>
             where TC : unmanaged, IIndexedComponent<TK>
         {
@@ -20,7 +20,7 @@ namespace Svelto.ECS.Schema
         }
     }
 
-    public readonly partial struct IndexQuery<TK, TC> : IIndexQuery<TK, TC>
+    public readonly partial struct IndexQuery<TK, TC> : IEntityIndexQuery<TK, TC>
         where TK : unmanaged, IKeyEquatable<TK>
         where TC : unmanaged, IIndexedComponent<TK>
     {
@@ -33,12 +33,12 @@ namespace Svelto.ECS.Schema
             _key = key;
         }
 
-        NB<TC> IIndexQuery<TK, TC>.GetComponents(IndexesDB indexesDB, in ExclusiveGroupStruct groupID)
+        NB<TC> IEntityIndexQuery<TK, TC>.GetComponents(IndexesDB indexesDB, in ExclusiveGroupStruct groupID)
         {
             return indexesDB.entitiesDB.QueryEntities<TC>(groupID).ToBuffer().buffer;
         }
 
-        IndexesDB.IndexerSetData IIndexQuery.GetGroupIndexDataList(IndexesDB indexesDB)
+        private IndexesDB.IndexerSetData GetGroupIndexDataList(IndexesDB indexesDB)
         {
             if (!indexesDB.indexers.ContainsKey(_indexerId))
                 return default;
@@ -47,6 +47,9 @@ namespace Svelto.ECS.Schema
             indexerData.TryGetValue(_key, out var result);
             return result;
         }
+
+        IndexesDB.IndexerSetData IEntityIndexQuery.GetGroupIndexDataList(IndexesDB indexesDB)
+            => GetGroupIndexDataList(indexesDB);
 
         public void Set<T>(IndexesDB indexesDB, Memo<T> memo)
             where T : unmanaged, IEntityComponent

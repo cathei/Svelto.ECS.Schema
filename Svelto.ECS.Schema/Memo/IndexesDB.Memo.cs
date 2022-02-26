@@ -26,7 +26,7 @@ namespace Svelto.ECS.Schema
             groupData.filter.TryRemove(entityID);
         }
 
-        internal void ClearMemo<T>(T memo) where T : IEntitySchemaMemo
+        internal void ClearMemo<T>(T memo) where T : ISchemaDefinitionMemo
         {
             memos[memo.MemoID].Clear();
         }

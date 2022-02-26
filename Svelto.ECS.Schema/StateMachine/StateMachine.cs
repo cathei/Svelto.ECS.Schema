@@ -6,7 +6,7 @@ using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema
 {
-    public abstract partial class StateMachine<TParam, TState>
+    public abstract partial class StateMachine<TParam, TState> : ISchemaDefinitionStateMachine
         where TParam : unmanaged
         where TState : unmanaged, IKeyEquatable<TState>
     {

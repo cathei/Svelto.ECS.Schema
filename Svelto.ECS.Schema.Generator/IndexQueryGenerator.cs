@@ -24,7 +24,7 @@ namespace Svelto.ECS.Schema.Generator
 
             var indices = new FilteredIndices();
 
-            if (groupDataList != null && _group.ExclusiveGroupStruct.IsEnabled() &&
+            if (groupDataList != null && _group.ExclusiveGroup.IsEnabled() &&
                 groupDataList.TryGetValue(_group, out var groupData))
             {{
                 indices = groupData.filter.filteredIndices;
@@ -77,13 +77,16 @@ using System.Runtime.CompilerServices;
 using Svelto.DataStructures;
 using Svelto.ECS.Schema.Internal;
 
-namespace Svelto.ECS.Schema
+namespace Svelto.ECS.Schema.Definition
 {{
     public partial class Memo<T>
     {{
 {GenerateQueryEntities(QueryEntitiesTemplate)}
     }}
+}}
 
+namespace Svelto.ECS.Schema
+{{
     public partial struct IndexQuery<TK, TC>
     {{
 {GenerateQueryEntities(QueryEntitiesTemplate)}

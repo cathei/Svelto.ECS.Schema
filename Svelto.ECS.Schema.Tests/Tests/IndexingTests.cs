@@ -60,19 +60,19 @@ namespace Svelto.ECS.Schema.Tests
             for (int i = 0; i < 10; ++i)
             {
                 var itemBuilder = _schema.AI.Item.Build(_factory, itemIdCounter++);
-                itemBuilder.Init(new Indexed<ItemOwner>(new ItemOwner(0)));
+                itemBuilder.Init(new Indexed<ItemOwner>(0));
             }
 
             for (int i = 0; i < 10; ++i)
             {
                 var itemBuilder = _schema.Players[0].Item.Build(_factory, itemIdCounter++);
-                itemBuilder.Init(new Indexed<ItemOwner>(new ItemOwner(0)));
+                itemBuilder.Init(new Indexed<ItemOwner>(0));
             }
 
             for (int i = 0; i < 10; ++i)
             {
                 var itemBuilder = _schema.Players[1].Item.Build(_factory, itemIdCounter++);
-                itemBuilder.Init(new Indexed<ItemOwner>(new ItemOwner(0)));
+                itemBuilder.Init(new Indexed<ItemOwner>(0));
             }
 
             _submissionScheduler.SubmitEntities();
@@ -215,24 +215,23 @@ namespace Svelto.ECS.Schema.Tests
             for (int i = 0; i < 10; ++i)
             {
                 var itemBuilder = _schema.AI.Item.Build(_factory, itemIdCounter++);
-                itemBuilder.Init(new Indexed<ItemOwner>(new ItemOwner(i)));
+                itemBuilder.Init(new Indexed<ItemOwner>(i));
             }
 
             for (int i = 0; i < 10; ++i)
             {
                 var itemBuilder = _schema.Players[3].Item.Build(_factory, itemIdCounter++);
-                itemBuilder.Init(new Indexed<ItemOwner>(new ItemOwner(i)));
+                itemBuilder.Init(new Indexed<ItemOwner>(i));
             }
 
             for (int i = 0; i < 10; ++i)
             {
                 var itemBuilder = _schema.Players[5].Item.Build(_factory, itemIdCounter++);
-                itemBuilder.Init(new Indexed<ItemOwner>(new ItemOwner(i)));
+                itemBuilder.Init(new Indexed<ItemOwner>(i));
             }
 
             _submissionScheduler.SubmitEntities();
 
-            // var (buffer, indices) = _schema.ItemsByOwner.Query(0).From(_schema.AI.Item)).Entities<Indexed<ItemOwner>>();
             var (buffer, indices) = _schema.ItemsByOwner.Query(0)
                 .From(_schema.AI.Item)
                 .Entities<Indexed<ItemOwner>>(_indexesDB);

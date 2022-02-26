@@ -13,13 +13,13 @@ namespace Svelto.ECS.Schema.Definition
         public static int Generate() => Interlocked.Increment(ref Count);
     }
 
-    public sealed partial class Memo<T> : IEntitySchemaMemo, IIndexQuery
+    public sealed partial class Memo<T> : ISchemaDefinitionMemo, IEntityIndexQuery
         where T : unmanaged, IEntityComponent
     {
         // equvalent to ExclusiveGroupStruct.Generate()
         internal readonly int _memoID = GlobalMemoCount.Generate();
 
-        int IEntitySchemaMemo.MemoID => _memoID;
+        int ISchemaDefinitionMemo.MemoID => _memoID;
 
         public void Add(IndexesDB indexesDB, EGID egid)
         {
@@ -37,7 +37,7 @@ namespace Svelto.ECS.Schema.Definition
         }
 
         internal void Set<TQuery, TK, TC>(IndexesDB indexesDB, TQuery query)
-            where TQuery : IIndexQuery<TK, TC>
+            where TQuery : IEntityIndexQuery<TK, TC>
             where TK : unmanaged, IKeyEquatable<TK>
             where TC : unmanaged, IIndexedComponent<TK>
         {
@@ -46,7 +46,7 @@ namespace Svelto.ECS.Schema.Definition
         }
 
         internal void Union<TQuery, TK, TC>(IndexesDB indexesDB, TQuery query)
-            where TQuery : IIndexQuery<TK, TC>
+            where TQuery : IEntityIndexQuery<TK, TC>
             where TK : unmanaged, IKeyEquatable<TK>
             where TC : unmanaged, IIndexedComponent<TK>
         {
@@ -71,7 +71,7 @@ namespace Svelto.ECS.Schema.Definition
         }
 
         internal void Intersect<TQuery, TK, TC>(IndexesDB indexesDB, TQuery query)
-            where TQuery : IIndexQuery<TK, TC>
+            where TQuery : IEntityIndexQuery<TK, TC>
             where TK : unmanaged, IKeyEquatable<TK>
             where TC : unmanaged, IIndexedComponent<TK>
         {
@@ -120,7 +120,7 @@ namespace Svelto.ECS.Schema.Definition
             return result;
         }
 
-        IndexesDB.IndexerSetData IIndexQuery.GetGroupIndexDataList(IndexesDB indexesDB)
+        IndexesDB.IndexerSetData IEntityIndexQuery.GetGroupIndexDataList(IndexesDB indexesDB)
             => GetGroupIndexDataList(indexesDB);
     }
 }
