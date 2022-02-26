@@ -43,13 +43,13 @@ namespace Svelto.ECS.Schema
         {
             int MemoID { get; }
         }
+
+        public interface IEntityStateMachine
+        {
+            void AddEngines(EnginesRoot enginesRoot, IndexesDB indexesDB);
+            ISchemaDefinitionIndex Index { get; }
+        }
     }
 
-    public interface IEntitySchema : Internal.ISchemaDefinition { }
-
-    public interface IEntityStateMachine
-    {
-        IStepEngine AddEngines(EnginesRoot enginesRoot, IndexesDB indexesDB);
-        ISchemaDefinitionIndex Index { get; }
-    }
+    public interface IEntitySchema : ISchemaDefinition { }
 }

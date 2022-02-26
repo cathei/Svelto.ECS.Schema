@@ -15,17 +15,15 @@ namespace Svelto.ECS.Schema
     public abstract partial class StateMachine<TState> : IEntityStateMachine
         where TState : unmanaged
     {
-        internal readonly FasterDictionary<IKeyEquatable<Key>.Wrapper, StateConfig> _states;
-        internal readonly AnyStateConfig _anyState;
+        // lock is not needed unlike EntitySchemaHolder
+        // because no shared memory or reflection etc involved
+        internal static readonly StateMachineConfig Config = new StateMachineConfig();
+        internal static readonly EqualityComparer<TState> Comparer = EqualityComparer<TState>.Default;
 
-        protected AnyStateBuilder AnyState => new AnyStateBuilder(_anyState);
-
-        internal static EqualityComparer<TState> Comparer = EqualityComparer<TState>.Default;
+        public TransitionEngine Engine { get; internal set; }
 
         protected StateMachine()
         {
-            _states = new FasterDictionary<IKeyEquatable<Key>.Wrapper, StateConfig>();
-            _anyState = new AnyStateConfig(this);
         }
 
         protected internal delegate bool Predicate<TComponent>(ref TComponent component)
@@ -107,18 +105,12 @@ namespace Svelto.ECS.Schema
 
         internal sealed class TransitionConfig
         {
-            private readonly StateMachine<TState> _fsm;
-
             // ID in this state
-            internal readonly int _transitionID;
-
             internal readonly TState _next;
             internal readonly FasterList<ConditionConfig> _conditions;
 
-            internal TransitionConfig(StateMachine<TState> fsm, int transitionID, in TState next)
+            internal TransitionConfig(in TState next)
             {
-                _fsm = fsm;
-                _transitionID = transitionID;
                 _next = next;
                 _conditions = new FasterList<ConditionConfig>();
             }
@@ -151,8 +143,8 @@ namespace Svelto.ECS.Schema
                         var currentState = new IKeyEquatable<Key>.Wrapper(component[i]._key);
                         var nextState = new IKeyEquatable<Key>.Wrapper(_next);
 
-                        _fsm._states[currentState]._exitCandidates.Add(indexesDB, component[i].ID);
-                        _fsm._states[nextState]._enterCandidates.Add(indexesDB, component[i].ID);
+                        Config.States[currentState]._exitCandidates.Add(indexesDB, component[i].ID);
+                        Config.States[nextState]._enterCandidates.Add(indexesDB, component[i].ID);
                     }
                 }
             }
@@ -185,7 +177,7 @@ namespace Svelto.ECS.Schema
 
             internal void Evaluate(IndexesDB indexesDB, NB<Component> component, in ExclusiveGroupStruct groupID)
             {
-                var indices = _fsm.Index.Query(_state).From(groupID).Indices(indexesDB);
+                var indices = Config.Index.Query(_state).From(groupID).Indices(indexesDB);
 
                 // higher priority if added first
                 for (int i = 0; i < _transitions.count; ++i)
@@ -235,12 +227,10 @@ namespace Svelto.ECS.Schema
 
         internal sealed class AnyStateConfig
         {
-            internal readonly StateMachine<TState> _fsm;
             internal readonly FasterList<TransitionConfig> _transitions;
 
-            internal AnyStateConfig(StateMachine<TState> fsm)
+            internal AnyStateConfig()
             {
-                _fsm = fsm;
                 _transitions = new FasterList<TransitionConfig>();
             }
 
@@ -253,6 +243,23 @@ namespace Svelto.ECS.Schema
                     _transitions[i].Evaluate<RangeIndiceEnumerable, RangeIndicesEnumerator>
                         (indexesDB, state, indices, groupID);
                 }
+            }
+        }
+
+        internal sealed class StateMachineConfig
+        {
+            internal readonly FasterDictionary<IKeyEquatable<Key>.Wrapper, StateConfig> States;
+            internal readonly AnyStateConfig AnyState;
+
+            // this will manage filters for state machine
+            internal readonly Index Index;
+
+            public StateMachineConfig()
+            {
+                States = new FasterDictionary<IKeyEquatable<Key>.Wrapper, StateConfig>();
+                AnyState = new AnyStateConfig();
+
+                Index = new Index();
             }
         }
     }

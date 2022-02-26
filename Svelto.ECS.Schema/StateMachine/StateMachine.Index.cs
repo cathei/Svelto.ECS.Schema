@@ -59,13 +59,12 @@ namespace Svelto.ECS.Schema
             }
         }
 
-        internal sealed class StateMachineIndex : IndexBase<Key, Component>
+        internal sealed class Index : IndexBase<Key, Component>
         {
         }
 
-        // this will manage filters for state machine
-        internal StateMachineIndex Index = new StateMachineIndex();
+        ISchemaDefinitionIndex IEntityStateMachine.Index => Config.Index;
 
-        ISchemaDefinitionIndex IEntityStateMachine.Index => Index;
+        public IndexQuery<Key, Component> Query(TState state) => Config.Index.Query(state);
     }
 }

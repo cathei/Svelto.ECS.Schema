@@ -27,14 +27,6 @@ namespace Svelto.ECS.Schema
         }
     }
 
-    internal static class EntityStateMachineHolder<T>
-        where T : class, IEntityStateMachine, new()
-    {
-        // lock is not needed unlike EntitySchemaHolder
-        // because no shared memory or reflection etc involved
-        public static readonly T StateMachine = new T();
-    }
-
     public static class EntitySchemaExtensions
     {
         public static T AddSchema<T>(this EnginesRoot enginesRoot, IndexesDB indexesDB)
@@ -63,17 +55,21 @@ namespace Svelto.ECS.Schema
         }
 
         /// <summary>
-        /// return value is IStepEngine runs state machine transition
+        /// return value is StateMachine that will work as API of state machine related functions
+        /// remember to run StateMachine.Engine to make sure state changes!
         /// </summary>
-        public static IStepEngine AddStateMachine<T>(this EnginesRoot enginesRoot, IndexesDB indexesDB)
+        public static T AddStateMachine<T>(this EnginesRoot enginesRoot, IndexesDB indexesDB)
             where T : class, IEntityStateMachine, new()
         {
-            // State machine will not be directly created
-            var stateMachine = EntityStateMachineHolder<T>.StateMachine;
+            // State machine will work as API
+            // Actual configuration is static variable in StateMachine
+            var stateMachine = new T();
 
             indexesDB.stateMachineIndexers.Add(stateMachine.Index);
 
-            return stateMachine.AddEngines(enginesRoot, indexesDB);
+            stateMachine.AddEngines(enginesRoot, indexesDB);
+
+            return stateMachine;
         }
 
         public static IndexesDB GenerateIndexesDB(this EnginesRoot enginesRoot)

@@ -5,33 +5,29 @@ namespace Svelto.ECS.Schema
 {
     public partial class StateMachine<TState>
     {
-        IStepEngine IEntityStateMachine.AddEngines(EnginesRoot enginesRoot, IndexesDB indexesDB)
+        void IEntityStateMachine.AddEngines(EnginesRoot enginesRoot, IndexesDB indexesDB)
         {
-            // this is required to handle added entity or removal
+            // this is required to handle added or removed entities
             enginesRoot.AddEngine(new TableIndexingEngine<Key, Component>(indexesDB));
 
             // this is required to validate and change state
-            var engine = new Engine(this, indexesDB);
+            Engine = new TransitionEngine(this, indexesDB);
 
-            enginesRoot.AddEngine(engine);
-
-            return engine;
+            enginesRoot.AddEngine(Engine);
         }
 
-        public sealed class Engine : IQueryingEntitiesEngine, IStepEngine
+        public sealed class TransitionEngine : IQueryingEntitiesEngine, IStepEngine
         {
-            private readonly StateMachine<TState> _fsm;
             private readonly IndexesDB _indexesDB;
 
             public string name { get; }
 
             public EntitiesDB entitiesDB { private get; set; }
 
-            public Engine(StateMachine<TState> fsm, IndexesDB indexesDB)
+            public TransitionEngine(StateMachine<TState> fsm, IndexesDB indexesDB)
             {
                 name = $"{fsm.GetType().Name}.Engine";
 
-                _fsm = fsm;
                 _indexesDB = indexesDB;
             }
 
@@ -42,7 +38,7 @@ namespace Svelto.ECS.Schema
                 // TODO: we probably can cache this with inspecting table descriptors or get some hints
                 var groups = entitiesDB.FindGroups<Component>();
 
-                var states = _fsm._states.GetValues(out var stateCount);
+                var states = Config.States.GetValues(out var stateCount);
 
                 // clear all filters before proceed
                 // maybe not needed with new filter system
@@ -60,7 +56,7 @@ namespace Svelto.ECS.Schema
                     }
 
                     // any state transition has lower priority
-                    _fsm._anyState.Evaluate(_indexesDB, component, count, group);
+                    Config.AnyState.Evaluate(_indexesDB, component, count, group);
 
                     // check for exit candidates
                     for (int i = 0; i < stateCount; ++i)

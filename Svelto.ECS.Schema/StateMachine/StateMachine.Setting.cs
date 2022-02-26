@@ -8,17 +8,19 @@ namespace Svelto.ECS.Schema
 {
     public partial class StateMachine<TState> : IEntityStateMachine
     {
+        protected AnyStateBuilder AnyState => new AnyStateBuilder(Config.AnyState);
+
         protected StateBuilder AddState(in TState state)
         {
             var wrapper = new IKeyEquatable<Key>.Wrapper(new Key(state));
 
-            if (_states.ContainsKey(wrapper))
+            if (Config.States.ContainsKey(wrapper))
             {
                 throw new ECSException($"State {state} already exsists!");
             }
 
             var stateConfig = new StateConfig(this, state);
-            _states[wrapper] = stateConfig;
+            Config.States[wrapper] = stateConfig;
 
             return new StateBuilder(stateConfig);
         }
@@ -34,7 +36,7 @@ namespace Svelto.ECS.Schema
 
             public TransitionBuilder AddTransition(in TState next)
             {
-                var transition = new TransitionConfig(_state._fsm, _state._transitions.count, next);
+                var transition = new TransitionConfig(next);
                 _state._transitions.Add(transition);
                 return new TransitionBuilder(transition);
             }
@@ -88,7 +90,7 @@ namespace Svelto.ECS.Schema
 
             public TransitionBuilder AddTransition(in TState next)
             {
-                var transition = new TransitionConfig(_state._fsm, _state._transitions.count, next);
+                var transition = new TransitionConfig(next);
                 _state._transitions.Add(transition);
                 return new TransitionBuilder(transition);
             }

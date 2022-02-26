@@ -24,7 +24,7 @@ namespace Svelto.ECS.Schema.Tests
             public float timer = 0;
         }
 
-        public enum CharacterState { Normal, Upset, Angry, Special }
+        public enum CharacterState { Normal, Upset, Angry, Special, MAX }
 
         public class CharacterFSM : StateMachine<CharacterState>
         {
@@ -67,11 +67,34 @@ namespace Svelto.ECS.Schema.Tests
             public readonly Table<CharacterDescriptor> Character = new Table<CharacterDescriptor>();
         }
 
-        private IStepEngine _characterFSMEngine;
+        private readonly CharacterFSM _characterFSM;
 
         public StateMachineTests() : base()
         {
-            _characterFSMEngine = _enginesRoot.AddStateMachine<CharacterFSM>(_indexesDB);
+            _characterFSM = _enginesRoot.AddStateMachine<CharacterFSM>(_indexesDB);
+        }
+
+        private void AssertIndexer()
+        {
+            var (component, count) = _schema.Character.Entities<CharacterFSM.Component>(_entitiesDB);
+
+            int totalCheckedCount = 0;
+
+            for (CharacterState state = 0; state < CharacterState.MAX; ++state)
+            {
+                var indices = _characterFSM.Query(state).From(_schema.Character).Indices(_indexesDB);
+
+                foreach (var i in indices)
+                {
+                    // component state must match
+                    Assert.Equal(state, component[i].State);
+
+                    ++totalCheckedCount;
+                }
+            }
+
+            // all components should belong in index
+            Assert.Equal(count, totalCheckedCount);
         }
 
         [Fact]
@@ -85,7 +108,9 @@ namespace Svelto.ECS.Schema.Tests
 
             _submissionScheduler.SubmitEntities();
 
-            _characterFSMEngine.Step();
+            _characterFSM.Engine.Step();
+
+            AssertIndexer();
 
             var (rage, fsm, count) = _schema.Character.Entities<RageComponent, CharacterFSM.Component>(_entitiesDB);
 
@@ -95,7 +120,9 @@ namespace Svelto.ECS.Schema.Tests
                 rage[i].value = i * 2;
             }
 
-            _characterFSMEngine.Step();
+            _characterFSM.Engine.Step();
+
+            AssertIndexer();
 
             for (int i = 0; i < count; ++i)
             {
