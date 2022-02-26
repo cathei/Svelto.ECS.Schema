@@ -4,7 +4,7 @@ using Svelto.DataStructures;
 
 namespace Svelto.ECS.Schema
 {
-    internal class IndexesDBEngine : IQueryingEntitiesEngine, IReactOnSubmission
+    internal class IndexesDBEngine : IQueryingEntitiesEngine //, IReactOnSubmission
     {
         private readonly IndexesDB _indexesDB;
 
@@ -23,7 +23,11 @@ namespace Svelto.ECS.Schema
 
         public void EntitiesSubmitted()
         {
-            _indexesDB.ClearMemos();
+            // Even if we call it here, we still need to manually clean memo because
+            // EntitiesSubmitted only called when there is entities to submit
+            // We don't have to do this anyway if we move to new filter system
+
+            // _indexesDB.ClearMemos();
         }
     }
 }

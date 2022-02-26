@@ -5,12 +5,6 @@ namespace Svelto.ECS.Schema
 {
     public partial class StateMachine<TState>
     {
-        /// <summary>
-        /// if you want to control when to evaluate state, set this value to false
-        /// and remember to call Engine.Step() by yourself!
-        /// </summary>
-        public virtual bool RunEngineOnEntitySubmission => true;
-
         IStepEngine IEntityStateMachine.AddEngines(EnginesRoot enginesRoot, IndexesDB indexesDB)
         {
             // this is required to handle added entity or removal
@@ -19,15 +13,12 @@ namespace Svelto.ECS.Schema
             // this is required to validate and change state
             var engine = new Engine(this, indexesDB);
 
-            // order would be important here ...
-            // for now we don't want to be in-between of IReactAdd and IReactSubmission
-            // TODO: after new filter appplied this can move up to ensure initial state
             enginesRoot.AddEngine(engine);
 
             return engine;
         }
 
-        public sealed class Engine : IQueryingEntitiesEngine, IStepEngine, IReactOnSubmission
+        public sealed class Engine : IQueryingEntitiesEngine, IStepEngine
         {
             private readonly StateMachine<TState> _fsm;
             private readonly IndexesDB _indexesDB;
@@ -48,37 +39,41 @@ namespace Svelto.ECS.Schema
 
             public void Step()
             {
-                // TODO: we probably can cache this with inspecting descriptors
+                // TODO: we probably can cache this with inspecting table descriptors or get some hints
                 var groups = entitiesDB.FindGroups<Component>();
+
+                var states = _fsm._states.GetValues(out var stateCount);
+
+                // clear all filters before proceed
+                // maybe not needed with new filter system
+                for (int i = 0; i < stateCount; ++i)
+                {
+                    states[i]._exitCandidates.Clear(_indexesDB);
+                    states[i]._enterCandidates.Clear(_indexesDB);
+                }
 
                 foreach (var ((component, count), group) in entitiesDB.QueryEntities<Component>(groups))
                 {
-                    for (int i = 0; i < _fsm._states.count; ++i)
+                    for (int i = 0; i < stateCount; ++i)
                     {
-                        _fsm._states.unsafeValues[i].Evaluate(_indexesDB, component, group);
+                        states[i].Evaluate(_indexesDB, component, group);
                     }
 
                     // any state transition has lower priority
                     _fsm._anyState.Evaluate(_indexesDB, component, count, group);
 
                     // check for exit candidates
-                    for (int i = 0; i < _fsm._states.count; ++i)
+                    for (int i = 0; i < stateCount; ++i)
                     {
-                        _fsm._states.unsafeValues[i].ProcessExit(_indexesDB, group);
+                        states[i].ProcessExit(_indexesDB, group);
                     }
 
                     // check for enter candidates
-                    for (int i = 0; i < _fsm._states.count; ++i)
+                    for (int i = 0; i < stateCount; ++i)
                     {
-                        _fsm._states.unsafeValues[i].ProcessEnter(_indexesDB, component, group);
+                        states[i].ProcessEnter(_indexesDB, component, group);
                     }
                 }
-            }
-
-            public void EntitiesSubmitted()
-            {
-                if (_fsm.RunEngineOnEntitySubmission)
-                    Step();
             }
         }
     }

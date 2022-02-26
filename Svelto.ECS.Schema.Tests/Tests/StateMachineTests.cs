@@ -67,9 +67,11 @@ namespace Svelto.ECS.Schema.Tests
             public readonly Table<CharacterDescriptor> Character = new Table<CharacterDescriptor>();
         }
 
+        private IStepEngine _characterFSMEngine;
+
         public StateMachineTests() : base()
         {
-            _enginesRoot.AddStateMachine<CharacterFSM>(_indexesDB);
+            _characterFSMEngine = _enginesRoot.AddStateMachine<CharacterFSM>(_indexesDB);
         }
 
         [Fact]
@@ -83,6 +85,8 @@ namespace Svelto.ECS.Schema.Tests
 
             _submissionScheduler.SubmitEntities();
 
+            _characterFSMEngine.Step();
+
             var (rage, fsm, count) = _schema.Character.Entities<RageComponent, CharacterFSM.Component>(_entitiesDB);
 
             for (int i = 0; i < count; ++i)
@@ -91,7 +95,7 @@ namespace Svelto.ECS.Schema.Tests
                 rage[i].value = i * 2;
             }
 
-            _submissionScheduler.SubmitEntities();
+            _characterFSMEngine.Step();
 
             for (int i = 0; i < count; ++i)
             {

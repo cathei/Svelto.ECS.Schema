@@ -63,6 +63,16 @@ namespace Svelto.ECS.Schema
                     node = node.parent;
                 }
             }
+
+            for (int i = 0; i < _indexesDB.stateMachineIndexers.count; ++i)
+            {
+                var indexer = _indexesDB.stateMachineIndexers[i];
+
+                if (indexer.KeyType.Equals(IndexKeyType))
+                {
+                    AddToFilter(indexer.IndexerID, ref keyComponent, groupID);
+                }
+            }
         }
 
         private void AddToFilter(int indexerID, ref TC keyComponent, in ExclusiveGroupStruct groupID)
@@ -95,6 +105,16 @@ namespace Svelto.ECS.Schema
                     }
 
                     node = node.parent;
+                }
+            }
+
+            for (int i = 0; i < _indexesDB.stateMachineIndexers.count; ++i)
+            {
+                var indexer = _indexesDB.stateMachineIndexers[i];
+
+                if (indexer.KeyType.Equals(IndexKeyType))
+                {
+                    RemoveFromFilter(indexer.IndexerID, ref keyComponent, groupID);
                 }
             }
         }

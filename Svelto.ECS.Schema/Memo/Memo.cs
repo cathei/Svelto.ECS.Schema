@@ -56,9 +56,11 @@ namespace Svelto.ECS.Schema.Definition
             if (queryData == null)
                 return;
 
-            for (int groupIndex = 0; groupIndex < queryData.count; ++groupIndex)
+            var queryDataValues = queryData.GetValues(out var queryDataCount);
+
+            for (int groupIndex = 0; groupIndex < queryDataCount; ++groupIndex)
             {
-                var queryGroupData = queryData.unsafeValues[groupIndex];
+                var queryGroupData = queryDataValues[groupIndex];
 
                 // if empty nothing to add
                 if (queryGroupData.filter.filteredIndices.Count() == 0)
@@ -94,24 +96,25 @@ namespace Svelto.ECS.Schema.Definition
                 return;
             }
 
-            for (int groupIndex = 0; groupIndex < originalData.count; ++groupIndex)
+            var originalDataValues = originalData.GetValues(out var originalDataCount);
+
+            for (int groupIndex = 0; groupIndex < originalDataCount; ++groupIndex)
             {
-                ref var originalGroupData = ref originalData.unsafeValues[groupIndex];
+                ref var originalGroupData = ref originalDataValues[groupIndex];
 
                 // if group is empty there is nothing to remove
                 if (originalGroupData.filter.filteredIndices.Count() == 0)
                     continue;
 
                 // if target is empty there is no intersection
-                if (!queryData.TryGetValue(originalData.unsafeValues[groupIndex].group, out var queryGroupData) ||
+                if (!queryData.TryGetValue(originalDataValues[groupIndex].group, out var queryGroupData) ||
                     queryGroupData.filter.filteredIndices.Count() == 0)
                 {
                     originalGroupData.filter.Clear();
                     continue;
                 }
 
-                // var groupID = queryData.unsafeValues[groupIndex].group;
-                var components = query.GetComponents(indexesDB, queryData.unsafeValues[groupIndex].group);
+                var components = query.GetComponents(indexesDB, queryGroupData.group);
 
                 // ugh I have to check what to delete
                 // since I cannot change filter while iteration

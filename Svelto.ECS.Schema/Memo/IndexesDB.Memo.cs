@@ -28,13 +28,16 @@ namespace Svelto.ECS.Schema
 
         internal void ClearMemo<T>(T memo) where T : ISchemaDefinitionMemo
         {
-            memos[memo.MemoID].Clear();
+            if (memos.ContainsKey(memo.MemoID))
+                memos[memo.MemoID].Clear();
         }
 
         internal void ClearMemos()
         {
-            for (int i = 0; i < memos.count; ++i)
-                memos.unsafeValues[i].Clear();
+            var values = memos.GetValues(out var count);
+
+            for (int i = 0; i < count; ++i)
+                values[i].Clear();
         }
 
         internal ref IndexerGroupData CreateOrGetMemoGroup<T>(int memoID, in ExclusiveGroupStruct groupID)

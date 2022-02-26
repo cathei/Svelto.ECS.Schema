@@ -14,6 +14,8 @@ namespace Svelto.ECS.Schema
         internal readonly FasterDictionary<int, IndexerData> indexers;
         internal readonly FasterDictionary<int, IndexerSetData> memos;
 
+        internal readonly FasterList<ISchemaDefinitionIndex> stateMachineIndexers;
+
         // well... let's have some space for user defined filter
         private int filterIdCounter = 10000;
 
@@ -26,6 +28,7 @@ namespace Svelto.ECS.Schema
 
             indexers = new FasterDictionary<int, IndexerData>();
             memos = new FasterDictionary<int, IndexerSetData>();
+            stateMachineIndexers = new FasterList<ISchemaDefinitionIndex>();
         }
 
         internal void RegisterSchema(SchemaMetadata metadata)
@@ -54,27 +57,35 @@ namespace Svelto.ECS.Schema
             if (oldKey.Equals(newKey))
                 return;
 
-            // index may exist but no table found
-            if (!TryGetShard(keyComponent.ID.groupID, out var node))
-                return;
-
             var keyType = TypeRefWrapper<TK>.wrapper;
 
-            while (node != null)
+            if (TryGetShard(keyComponent.ID.groupID, out var node))
             {
-                if (node.indexers != null)
+                while (node != null)
                 {
-                    // there wouldn't be too many indexers
-                    for (int i = 0; i < node.indexers.count; ++i)
+                    if (node.indexers != null)
                     {
-                        var indexer = node.indexers[i];
+                        // there wouldn't be too many indexers
+                        for (int i = 0; i < node.indexers.count; ++i)
+                        {
+                            var indexer = node.indexers[i];
 
-                        if (indexer.KeyType.Equals(keyType))
-                            UpdateFilters(indexer.IndexerID, ref keyComponent, oldKey, newKey);
+                            if (indexer.KeyType.Equals(keyType))
+                                UpdateFilters(indexer.IndexerID, ref keyComponent, oldKey, newKey);
+                        }
                     }
-                }
 
-                node = node.parent;
+                    node = node.parent;
+                }
+            }
+
+            // there wouldn't be too many indexers
+            for (int i = 0; i < stateMachineIndexers.count; ++i)
+            {
+                var indexer = stateMachineIndexers[i];
+
+                if (indexer.KeyType.Equals(keyType))
+                    UpdateFilters(indexer.IndexerID, ref keyComponent, oldKey, newKey);
             }
         }
 

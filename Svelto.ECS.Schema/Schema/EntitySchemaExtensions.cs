@@ -64,13 +64,14 @@ namespace Svelto.ECS.Schema
 
         /// <summary>
         /// return value is IStepEngine runs state machine transition
-        /// it is executed on entity submission by default
         /// </summary>
         public static IStepEngine AddStateMachine<T>(this EnginesRoot enginesRoot, IndexesDB indexesDB)
             where T : class, IEntityStateMachine, new()
         {
             // State machine will not be directly created
             var stateMachine = EntityStateMachineHolder<T>.StateMachine;
+
+            indexesDB.stateMachineIndexers.Add(stateMachine.Index);
 
             return stateMachine.AddEngines(enginesRoot, indexesDB);
         }

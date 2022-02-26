@@ -31,7 +31,7 @@ namespace Svelto.ECS.Schema
             public static implicit operator TState(in Key key) => key._state;
         }
 
-        public struct Component : IIndexedComponent<Key>
+        public struct Component : IIndexedComponent<Key>, INeedEGID
         {
             public EGID ID { get; set; }
 
@@ -54,21 +54,18 @@ namespace Svelto.ECS.Schema
                 Key oldKey = _key;
                 _key = state;
 
-                // we can directly update our state machine indexer
-                // since it is not attached to any node
-                indexesDB.UpdateFilters(Index._indexerId, ref this, oldKey, _key);
-
-                // and, propagate to others indexers in schema (is this even necessary?)
+                // propagate to fsm index and others indexers in schema
                 indexesDB.NotifyKeyUpdate(ref this, oldKey, _key);
             }
         }
 
-        // this will manage filters for state machine
-        // it is static member here so user can easily access :)
-        public static StateMachineIndex Index = new StateMachineIndex();
-
-        public sealed class StateMachineIndex : IndexBase<Key, Component>
+        internal sealed class StateMachineIndex : IndexBase<Key, Component>
         {
         }
+
+        // this will manage filters for state machine
+        internal StateMachineIndex Index = new StateMachineIndex();
+
+        ISchemaDefinitionIndex IEntityStateMachine.Index => Index;
     }
 }

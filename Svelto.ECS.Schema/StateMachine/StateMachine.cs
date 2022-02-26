@@ -178,11 +178,14 @@ namespace Svelto.ECS.Schema
 
                 _exitCandidates = new Memo<Component>();
                 _enterCandidates = new Memo<Component>();
+
+                _onExit = new FasterList<CallbackConfig>();
+                _onEnter = new FasterList<CallbackConfig>();
             }
 
             internal void Evaluate(IndexesDB indexesDB, NB<Component> component, in ExclusiveGroupStruct groupID)
             {
-                var indices = Index.Query(_state).From(groupID).Indices(indexesDB);
+                var indices = _fsm.Index.Query(_state).From(groupID).Indices(indexesDB);
 
                 // higher priority if added first
                 for (int i = 0; i < _transitions.count; ++i)

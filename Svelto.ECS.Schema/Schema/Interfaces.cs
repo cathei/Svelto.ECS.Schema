@@ -5,6 +5,7 @@ using System.Linq;
 using Svelto.DataStructures;
 using Svelto.ECS;
 using Svelto.ECS.DataStructures;
+using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema
 {
@@ -18,7 +19,7 @@ namespace Svelto.ECS.Schema
             void Remove(IEntityFunctions functions, uint entityID);
         }
 
-        internal interface ISchemaDefinitionIndex : ISchemaDefinition
+        public interface ISchemaDefinitionIndex : ISchemaDefinition
         {
             RefWrapperType KeyType { get; }
             int IndexerID { get; }
@@ -49,5 +50,6 @@ namespace Svelto.ECS.Schema
     public interface IEntityStateMachine
     {
         IStepEngine AddEngines(EnginesRoot enginesRoot, IndexesDB indexesDB);
+        ISchemaDefinitionIndex Index { get; }
     }
 }

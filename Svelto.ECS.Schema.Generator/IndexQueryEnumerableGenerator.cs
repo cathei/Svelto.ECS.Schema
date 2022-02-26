@@ -25,7 +25,8 @@ namespace Svelto.ECS.Schema.Generator
         public ref struct RefIterator
         {{
             private readonly IndexesDB _indexesDB;
-            private readonly FasterDictionary<ExclusiveGroupStruct, IndexesDB.IndexerGroupData> _dict;
+            private readonly MB<IndexesDB.IndexerGroupData> _dictValues;
+            private readonly uint _count;
 
             private EntityCollection<{1}> _collection;
             private int _indexValue;
@@ -33,18 +34,17 @@ namespace Svelto.ECS.Schema.Generator
             internal RefIterator(IndexesDB indexesDB, FasterDictionary<ExclusiveGroupStruct, IndexesDB.IndexerGroupData> dict) : this()
             {{
                 _indexesDB = indexesDB;
-                _dict = dict;
                 _indexValue = -1;
+
+                if (dict != null)
+                    _dictValues = dict.GetValues(out _count);
             }}
 
             public bool MoveNext()
             {{
-                if (_dict == null)
-                    return false;
-
-                while (++_indexValue < _dict.count)
+                while (++_indexValue < _count)
                 {{
-                    var groupData = _dict.unsafeValues[_indexValue];
+                    var groupData = _dictValues[_indexValue];
 
                     if (!groupData.group.IsEnabled())
                         continue;
@@ -58,7 +58,7 @@ namespace Svelto.ECS.Schema.Generator
                     break;
                 }}
 
-                var moveNext = _indexValue < _dict.count;
+                var moveNext = _indexValue < _count;
 
                 if (!moveNext)
                     Reset();
@@ -69,7 +69,7 @@ namespace Svelto.ECS.Schema.Generator
             public void Reset() {{ _indexValue = -1; }}
 
             public RefCurrent Current => new RefCurrent(
-                _collection, _dict.unsafeValues[_indexValue].filter.filteredIndices, _dict.unsafeValues[_indexValue].group);
+                _collection, _dictValues[_indexValue].filter.filteredIndices, _dictValues[_indexValue].group);
         }}
 
         public readonly ref struct RefCurrent

@@ -23,8 +23,10 @@ namespace Svelto.ECS.Schema
 
             public void Clear()
             {
-                for (int i = 0; i < groups.count; ++i)
-                    groups.unsafeValues[i].filter.Clear();
+                var values = groups.GetValues(out var count);
+
+                for (int i = 0; i < count; ++i)
+                    values[i].filter.Clear();
             }
         }
 
