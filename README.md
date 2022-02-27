@@ -6,25 +6,29 @@ Extension for [Svelto.ECS](https://github.com/sebas77/Svelto.ECS), helps definin
 ### Motivation
 Svelto.ECS is an awesome project, however I found understanding underlying entity structure can be pretty confusing to new users like myself.
 It has powerful tools like groups and filters, but lacks of wrapper to make it intutive.
-I thought it will be much easier to understand group with structured schema, and it is worth to make your code flexible, design change proof.
+I thought it will be much easier to understand group with structured Schema, and it is worth to make your code flexible, design change proof.
 That is the motivation I wrote this Svelto.ECS.Schema extension which is basically a user-friendly wrapper for groups and filters.
 
-### Concept
-Think of a RDBMS schema, there is tables, records, columns, indexes and shards. ECS is basically in-memory database but faster.
+Think of a RDBMS schema, there is tables, records, columns, indexes. ECS is basically in-memory database but faster.
 In RDBMS, tables can hold records having specific combination of columns.
 In Svelto.ECS, groups can hold entities having specific combination of components.
-That is why I chose to take friendly terms from RDBMS and define schema of ECS.
+That is why I chose to take friendly terms from RDBMS and define Schema of ECS.
+
+### Features
+* RDBMS-like Schema Definition with Extendible, Nestable Layout 
+* Indexing Entities and Automatic Tracking over Tables
+* Finite State Machine supporting Transitions, Conditions and Callbacks
 
 ## Basic Usage
 ### Install
-Currently it is alpha stage, available on [NuGet](https://www.nuget.org/packages/Svelto.ECS.Schema/). While I don't recommend to use it on production, feel free to try it and please share me the experience! 
+Currently it is alpha stage, available on [NuGet](https://www.nuget.org/packages/Svelto.ECS.Schema/). While I don't recommend to use it on production, feel free to try it and please share me the experience!
 
 ### Need help?
 If you need help or want to give feedback, you can either join [my Discord Channel](https://discord.gg/Dvak3QMj3n) or ping @cathei from [Svelto's Official Discord Channel](https://discord.gg/3qAdjDb).
 
 ### Defining Descriptor
-Let's say you have basic understanding of general Entity-Component-System.
-Defining schema starts from defining EntityDescriptor, that is combination of components.
+Let's say you have basic understanding of Svelto ECS. (You might read some articles and still confused and lost.)
+Defining Schema starts from defining EntityDescriptor, that is combination of components.
 ```csharp
 public class CharacterDescriptor : GenericEntityDescriptor<EGIDComponent, HealthComponent, PositionComponent> { }
 ```
@@ -39,9 +43,9 @@ public class GameSchema : IEntitySchema
     public readonly Table<ItemDescriptor> Item = new Table<ItemDescriptor>();
 }
 ```
-`IEntitySchema` is a logical group that can contain tables and indexes as member.
+`IEntitySchema` is a logical group that can contain Tables and Indexes as their members. I strongly recommend to make every fields in Schema `readonly`.
 
-`Table<TDescriptor>` represents underlying `ExclusiveGroup`. Groups should only accept entities using same descriptor, or else the iteration index will break. In Schema extension Table has Descriptor type argument, basically preventing the issue.
+`Table<TDescriptor>` represents underlying `ExclusiveGroup`. Since it is exlusive, a Entity will belong in one Group only at the same moment. Groups should only accept entities using same Descriptor, or else the iteration index will break. In Schema extension Table has Descriptor type argument, basically preventing this issue.
 
 Note that tables are public readonly fields. Tables should not be changed, and properties are not supported by Schema extension for now.
 
@@ -50,37 +54,29 @@ Now we defined a schema, we can generate on through `EnginesRoot`, do this befor
 
 ```csharp
 IndexesDB indexesDB = _enginesRoot.GenerateIndexesDB();
-GameSchema schema = _enginesRoot.GenerateSchema<GameSchema>(indexesDB);
+GameSchema schema = _enginesRoot.AddSchema<GameSchema>(indexesDB);
 ```
-Generating `IndexesDB` is required prior to generate schema. It is the class that will hold indexing information of a `EnginesRoot`. We will use this later.
-
-**Do not call new on IEntitySchema directly. It needs to be managed internally by this extension.**
+Generating `IndexesDB` is required prior to generate schema. It is the class that will hold runtime information for Schema extension. We will use this later. Make sure you use Schema object returned by `AddSchema`. In other words do NOT call new on root Schema.
 
 ### Add Entities to Table
-Now to add entity with `Table<T>`, we support two ways. One is original Svelto way:
+Now to add entity with `Table<T>`, we support two ways. You can pass Table to `BuildEntity` as if it is a `ExclusiveGroup`;
 ```csharp
 var entityBuilder = entityFactory.BuildEntity(entityId, schema.Character);
 ```
-The other is Schema extension way (preferred):
+Or call through `Table<T>.Build`.
 ```csharp
 var entityBuilder = schema.Character.Build(entityFactory, entityId);
 ```
-Results are the same so it is just different expression.
+Results are the same so it is just different expression. But later gives us more type information, so later is preffered. From now we will introduce more with form of later, but keep in mind that many of them can be also used with equivalent expression like former.
 
 ### Query Entities from Table
-To query entities of `Table<T>`, also original Svelto way:
-```csharp
-var (egid, count) = entitiesDB.QueryEntities<EGIDComponent>(schema.Character);
-```
-and Schema extension way (preferred):
+To query entities of `Table<T>`, it is easy as building entity.
 ```csharp
 var (egid, count) = schema.Character.Entities<EGIDComponent>(entitiesDB);
 ```
 
-Reason I decided to have different expression from original Svelto is because we can pass more type information to calls without making it look awkward. C# does not support partial generic type inference, and we don't wanna verbosely pass type information around like `QueryEntities<EGIDCompoent, CharacterDescriptor>(schema.Character)`.
-
 ### Defining Ranged Table
-Sometimes you'll want many tables of same type, without defining many variables. Simiply pass the number of group you want to be created, and there are multiple separated tables!
+Sometimes you'll want many tables of same type, without defining many variables. Simiply define `Tables<T>`, pass the number of group you want to be created, and there are multiple separated tables!
 ```csharp
 public enum ItemType { Potion, Weapon, Armor, MAX };
 
@@ -88,33 +84,21 @@ public class AnotherSchema : IEntitySchema
 {
     public const int MaxPlayerCount = 10;
 
-    public readonly RangedTable<PlayerDescriptor> Players =
-        new RangedTable<PlayerDescriptor>(MaxPlayerCount);
+    public readonly Tables<PlayerDescriptor> Players = new Tables<PlayerDescriptor>(MaxPlayerCount);
 
-    public readonly RangedTable<ItemDescriptor, ItemType> Items =
-        new RangedTable<ItemDescriptor, ItemType>((int)ItemType.MAX, itemType => (int)itemType);
-
-    public readonly Tables<PlayerDescriptor> AllPlayers;
-
-    public AnotherSchema()
-    {
-        AllPlayers = Players;
-    }
+    public readonly Tables<ItemDescriptor, ItemType> Items
+        = new Tables<ItemDescriptor, ItemType>((int)ItemType.MAX, itemType => (int)itemType);
 }
 ```
-Above example shows use case of ranged tables with number or enum. `Players` has one argument since it is using integer, and `Items` has a mapping function to access inner table easily. Both tables are accessable by `Players[0]` or `Items[0]`. Additionally, item tables are accessible with `ItemType` like `Items[ItemType.Potion]`.
+Above example shows use case of `Tables` with `int` or `enum`. `Players` has one argument since it is using integer, and `Items` has a mapping function to access inner table easily. Both tables are accessable by `Players[0]` or `Items[0]`. Additionally, item tables are accessible with `ItemType` like `Items[ItemType.Potion]`.
 
-Note that we also exposes `AnotherSchema.AllPlayers` which represents all player groups. `Tables<T>` has underlying `FasterList<ExclusiveGroupStruct>`. Which means you can directly pass it into `EntitiesDB.QueryEntities`. 
+`Tables<T>` has underlying `FasterList<ExclusiveGroupStruct>`. Which means you can query over multiple groups with it:
 ```csharp
-foreach (var (...) in entitiesDB.QueryEntities<...>(schema.AllPlayers)) { }
-```
-Or, in Schema extension way (preferred):
-```csharp
-foreach (var (...) in schema.AllPlayers.Entities<...>(entitiesDB)) { }
+foreach (var ((egid, count), group) in schema.Players.Entities<EGIDComponent>(entitiesDB)) { }
 ```
 
-### Defining Shards
-On the other hand, you will want to make separate group for some related tables, and reuse it. We use `Shard<TSchema>` for it. First, define a child schema, same as we defined other schemas before.
+### Defining Nested Schemas
+On the other hand, you will want to make separate group for some related tables, and reuse it. First, define a child schema, same as we defined other schemas before.
 ```csharp
 public enum ItemType { Potion, Weapon, Armor, MAX };
 
@@ -123,11 +107,11 @@ public class PlayerSchema : IEntitySchema
     public readonly Table<CharacterDescriptor> AliveCharacter = new Table<CharacterDescriptor>();
     public readonly Table<CharacterDescriptor> DeadCharacter = new Table<CharacterDescriptor>();
 
-    public readonly RangedTable<ItemDescriptor, ItemType> Items =
-        new RangedTable<ItemDescriptor, ItemType>((int)ItemType.MAX, itemType => (int)itemType);
+    public readonly Tables<ItemDescriptor, ItemType> Items =
+        new Tables<ItemDescriptor, ItemType>((int)ItemType.MAX, itemType => (int)itemType);
 }
 ```
-Now we have `PlayerSchema`, we can define shard in the parent schema. with `Shard<PlayerSchema>`.
+Now we have `PlayerSchema`, we can now add child Schema in the parent Schema. Even more, we can define multiple child Schemas with `Ranged<TSchema>`.
 
 ```csharp
 public class MyGameSchema : IEntitySchema
@@ -138,7 +122,7 @@ public class MyGameSchema : IEntitySchema
 
     public readonly Ranged<PlayerSchema> Players = new Ranged<PlayerSchema>(MaxPlayerCount);
 
-    public Tables<CharacterDescriptor> AllAliveCharacters { get; }
+    public readonly Tables<CharacterDescriptor> AllAliveCharacters;
 
     public MyGameSchema()
     {
@@ -146,9 +130,11 @@ public class MyGameSchema : IEntitySchema
     }
 }
 ```
-Nice. As you can see, shard can be ranged, too. We defined a group for AI, and 10 players. Just like how we expose group instead of table, we'll expose inner schema insted of shard itself. But again aware that no schema should created directly. If you want to access group for player 5's alive characters, use `MyGameSchema.Player(5).AliveCharacter`. Also we added shortcut `Groups` for all alive characters.
+Nice. We defined a child Schema for AI, and 10 child Schemas for players. If you want to access group for player 5's alive characters, use `MyGameSchema.Player[5].AliveCharacter`.
 
-Let's see how to fill up your tables with records.
+Also note that we added shortcut `Tables` for all alive characters of AI and all players. You can use it same as other `Tables` you defined directly.
+
+Let's see complete example to fill up your tables with records.
 ```csharp
 public class CompositionRoot
 {
@@ -161,7 +147,7 @@ public class CompositionRoot
 
         var entityFactory = enginesRoot.GenerateEntityFactory();
         var indexesDB = _enginesRoot.GenerateIndexesDB();
-        var schema = _enginesRoot.GenerateSchema<GameSchema>(indexesDB);
+        var schema = _enginesRoot.AddSchema<GameSchema>(indexesDB);
 
         for (int i = 0; i < 10; ++i)
             AddCharacter(entityFactory, schema.AI.AliveCharacter);
@@ -181,7 +167,7 @@ public class CompositionRoot
     }
 }
 ```
-Above we have example to put 10 characters to alive, AI controlled character group, and put another 10 characters to dead, player 0 controlled character group. Now you can inject schema to your preferred engine and query entities. You don't have to specify descriptor when build entity, because group is already implying descriptor type.
+Above we have example to put 10 characters to alive, AI controlled character group, and put another 10 characters to dead, player 0 controlled character group. Now you can inject schema to your preferred engine and query entities. You don't have to specify descriptor when build, swap or remove entity, because group is already implying descriptor type.
 ```csharp
 foreach (var ((healths, positions, count), group) in schema.AllAliveCharacters.Entities<HealthComponent, PositionComponent>(entitiesDB))
 {
@@ -237,8 +223,6 @@ public class TeamSchema : IEntitySchema
     public readonly StateSchema NonEating = new StateSchema();
 }
 
-public enum TeamColor { Red, Blue, MAX }
-
 public class GameSchema : IEntitySchema
 {
     public readonly Ranged<TeamSchema, TeamColor> Teams =
@@ -251,68 +235,51 @@ public class GameSchema : IEntitySchema
         EatingDoofuses = Teams.Combine(x => x.Eating.Doofus);
     }
 }
+
+public enum TeamColor { Red, Blue, MAX }
 ```
-Not that hard, you'll thank to some complexity when you have to deal with big design changes!
+Now we can easly change structure without fixed names, and have changable number of teams. You'll thank to some complexity when you have to deal with big design changes!
 
 When using it, code `GameGroups.RED_DOOFUSES_EATING.Groups` would be equvalent to `GameSchema.Teams[TeamColor.Red].Eating.Doofus`.
 
 ## Index Usage
 ### Defining Indexes
-Index is wrapper of filters system, but works like indexes in RDBMS. Filters are used to have subset from a group. Indexes are to collect entities by specific key, from a shard or entire schema. Let's take a look. You have to define Key first.
+Index is wrapper of filters system, but works like indexes in RDBMS. Filters are used to have subset from a group. Indexes are to collect entities by specific key, from a child or entire schema. Let's take a look. We'll start from defining `IndexTag`.
 ```csharp
-public readonly struct CharacterController : IEntityIndexKey<CharacterController>
+public class CharacterController : IndexTag<int, CharacterController.Unique>
 {
-    public readonly int PlayerId;
-
-    public CharacterController(int playerId)
-    {
-        PlayerId = playerId;
-    }
-
-    public bool Equals(CharacterController other)
-    {
-        return PlayerId == other.PlayerId;
-    }
-
-    public static implicit operator CharacterController(int value)
-        => CharacterController(value);
+    public struct Unique : IUnique { }
 }
 ```
-Keys are structs inheriting `IEntityIndexKey<TSelf>`. And you have to implement `bool Equals(TSelf)` to check Key equality and optionally implement `int GetHashCode()`. Also keys are not meant to be mutable so I prefer to add `readonly` constraint.
+IndexTag represent a indexable trait of entity. First type parameter is equatable value type that will be used as key of Index. Second type parameter is to ensure uniqueness of the generic class members (We have to define struct to pass as type parameter, due to Svelto limitation).
 
-Then, you add `Indexed<TKey>` to your descriptor.
-
+`IndexTag` has nested types of `Component` and `Index`. Now, let's add `CharacterController.Component` to your descriptor.
 ```csharp
-public class CharacterDescriptor<HealthComponent, PositionComponent, Indexed<CharacterController>> { }
+public class CharacterDescriptor<HealthComponent, PositionComponent, CharacterController.Component> { }
 ```
-Indexed is special component to make sure that indexes are up-to-date. It has Controller struct as member `Key`, but you cannot change the value unless you use `Indexed<TKey>.Update(IndexesDB, TKey)`. `IndexesDB` is returned when `EnginesRoot.GenerateIndexesDB()` is executed and represents runtime state of entity indexes.
+`IndexTag.Component` is a special component holds the `Value` to index, and ensures that indexes are up-to-date. It has the first type parameter of `IndexTag`, which is `int` here, as member `Value`, but you cannot change the `Value` directly. Instead you need to call `Update(IndexesDB, TValue)`. `IndexesDB` is returned when `EnginesRoot.GenerateIndexesDB()`, holds runtime state of entity indexes.
 
-Before look how to query with indexes, Let's add `Index<TKey>` to our schema.
+Before look how to query with indexes, Let's add `CharacterController.Index` to our schema.
 ```csharp
 public class IndexedSchema : IEntitySchema
 {
-    private Table<CharacterDescriptor> _flyingCharacter = new Table<CharacterDescriptor>();
-    public Group<CharacterDescriptor> FlyingCharacter => _flyingCharacter.Group();
+    public readonly Table<CharacterDescriptor> FlyingCharacter = new Table<CharacterDescriptor>();
+    public readonly Table<CharacterDescriptor> GroundCharacter = new Table<CharacterDescriptor>();
 
-    private Table<CharacterDescriptor> _groundCharacter = new Table<CharacterDescriptor>();
-    public Group<CharacterDescriptor> GroundCharacter => _groundCharacter.Group();
-
-    private Index<CharacterController> _charactersByController = new Index<CharacterController>();
-    public IndexQuery<ChracterController> CharactersByController(int playerId) => _charactersByController.Query(new CharacterController(playerId));
+    public readonly CharacterController.Index CharactersByController = new CharacterController.Index();
 }
 ```
-`Index<TKey>` will index any `Indexed<TKey>` component in any tables with same schema. Any child schema will be indexed as well. If `Index<TKey>` is defined in root schema, any table with `Indexed<TKey>` will be indexed. In this example both `FlyingCharacter` and `GroundCharacter` group will be indexed and returned when queried. If you want to index specific groups only, define a shard.
+`IndexTag.Index` will index paired `IndexTag.Component` component in any tables within declared schema. Any child schema will be indexed as well. Since `CharacterController.Index` is defined in root schema, any table with `CharacterController.Component` will be indexed. In this example both `FlyingCharacter` and `GroundCharacter` group will be indexed and returned when queried. If you want to index specific groups only, define a child Schema.
 
-Same manner as we expose a group for a table, we'll expose `IndexQuery<TKey>` for a index. `IndexQuery<TKey>` is query for a specific key, like 'entities controlled by player id 0'.
-
-You can share `Indexed<TKey>` across different descriptors.
+Also, you can share `IndexTag.Component` across different descriptors. Index will handle them well.
 
 ### Querying Indexes
-Now, finally you can iterate over entities with `IndexQuery<TKey>`. You don't have to include `Indexed<TKey>` in the type list. You can query any type of component within the descriptor, because as long as you keep a group with single descriptor you can iterate with same filter.
+Now, finally you can iterate over entities with `IndexTag.Index`. You don't have to include `IndexTag.Component` in the type list. You can query any type of component within the descriptor, because as long as you keep a group with single descriptor you can iterate with same filter.
 
-Just like when you query with `EntitiesDB`, you query with `IndexesDB`.
+Just like when you query with `EntitiesDB`, you query with `IndexesDB`. To query entites with `IndexTag.Component.Value` of 3:
 ```csharp
-foreach (var ((health, position, indices), group) in schema.CharactersByController(3).Entities<HealthComponent, PositionComponent>(indexesDB))
+foreach (var ((health, position, indices), group) in schema.CharactersByController
+    .Query(3).Entities<HealthComponent, PositionComponent>(indexesDB))
 {
     foreach (var i in indices)
     {
@@ -320,28 +287,37 @@ foreach (var ((health, position, indices), group) in schema.CharactersByControll
     }
 }
 ```
-Note that you can use foreach loop to iterate indices.  **DO NOT update `Indexed` component while iterating through index query with it.** It is undefined behaviour.
+Note that you can use foreach loop to iterate indices.  but **DO NOT** update `IndexTag.Component` component while iterating through index query with it. It is undefined behaviour. If you have to, consider using `StateMachine` instead, which will be explained later.
 
-If you want to query index within specific `Table<T>` or `Groups<T>`, use `From` like this:
+If you want to query index within specific `Table<T>` or `Tables<T>`, use `From` like this:
 ```csharp
-var (health, position, indices) = IndexedSchema.CharactersByController(3)
-    .From(IndexedSchema.FlyingCharacter)
-    .Entities<HealthComponent, PositionComponent>(indexesDB);
+var (health, position, indices) = schema.CharactersByController
+    .Query(3).From(schema.FlyingCharacter).Entities<HealthComponent, PositionComponent>(indexesDB);
 ```
+
+## State Machine Usage
+### Defining State Machine
+
+### Adding Transitions
+
+### Adding Callbacks
+
+### Adding State Machine
+
+### 
 
 ## Advanced Usage
 ### Extending Schema
-In advance, you can extend your schema with inheritance, or having multiple schemas in same `EnginesRoot`. You can still share `IndexesDB` between schemas. Good thing is, underlying groups will remain static and unique per schema type.
+In advance, you can extend your Schema with inheritance, or having multiple Schemas within same `EnginesRoot`. You can still share `IndexesDB` between schemas. Good thing is, underlying groups will remain static and unique per added Schema type.
 
 ```csharp
 public abstract class GameModeSchemaBase : IEntitySchema
 {
-    protected Shard<PlayerSchema> _players;
-    public PlayerSchema Player(int playerId) => _players.Schema(playerId);
+    public readonly Ranged<PlayerSchema> Players;
 
     public GameModeSchemaBase(int playerCount)
     {
-        _players = new Shard<PlayerSchema>(playerCount);
+        _players = new Ranged<PlayerSchema>(playerCount);
     }
 }
 
@@ -353,34 +329,38 @@ public class PvPGameModeSchema : GameModeSchemaBase
 
 public class CoOpGameModeSchema : GameModeSchemaBase
 {
-    protected Shard<PlayerSchema> _ai;
-    public PlayerSchema AI => _ai.Schema();
+    public PlayerSchema AI = new PlayerSchema();
 
     // two player max
     public CoOpGameModeSchema() : base(2) { }
 }
-
 ```
+
+### Calculate Union and Intersection of Indexes
+To calculate Union and Intersection of Indexes, you can use temporary filters called `Memo<T>`. It can be included anywhere in Schema. Use it like this:
+```csharp
+_schema.CharacterByController.Query(0).Union(_indexesDB, _schema.Memo);
+_schema.CharacterByController.Query(3).Union(_indexesDB, _schema.Memo);
+_schema.CharacterByController.Query(6).Union(_indexesDB, _schema.Memo);
+
+_schema.CharacterByState.Query(CharacterState.Happy).Intersect(_indexesDB, _schema.Memo);
+```
+Note that you have to clear `Memo<T>` before you reuse it! `Memo<T>` does not have any guarantee to have valid indices after entity submission.
 
 ## Naming Convention
 Below is naming convention suggestions to make schema more readable.
 
 ### For Tables
-* Use `_singularNoun` for singluar table.
-* Use `_pluralNouns` for ranged table.
 * Use `SingularNoun` for `Table<T>`.
-* Use `PluralNouns` for `Groups<T>`.
+* Use `PluralNouns` for `Tables<T>`.
 
-### For Shards
-* Use `_adjective` or `_singluarNoun` for singular shard. e.g. `_flying`
-* Use `_adjective` or `_pluralNouns` for ranged shard.
-* Use `Adjective` or `SingularNoun` for result of `Schema()`. e.g. `Flying`, so you can access like `Flying.Monster`
-* Use `Adjective` or `PluralNouns` for result of `Schemas()`.
+### For Schemas
+* Use `Adjective` or `SingularNoun` for Schema object. e.g. `Flying`, so you can access like `Flying.Monster`
+* Use `Adjective` or `PluralNouns` for `Ranged<TSchema>`
 
 ### For Indexes
-* Use `TableNameKeyName` for `IEntityIndexKey`. e.g. `ItemHolder`
-* Use `_tableNamesByKeyName` for `Index<T>`. e.g. `_itemsByHodler`
-* Use `TableNameByKeyName` for `IndexQuery`. e.g. `ItemsByHolder`
+* Use `TableNameKeyName` for `IndexTag` type. e.g. `ItemHolder`
+* Use `TableNameByKeyName` for `IndexTag.Index`. e.g. `ItemsByHolder`
 
 ### Etc.
 * Use `Indexes` as plural form for `Index` in schema.

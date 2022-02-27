@@ -25,7 +25,7 @@ namespace Svelto.ECS.Schema
             var groupHashMapType = groupType.Assembly.GetType("Svelto.ECS.GroupHashMap");
             var groupNamesMapType = groupType.Assembly.GetType("GroupNamesMap");
 
-            const BindingFlags bindingFlags = BindingFlags.NonPublic | BindingFlags.Static;
+            const BindingFlags bindingFlags = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static;
 
             GroupHashMapRegisterGroup = groupHashMapType.GetMethod("RegisterGroup", bindingFlags);
 
