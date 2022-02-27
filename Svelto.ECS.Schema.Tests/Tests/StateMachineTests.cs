@@ -242,7 +242,10 @@ namespace Svelto.ECS.Schema.Tests
 
             _characterFSM.Engine.Step();
 
-
+            for (int i = 0; i < count; ++i)
+            {
+                rage[i].value = 0;
+            }
 
             long before = GC.GetAllocatedBytesForCurrentThread();
 

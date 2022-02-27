@@ -33,9 +33,7 @@ namespace Svelto.ECS.Schema
 
             public void Step()
             {
-                // TODO: we probably can cache this with inspecting table descriptors or get some hints
                 var groups = entitiesDB.FindGroups<Component>();
-
                 var states = Config.States.GetValues(out var stateCount);
 
                 // clear all filters before proceed

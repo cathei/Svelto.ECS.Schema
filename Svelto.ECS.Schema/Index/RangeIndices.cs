@@ -31,6 +31,8 @@ namespace Svelto.ECS.Schema
             _index = -1;
         }
 
+        public void Dispose() {}
+
         public int Current => _index;
     }
 

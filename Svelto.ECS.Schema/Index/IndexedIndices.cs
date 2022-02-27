@@ -1,18 +1,14 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using Svelto.DataStructures;
-using Svelto.ECS;
-using Svelto.ECS.DataStructures;
 using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema
 {
     namespace Internal
     {
-        public interface IIndicesEnumerator
+        // IDisposable is required here to ensure zero-allocation
+        // Because compiler has to be able to see Dispose() method
+        // https://ericlippert.com/2011/03/14/to-box-or-not-to-box/
+        public interface IIndicesEnumerator : IDisposable
         {
             bool MoveNext();
             void Reset();
@@ -46,6 +42,8 @@ namespace Svelto.ECS.Schema
         {
             _index = -1;
         }
+
+        public void Dispose() { }
 
         public int Current => (int)_indices[_index];
     }

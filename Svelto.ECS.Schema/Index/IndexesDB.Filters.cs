@@ -60,10 +60,13 @@ namespace Svelto.ECS.Schema
 
             while (node != null)
             {
-                foreach (var indexer in node.indexers)
+                if (node.indexers != null)
                 {
-                    if (indexer.ComponentType.Equals(componentType))
-                        componentToIndexers.Add(indexer);
+                    foreach (var indexer in node.indexers)
+                    {
+                        if (indexer.ComponentType.Equals(componentType))
+                            componentToIndexers.Add(indexer);
+                    }
                 }
 
                 node = node.parent;
