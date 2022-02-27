@@ -119,7 +119,6 @@ namespace Svelto.ECS.Schema
 
         internal sealed class TransitionConfig
         {
-            // ID in this state
             internal readonly TState _next;
             internal readonly FasterList<ConditionConfig> _conditions;
 
