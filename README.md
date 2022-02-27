@@ -50,8 +50,8 @@ public class GameSchema : IEntitySchema
 
 Note that tables are public readonly fields. Tables should not be changed, and properties are not supported by Schema extension for now.
 
-### Generating Schema
-Now we defined a schema, we can generate on through `EnginesRoot`, do this before any entitiy submission.
+### Using Schema
+Now we defined a schema, we can add it to `EnginesRoot`, do this before any entitiy submission.
 
 ```csharp
 IndexesDB indexesDB = _enginesRoot.GenerateIndexesDB();
