@@ -15,13 +15,13 @@ namespace Svelto.ECS.Schema.Tests
 
         public class MerchantSchema : IEntitySchema
         {
-            public readonly RangedTable<ItemDescriptor> Items = new RangedTable<ItemDescriptor>(100);
+            public readonly Tables<ItemDescriptor> Items = new Tables<ItemDescriptor>(100);
         }
 
         public class TestSchema : IEntitySchema
         {
-            public readonly RangedTable<CharacterDescriptor> Characters = new RangedTable<CharacterDescriptor>(100);
-            public readonly RangedTable<EquipmentDescriptor> Equipments = new RangedTable<EquipmentDescriptor>(30);
+            public readonly Tables<CharacterDescriptor> Characters = new Tables<CharacterDescriptor>(100);
+            public readonly Tables<EquipmentDescriptor> Equipments = new Tables<EquipmentDescriptor>(30);
 
             public readonly Ranged<MerchantSchema> Merchants = new Ranged<MerchantSchema>(50);
         }

@@ -11,16 +11,16 @@ namespace Svelto.ECS.Schema
 {
     public readonly ref struct TablesBuilder<T> where T : IEntityDescriptor, new()
     {
-        public readonly IEnumerable<ExclusiveGroupStruct> items;
+        public readonly IEnumerable<Table<T>> items;
 
-        public TablesBuilder(IEnumerable<ExclusiveGroupStruct> items)
+        public TablesBuilder(IEnumerable<Table<T>> items)
         {
             this.items = items;
         }
 
         public Tables<T> Build()
         {
-            return new Tables<T>(items.ToFasterList());
+            return new Tables<T>(items);
         }
 
         public static TablesBuilder<T> operator+(TablesBuilder<T> a, TablesBuilder<T> b)
@@ -30,12 +30,12 @@ namespace Svelto.ECS.Schema
 
         public static TablesBuilder<T> operator+(TablesBuilder<T> a, Table<T> b)
         {
-            return new TablesBuilder<T>(a.items.Append(b.ExclusiveGroup));
+            return new TablesBuilder<T>(a.items.Append(b));
         }
 
         public static TablesBuilder<T> operator+(Table<T> a, TablesBuilder<T> b)
         {
-            return new TablesBuilder<T>(b.items.Prepend(a.ExclusiveGroup));
+            return new TablesBuilder<T>(b.items.Prepend(a));
         }
 
         public static implicit operator Tables<T>(in TablesBuilder<T> builder) => builder.Build();

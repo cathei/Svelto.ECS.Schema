@@ -22,8 +22,9 @@ namespace Svelto.ECS.Schema
             void AddEngines(EnginesRoot enginesRoot, IndexesDB indexesDB);
         }
 
-        internal interface ISchemaDefinitionRangedTable : ISchemaDefinition
+        internal interface ISchemaDefinitionTables : ISchemaDefinition
         {
+            bool IsCombined { get; }
             int Range { get; }
             ISchemaDefinitionTable GetTable(int index);
         }

@@ -26,7 +26,7 @@ namespace Svelto.ECS.Schema.Tests
 
         public class TestSchema : IEntitySchema
         {
-            public readonly RangedTable<CharacterDescriptor> Characters = new RangedTable<CharacterDescriptor>(5);
+            public readonly Tables<CharacterDescriptor> Characters = new Tables<CharacterDescriptor>(5);
 
             public readonly CharacterController.Index CharacterByController = new CharacterController.Index();
             public readonly CharacterState.Index CharacterByState = new CharacterState.Index();

@@ -21,7 +21,7 @@ namespace Svelto.ECS.Schema.Generator
         public GroupsEnumerable<{0}> Entities<{0}>(EntitiesDB entitiesDB)
 {1}
         {{
-            return entitiesDB.QueryEntities<{0}>(exclusiveGroups);
+            return entitiesDB.QueryEntities<{0}>(_groups);
         }}
 ";
 
@@ -60,8 +60,11 @@ namespace Svelto.ECS.Schema.Definition
     {{
 {GenerateQueryEntities(QueryTableTemplate)}
     }}
+}}
 
-    public partial struct Tables<T>
+namespace Svelto.ECS.Schema.Internal
+{{
+    public partial class TablesBase<TDesc>
     {{
 {GenerateQueryEntities(QueryTablesTemplate)}
     }}

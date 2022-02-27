@@ -20,16 +20,9 @@ namespace Svelto.ECS.Schema.Tests
         public class TestSchema : IEntitySchema
         {
             public readonly Table<CharacterDescriptor> Character = new Table<CharacterDescriptor>();
-            public readonly RangedTable<ItemDescriptor> Items = new RangedTable<ItemDescriptor>(10);
+            public readonly Tables<ItemDescriptor> Items = new Tables<ItemDescriptor>(10);
 
             public readonly ItemOwner.Index ItemsByOwner = new ItemOwner.Index();
-
-            public Tables<ItemDescriptor> AllItems { get; }
-
-            public TestSchema()
-            {
-                AllItems = Items;
-            }
         }
 
         public MemoryTests() : base()
@@ -69,7 +62,7 @@ namespace Svelto.ECS.Schema.Tests
             int loop = 0;
 
             // warming up
-            foreach (var ((indexed, count), group) in _schema.AllItems.Entities<ItemOwner.Component>(_entitiesDB))
+            foreach (var ((indexed, count), group) in _schema.Items.Entities<ItemOwner.Component>(_entitiesDB))
             {
                 ++loop;
 
@@ -82,7 +75,7 @@ namespace Svelto.ECS.Schema.Tests
 
             long before = GC.GetAllocatedBytesForCurrentThread();
 
-            foreach (var ((indexed, count), group) in _schema.AllItems.Entities<ItemOwner.Component>(_entitiesDB))
+            foreach (var ((indexed, count), group) in _schema.Items.Entities<ItemOwner.Component>(_entitiesDB))
             {
                 ++loop;
             }

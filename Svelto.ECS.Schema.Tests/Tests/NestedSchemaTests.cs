@@ -20,8 +20,8 @@ namespace Svelto.ECS.Schema.Tests
         {
             public readonly Table<DoofusEntityDescriptor> Doofus = new Table<DoofusEntityDescriptor>();
 
-            public readonly RangedTable<FoodEntityDescriptor, FoodType> Food =
-                new RangedTable<FoodEntityDescriptor, FoodType>((int)FoodType.MAX, x => (int)x);
+            public readonly Tables<FoodEntityDescriptor, FoodType> Food =
+                new Tables<FoodEntityDescriptor, FoodType>((int)FoodType.MAX, x => (int)x);
         }
 
         public class TeamSchema : IEntitySchema

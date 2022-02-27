@@ -44,7 +44,7 @@ namespace Svelto.ECS.Schema.Definition
 
         public static TablesBuilder<T> operator+(in Table<T> a, in Table<T> b)
         {
-            return new TablesBuilder<T>(new ExclusiveGroupStruct[] { a._exclusiveGroup, b._exclusiveGroup });
+            return new TablesBuilder<T>(new Table<T>[] { a, b });
         }
 
         public static implicit operator ExclusiveGroupStruct(in Table<T> group) => group._exclusiveGroup;

@@ -58,7 +58,10 @@ namespace Svelto.ECS.Schema
                         RegisterTable(node, table, $"{name}.{fieldInfo.Name}");
                         break;
 
-                    case ISchemaDefinitionRangedTable rangedTable:
+                    case ISchemaDefinitionTables rangedTable:
+                        // metadata should not include combined tables
+                        if (rangedTable.IsCombined)
+                            break;
                         for (int i = 0; i < rangedTable.Range; ++i)
                             RegisterTable(node, rangedTable.GetTable(i), $"{name}.{fieldInfo.Name}.{i}");
                         break;
