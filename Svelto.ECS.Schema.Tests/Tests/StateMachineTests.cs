@@ -217,5 +217,38 @@ namespace Svelto.ECS.Schema.Tests
                 Assert.Equal(i % 3 == 0 && i % 2 == 0 ? 5 : -1, rage[i].value);
             }
         }
+
+        [Fact]
+        public void StateMachineMemoryTest()
+        {
+            for (uint i = 0; i < 1000; ++i)
+            {
+                var character = _schema.Character.Build(_factory, i);
+                character.Init(new CharacterFSM.Component(CharacterState.Normal));
+            }
+
+            _submissionScheduler.SubmitEntities();
+
+            // warming up
+            _characterFSM.Engine.Step();
+
+            var (rage, fsm, count) = _schema.Character.Entities<RageComponent, CharacterFSM.Component>(_entitiesDB);
+
+            for (int i = 0; i < count; ++i)
+            {
+                Assert.Equal(CharacterState.Normal, fsm[i].State);
+                rage[i].value = i * 2;
+            }
+
+            _characterFSM.Engine.Step();
+
+
+
+            long before = GC.GetAllocatedBytesForCurrentThread();
+
+            _characterFSM.Engine.Step();
+
+            Assert.True(before + 50 > GC.GetAllocatedBytesForCurrentThread());
+        }
     }
 }

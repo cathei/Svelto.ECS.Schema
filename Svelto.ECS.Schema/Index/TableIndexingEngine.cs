@@ -5,12 +5,10 @@ using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema
 {
-    // TODO: if apply new filter system, we can remove 'CheckRemove'
-    // but we still need 'CheckAdd' to make sure indexes are up-to-date
+    // TODO: if apply new filter system, we can remove handling for 'MovedTo' and 'Remove'
+    // but we still need 'Add' to make sure new entities are included in index
     internal class TableIndexingEngine<TK, TC> :
-            IReactOnAddAndRemove<TC>,
-            IReactOnSwap<TC>,
-            IReactOnSubmission
+            IReactOnAddAndRemove<TC>, IReactOnSwap<TC>, IReactOnSubmission
         where TK : unmanaged
         where TC : unmanaged, IIndexedComponent<TK>
     {
@@ -43,35 +41,21 @@ namespace Svelto.ECS.Schema
 
         private void CheckAdd(ref TC keyComponent, in ExclusiveGroupStruct groupID)
         {
-            if (_indexesDB.TryGetShard(groupID, out var node))
+            var indexers = _indexesDB.FindIndexers<TK, TC>(groupID);
+
+            foreach (var indexer in indexers)
             {
-                while (node != null)
-                {
-                    if (node.indexers != null)
-                    {
-                        for (int i = 0; i < node.indexers.count; ++i)
-                        {
-                            var indexer = node.indexers[i];
-
-                            if (indexer.ComponentType.Equals(IndexComponentType))
-                            {
-                                AddToFilter(indexer.IndexerID, ref keyComponent, groupID);
-                            }
-                        }
-                    }
-
-                    node = node.parent;
-                }
+                AddToFilter(indexer.IndexerID, ref keyComponent, groupID);
             }
+        }
 
-            for (int i = 0; i < _indexesDB.stateMachineIndexers.count; ++i)
+        private void CheckRemove(ref TC keyComponent, in ExclusiveGroupStruct groupID)
+        {
+            var indexers = _indexesDB.FindIndexers<TK, TC>(groupID);
+
+            foreach (var indexer in indexers)
             {
-                var indexer = _indexesDB.stateMachineIndexers[i];
-
-                if (indexer.ComponentType.Equals(IndexComponentType))
-                {
-                    AddToFilter(indexer.IndexerID, ref keyComponent, groupID);
-                }
+                RemoveFromFilter(indexer.IndexerID, ref keyComponent, groupID);
             }
         }
 
@@ -83,40 +67,6 @@ namespace Svelto.ECS.Schema
             var mapper = _indexesDB.entitiesDB.QueryMappedEntities<TC>(groupID);
 
             groupData.filter.Add(keyComponent.ID.entityID, mapper);
-        }
-
-        private void CheckRemove(ref TC keyComponent, in ExclusiveGroupStruct groupID)
-        {
-            if (_indexesDB.TryGetShard(groupID, out var node))
-            {
-                while (node != null)
-                {
-                    if (node.indexers != null)
-                    {
-                        for (int i = 0; i < node.indexers.count; ++i)
-                        {
-                            var indexer = node.indexers[i];
-
-                            if (indexer.ComponentType.Equals(IndexComponentType))
-                            {
-                                RemoveFromFilter(indexer.IndexerID, ref keyComponent, groupID);
-                            }
-                        }
-                    }
-
-                    node = node.parent;
-                }
-            }
-
-            for (int i = 0; i < _indexesDB.stateMachineIndexers.count; ++i)
-            {
-                var indexer = _indexesDB.stateMachineIndexers[i];
-
-                if (indexer.ComponentType.Equals(IndexComponentType))
-                {
-                    RemoveFromFilter(indexer.IndexerID, ref keyComponent, groupID);
-                }
-            }
         }
 
         private void RemoveFromFilter(int indexerID, ref TC keyComponent, in ExclusiveGroupStruct groupID)

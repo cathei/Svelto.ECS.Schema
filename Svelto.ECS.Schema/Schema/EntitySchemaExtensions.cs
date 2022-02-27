@@ -39,18 +39,7 @@ namespace Svelto.ECS.Schema
             var schema = EntitySchemaHolder<T>.Schema;
             var metadata = EntitySchemaHolder<T>.Metadata;
 
-            indexesDB.RegisterSchema(metadata);
-
-            var indexers = metadata.indexersToGenerateEngine;
-
-            foreach (var keyType in indexers.keys)
-            {
-                if (indexesDB.createdIndexerEngines.Contains(keyType))
-                    continue;
-
-                indexesDB.createdIndexerEngines.Add(keyType);
-                indexers[keyType].AddEngines(enginesRoot, indexesDB);
-            }
+            indexesDB.RegisterSchema(enginesRoot, metadata);
 
             return schema;
         }
@@ -66,9 +55,7 @@ namespace Svelto.ECS.Schema
             // Actual configuration is static variable in StateMachine
             var stateMachine = new T();
 
-            indexesDB.stateMachineIndexers.Add(stateMachine.Index);
-
-            stateMachine.AddEngines(enginesRoot, indexesDB);
+            indexesDB.RegisterStateMachine(enginesRoot, stateMachine);
 
             return stateMachine;
         }
