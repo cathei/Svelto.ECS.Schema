@@ -59,7 +59,7 @@ namespace Svelto.ECS.Schema.Tests
 
             int entityCount = 0;
 
-            foreach (var ((controller, state, indices), group) in
+            foreach (var ((controller, state, count), indices, group) in
                 _schema.Memo.Entities<CharacterController.Component, CharacterState.Component>(_indexesDB))
             {
                 foreach (int i in indices)
@@ -107,7 +107,7 @@ namespace Svelto.ECS.Schema.Tests
 
             int entityCount = 0;
 
-            foreach (var ((controller, state, indices), group) in
+            foreach (var ((controller, state, _), indices, _) in
                 _schema.Memo.Entities<CharacterController.Component, CharacterState.Component>(_indexesDB))
             {
                 foreach (int i in indices)

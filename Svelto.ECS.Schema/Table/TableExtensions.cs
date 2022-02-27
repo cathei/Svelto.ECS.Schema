@@ -6,7 +6,9 @@ using System.Runtime.CompilerServices;
 using Svelto.DataStructures;
 using Svelto.ECS;
 using Svelto.ECS.DataStructures;
+using Svelto.ECS.Hybrid;
 using Svelto.ECS.Schema.Definition;
+using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema
 {
@@ -73,6 +75,26 @@ namespace Svelto.ECS.Schema
             where T : IEntityDescriptor, new()
         {
             functions.SwapEntityGroup<T>(fromID, toID, mustBeFromGroup.ExclusiveGroup);
+        }
+    }
+
+    public static class TableNativeExtensions
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ref TR Entity<TR>(this ISchemaDefinitionTable table, EntitiesDB entitiesDB, uint entityID)
+            where TR : unmanaged, IEntityComponent
+        {
+            return ref entitiesDB.QueryEntity<TR>(entityID, table.ExclusiveGroup);
+        }
+    }
+
+    public static class TableManagedExtensions
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ref TR Entity<TR>(this ISchemaDefinitionTable table, EntitiesDB entitiesDB, uint entityID)
+            where TR : struct, IEntityViewComponent
+        {
+            return ref entitiesDB.QueryEntity<TR>(entityID, table.ExclusiveGroup);
         }
     }
 }

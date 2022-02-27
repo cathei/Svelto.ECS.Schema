@@ -71,14 +71,13 @@ namespace Svelto.ECS.Schema.Tests
                 .Entities<ItemOwner.Component>(_indexesDB).ToList();
 
             var queriedComponents = queriedGroups
-                .Select(x => (buffer: x.Item1.Item1, indices : x.Item1.Item2))
                 .SelectMany(x => Enumerable.Range(0, x.indices.Count()).Select(i => x.buffer[x.indices[i]]))
                 .ToList();
 
             Assert.Equal(3, queriedGroups.Count);
             Assert.Equal(30, queriedComponents.Count);
 
-            Assert.All(queriedGroups, x => Assert.Equal(10, x.Item1.Item2.Count()));
+            Assert.All(queriedGroups, x => Assert.Equal(10, x.indices.Count()));
 
             Assert.Contains(0u, queriedComponents.Select(x => x.ID.entityID));
             Assert.Contains(10u, queriedComponents.Select(x => x.ID.entityID));
@@ -93,7 +92,7 @@ namespace Svelto.ECS.Schema.Tests
             queriedGroups = _schema.ItemsByOwner.Query(0)
                 .Entities<ItemOwner.Component>(_indexesDB).ToList();
 
-            queriedComponents = queriedGroups.Select(x => (buffer: x.Item1.Item1, indices : x.Item1.Item2))
+            queriedComponents = queriedGroups
                 .SelectMany(x => Enumerable.Range(0, x.indices.Count()).Select(i => x.buffer[x.indices[i]]))
                 .ToList();
 
@@ -107,7 +106,7 @@ namespace Svelto.ECS.Schema.Tests
             queriedGroups = _schema.ItemsByOwner.Query(1)
                 .Entities<ItemOwner.Component>(_indexesDB).ToList();
 
-            queriedComponents = queriedGroups.Select(x => (buffer: x.Item1.Item1, indices : x.Item1.Item2))
+            queriedComponents = queriedGroups
                 .SelectMany(x => Enumerable.Range(0, x.indices.Count()).Select(i => x.buffer[x.indices[i]]))
                 .ToList();
 
@@ -148,7 +147,6 @@ namespace Svelto.ECS.Schema.Tests
                 .Entities<ItemOwner.Component>(_indexesDB).ToList();
 
             var queriedComponents = queriedGroups
-                .Select(x => (buffer: x.Item1.Item1, indices : x.Item1.Item2))
                 .SelectMany(x => Enumerable.Range(0, x.indices.Count()).Select(i => x.buffer[x.indices[i]]))
                 .ToList();
 
@@ -170,7 +168,6 @@ namespace Svelto.ECS.Schema.Tests
                 .Entities<ItemOwner.Component>(_indexesDB).ToList();
 
             queriedComponents = queriedGroups
-                .Select(x => (buffer: x.Item1.Item1, indices : x.Item1.Item2))
                 .SelectMany(x => Enumerable.Range(0, x.indices.Count()).Select(i => x.buffer[x.indices[i]]))
                 .ToList();
 
@@ -184,7 +181,6 @@ namespace Svelto.ECS.Schema.Tests
                 .Entities<ItemOwner.Component>(_indexesDB).ToList();
 
             queriedComponents = queriedGroups
-                .Select(x => (buffer: x.Item1.Item1, indices : x.Item1.Item2))
                 .SelectMany(x => Enumerable.Range(0, x.indices.Count()).Select(i => x.buffer[x.indices[i]]))
                 .ToList();
 
@@ -222,7 +218,7 @@ namespace Svelto.ECS.Schema.Tests
 
             _submissionScheduler.SubmitEntities();
 
-            var (buffer, indices) = _schema.ItemsByOwner.Query(0)
+            var ((buffer, count), indices) = _schema.ItemsByOwner.Query(0)
                 .From(_schema.AI.Item)
                 .Entities<ItemOwner.Component>(_indexesDB);
 
@@ -233,14 +229,14 @@ namespace Svelto.ECS.Schema.Tests
                 .From(_schema.AllItems)
                 .Entities<ItemOwner.Component>(_indexesDB).ToList();
 
-            var queriedComponents = queriedGroups.Select(x => (buffer: x.Item1.Item1, indices : x.Item1.Item2))
+            var queriedComponents = queriedGroups
                 .SelectMany(x => Enumerable.Range(0, x.indices.Count()).Select(i => x.buffer[x.indices[i]]))
                 .ToList();
 
             Assert.Equal(3, queriedGroups.Count);
             Assert.Equal(3, queriedComponents.Count);
 
-            Assert.All(queriedGroups, x => Assert.Equal(1, x.Item1.Item2.Count()));
+            Assert.All(queriedGroups, x => Assert.Equal(1, x.indices.Count()));
 
             Assert.Contains(7u, queriedComponents.Select(x => x.ID.entityID));
             Assert.Contains(17u, queriedComponents.Select(x => x.ID.entityID));

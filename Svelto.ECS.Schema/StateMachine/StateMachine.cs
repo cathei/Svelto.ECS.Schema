@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using Svelto.DataStructures;
+using Svelto.ECS.Hybrid;
 using Svelto.ECS.Schema.Definition;
 using Svelto.ECS.Schema.Internal;
 
@@ -40,11 +41,17 @@ namespace Svelto.ECS.Schema
 
         protected abstract void Configure();
 
-        protected internal delegate bool Predicate<TComponent>(ref TComponent component)
+        protected internal delegate bool PredicateNative<TComponent>(ref TComponent component)
             where TComponent : unmanaged, IEntityComponent;
 
-        protected internal delegate void Callback<TComponent>(ref TComponent component)
+        protected internal delegate bool PredicateManaged<TComponent>(ref TComponent component)
+            where TComponent : struct, IEntityViewComponent;
+
+        protected internal delegate void CallbackNative<TComponent>(ref TComponent component)
             where TComponent : unmanaged, IEntityComponent;
+
+        protected internal delegate void CallbackManaged<TComponent>(ref TComponent component)
+            where TComponent : struct, IEntityViewComponent;
 
         internal abstract class ConditionConfig
         {
@@ -56,12 +63,42 @@ namespace Svelto.ECS.Schema
                 where TIter : struct, IIndicesEnumerator;
         }
 
-        internal sealed class ConditionConfig<TComponent> : ConditionConfig
+        internal sealed class ConditionConfigNative<TComponent> : ConditionConfig
             where TComponent : unmanaged, IEntityComponent
         {
-            internal readonly Predicate<TComponent> _predicate;
+            internal readonly PredicateNative<TComponent> _predicate;
 
-            public ConditionConfig(Predicate<TComponent> predicate)
+            public ConditionConfigNative(PredicateNative<TComponent> predicate)
+            {
+                _predicate = predicate;
+            }
+
+            internal override void Evaluate<TEnum, TIter>(EntitiesDB entitiesDB,
+                NB<Component> component, in TEnum indices, in ExclusiveGroupStruct groupID)
+            {
+                // this is calling per group here, for this condition
+                var (target, _) = entitiesDB.QueryEntities<TComponent>(groupID);
+
+                // rather loop through indexes multiple times.
+                // should be better than fetching buffers per entity.
+                foreach (int i in indices)
+                {
+                    // just skip any component that is not available
+                    if (component[i].transitionState != TransitionState.Available)
+                        continue;
+
+                    if (!_predicate(ref target[i]))
+                        component[i].transitionState = TransitionState.Aborted;
+                }
+            }
+        }
+
+        internal sealed class ConditionConfigManaged<TComponent> : ConditionConfig
+            where TComponent : struct, IEntityViewComponent
+        {
+            internal readonly PredicateManaged<TComponent> _predicate;
+
+            public ConditionConfigManaged(PredicateManaged<TComponent> predicate)
             {
                 _predicate = predicate;
             }
@@ -94,12 +131,35 @@ namespace Svelto.ECS.Schema
                 IndexedIndices indexedIndices, in ExclusiveGroupStruct groupID);
         }
 
-        internal sealed class CallbackConfig<TComponent> : CallbackConfig
+        internal sealed class CallbackConfigNative<TComponent> : CallbackConfig
             where TComponent : unmanaged, IEntityComponent
         {
-            internal readonly Callback<TComponent> _callback;
+            internal readonly CallbackNative<TComponent> _callback;
 
-            public CallbackConfig(Callback<TComponent> callback)
+            public CallbackConfigNative(CallbackNative<TComponent> callback)
+            {
+                _callback = callback;
+            }
+
+            internal override void Invoke(EntitiesDB entitiesDB,
+                IndexedIndices indexedIndices, in ExclusiveGroupStruct groupID)
+            {
+                // this is calling per group here, for this callback
+                var (target, _) = entitiesDB.QueryEntities<TComponent>(groupID);
+
+                foreach (int i in indexedIndices)
+                {
+                    _callback(ref target[i]);
+                }
+            }
+        }
+
+        internal sealed class CallbackConfigManaged<TComponent> : CallbackConfig
+            where TComponent : struct, IEntityViewComponent
+        {
+            internal readonly CallbackManaged<TComponent> _callback;
+
+            public CallbackConfigManaged(CallbackManaged<TComponent> callback)
             {
                 _callback = callback;
             }

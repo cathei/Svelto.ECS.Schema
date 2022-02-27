@@ -33,11 +33,6 @@ namespace Svelto.ECS.Schema
             _key = key;
         }
 
-        NB<TC> IEntityIndexQuery<TC>.GetComponents(IndexesDB indexesDB, in ExclusiveGroupStruct groupID)
-        {
-            return indexesDB.entitiesDB.QueryEntities<TC>(groupID).ToBuffer().buffer;
-        }
-
         private IndexesDB.IndexerSetData GetGroupIndexDataList(IndexesDB indexesDB)
         {
             if (!indexesDB.indexers.ContainsKey(_indexerId))
@@ -51,20 +46,27 @@ namespace Svelto.ECS.Schema
         IndexesDB.IndexerSetData IEntityIndexQuery.GetGroupIndexDataList(IndexesDB indexesDB)
             => GetGroupIndexDataList(indexesDB);
 
+        // this is required because of limitation of filters
+        // we cannot merge filters without EGID yet
+        NB<TC> IEntityIndexQuery<TC>.GetComponents(IndexesDB indexesDB, in ExclusiveGroupStruct groupID)
+        {
+            return indexesDB.entitiesDB.QueryEntities<TC>(groupID).ToBuffer().buffer;
+        }
+
         public void Set<T>(IndexesDB indexesDB, Memo<T> memo)
-            where T : unmanaged, IEntityComponent
+            where T : struct, IEntityComponent
         {
             memo.Set<IndexQuery<TK, TC>, TC>(indexesDB, this);
         }
 
         public void Union<T>(IndexesDB indexesDB, Memo<T> memo)
-            where T : unmanaged, IEntityComponent
+            where T : struct, IEntityComponent
         {
             memo.Union<IndexQuery<TK, TC>, TC>(indexesDB, this);
         }
 
         public void Intersect<T>(IndexesDB indexesDB, Memo<T> memo)
-            where T : unmanaged, IEntityComponent
+            where T : struct, IEntityComponent
         {
             memo.Intersect<IndexQuery<TK, TC>, TC>(indexesDB, this);
         }

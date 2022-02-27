@@ -9,7 +9,7 @@ namespace Svelto.ECS.Schema
     public partial class IndexesDB
     {
         internal void AddMemo<T>(Memo<T> memo, uint entityID, in ExclusiveGroupStruct groupID)
-            where T : unmanaged, IEntityComponent
+            where T : struct, IEntityComponent
         {
             var mapper = entitiesDB.QueryMappedEntities<T>(groupID);
 
@@ -19,7 +19,7 @@ namespace Svelto.ECS.Schema
         }
 
         internal void RemoveMemo<T>(Memo<T> memo, uint entityID, in ExclusiveGroupStruct groupID)
-            where T : unmanaged, IEntityComponent
+            where T : struct, IEntityComponent
         {
             ref var groupData = ref CreateOrGetMemoGroup<T>(memo._memoID, groupID);
 
@@ -41,7 +41,7 @@ namespace Svelto.ECS.Schema
         }
 
         internal ref IndexerGroupData CreateOrGetMemoGroup<T>(int memoID, in ExclusiveGroupStruct groupID)
-            where T : unmanaged, IEntityComponent
+            where T : struct, IEntityComponent
         {
             ref var setData = ref memos.GetOrCreate(memoID, () => new IndexerSetData
             {

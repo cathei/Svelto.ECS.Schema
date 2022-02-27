@@ -5,7 +5,7 @@ using Microsoft.CodeAnalysis;
 namespace Svelto.ECS.Schema.Generator
 {
     [Generator]
-    public class GroupQueryGenerator : ISourceGenerator
+    public class TableQueryGenerator : ISourceGenerator
     {
         const string QueryTableTemplate = @"
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

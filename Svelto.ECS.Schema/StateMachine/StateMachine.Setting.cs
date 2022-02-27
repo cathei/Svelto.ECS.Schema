@@ -2,6 +2,7 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using Svelto.DataStructures;
+using Svelto.ECS.Hybrid;
 using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema
@@ -44,18 +45,34 @@ namespace Svelto.ECS.Schema
             public TransitionBuilder AddTransition(in StateBuilder next)
                 => AddTransition(next._state._state);
 
-            public StateBuilder ExecuteOnExit<TComponent>(Callback<TComponent> callback)
+            public StateBuilder ExecuteOnExit<TComponent>(CallbackNative<TComponent> callback)
                 where TComponent : unmanaged, IEntityComponent
             {
-                var config = new CallbackConfig<TComponent>(callback);
+                var config = new CallbackConfigNative<TComponent>(callback);
                 _state._onExit.Add(config);
                 return this;
             }
 
-            public StateBuilder ExecuteOnEnter<TComponent>(Callback<TComponent> callback)
+            public StateBuilder ExecuteOnExit<TComponent>(CallbackManaged<TComponent> callback)
+                where TComponent : struct, IEntityViewComponent
+            {
+                var config = new CallbackConfigManaged<TComponent>(callback);
+                _state._onExit.Add(config);
+                return this;
+            }
+
+            public StateBuilder ExecuteOnEnter<TComponent>(CallbackNative<TComponent> callback)
                 where TComponent : unmanaged, IEntityComponent
             {
-                var config = new CallbackConfig<TComponent>(callback);
+                var config = new CallbackConfigNative<TComponent>(callback);
+                _state._onEnter.Add(config);
+                return this;
+            }
+
+            public StateBuilder ExecuteOnEnter<TComponent>(CallbackManaged<TComponent> callback)
+                where TComponent : struct, IEntityViewComponent
+            {
+                var config = new CallbackConfigManaged<TComponent>(callback);
                 _state._onEnter.Add(config);
                 return this;
             }
@@ -70,10 +87,18 @@ namespace Svelto.ECS.Schema
                 _transition = transitionConfig;
             }
 
-            public TransitionBuilder AddCondition<TComponent>(Predicate<TComponent> preciate)
+            public TransitionBuilder AddCondition<TComponent>(PredicateNative<TComponent> preciate)
                 where TComponent : unmanaged, IEntityComponent
             {
-                var condition = new ConditionConfig<TComponent>(preciate);
+                var condition = new ConditionConfigNative<TComponent>(preciate);
+                _transition._conditions.Add(condition);
+                return this;
+            }
+
+            public TransitionBuilder AddCondition<TComponent>(PredicateManaged<TComponent> preciate)
+                where TComponent : struct, IEntityViewComponent
+            {
+                var condition = new ConditionConfigManaged<TComponent>(preciate);
                 _transition._conditions.Add(condition);
                 return this;
             }

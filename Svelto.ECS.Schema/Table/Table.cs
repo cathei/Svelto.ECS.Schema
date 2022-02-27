@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using Svelto.ECS.Hybrid;
 using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema.Definition
@@ -33,13 +34,6 @@ namespace Svelto.ECS.Schema.Definition
         public void Remove(IEntityFunctions functions, uint entityID)
         {
             functions.RemoveEntity<T>(entityID, _exclusiveGroup);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref TR Entity<TR>(EntitiesDB entitiesDB, uint entityID)
-            where TR : unmanaged, IEntityComponent
-        {
-            return ref entitiesDB.QueryEntity<TR>(entityID, _exclusiveGroup);
         }
 
         public static TablesBuilder<T> operator+(in Table<T> a, in Table<T> b)

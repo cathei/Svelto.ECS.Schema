@@ -9,7 +9,7 @@ namespace Svelto.ECS.Schema
     {
         public interface ISchemaDefinition { }
 
-        internal interface ISchemaDefinitionTable : ISchemaDefinition
+        public interface ISchemaDefinitionTable : ISchemaDefinition
         {
             ref readonly ExclusiveGroupStruct ExclusiveGroup { get; }
             void Remove(IEntityFunctions functions, uint entityID);

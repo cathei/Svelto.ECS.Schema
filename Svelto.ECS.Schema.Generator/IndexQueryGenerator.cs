@@ -12,27 +12,18 @@ namespace Svelto.ECS.Schema.Generator
         public IndexQueryEnumerable<{1}> Entities<{1}>(IndexesDB indexesDB)
 {2}
         {{
-            return new IndexQueryEnumerable<{1}>(indexesDB, GetGroupIndexDataList(indexesDB).groups);
+            return new IndexQueryEnumerable<{1}>(
+                indexesDB, GetGroupIndexDataList(indexesDB).groups);
         }}
 ";
 
         const string QueryEntitiesWithGroupTemplate = @"
-        public ({0}, IndexedIndices) Entities<{1}>(IndexesDB indexesDB)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public IndexQueryTuple<{1}> Entities<{1}>(IndexesDB indexesDB)
 {2}
         {{
-            var groupDataList = _query.GetGroupIndexDataList(indexesDB).groups;
-
-            var indices = new FilteredIndices();
-
-            if (groupDataList != null && _group.IsEnabled() &&
-                groupDataList.TryGetValue(_group, out var groupData))
-            {{
-                indices = groupData.filter.filteredIndices;
-            }}
-
-            var ({3}, _) = indexesDB.entitiesDB.QueryEntities<{1}>(_group);
-
-            return ({3}, new IndexedIndices(indices));
+            return new IndexQueryTuple<{1}>(
+                indexesDB.entitiesDB.QueryEntities<{1}>(_group), Indices(indexesDB));
         }}
 ";
 
@@ -41,7 +32,8 @@ namespace Svelto.ECS.Schema.Generator
         public IndexQueryGroupsEnumerable<{1}> Entities<{1}>(IndexesDB indexesDB)
 {2}
         {{
-            return new IndexQueryGroupsEnumerable<{1}>(indexesDB, _query.GetGroupIndexDataList(indexesDB).groups, _groups);
+            return new IndexQueryGroupsEnumerable<{1}>(
+                indexesDB, _query.GetGroupIndexDataList(indexesDB).groups, _groups);
         }}
 ";
 
@@ -59,13 +51,11 @@ namespace Svelto.ECS.Schema.Generator
 
         public StringBuilder GenerateQueryEntities(string template, int num)
         {
-            var nativeBufferTypeList = "NB<T{0}>".Repeat(", ", num);
             var genericTypeList = "T{0}".Repeat(", ", num);
-            var typeConstraintList = "                where T{0} : unmanaged, IEntityComponent".Repeat("\n", num);
-            var componentList = "c{0}".Repeat(", ", num);
+            var typeConstraintList = "                where T{0} : struct, IEntityComponent".Repeat("\n", num);
 
             var builder = new StringBuilder();
-            builder.AppendFormat(template, nativeBufferTypeList, genericTypeList, typeConstraintList, componentList);
+            builder.AppendFormat(template, "unused", genericTypeList, typeConstraintList);
             return builder;
         }
 

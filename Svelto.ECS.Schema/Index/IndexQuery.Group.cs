@@ -26,8 +26,11 @@ namespace Svelto.ECS.Schema
         {
             var setData = _query.GetGroupIndexDataList(indexesDB);
 
-            if (setData.groups == null || !setData.groups.TryGetValue(_group, out var groupData))
+            if (setData.groups == null || !_group.IsEnabled() ||
+                !setData.groups.TryGetValue(_group, out var groupData))
+            {
                 return default;
+            }
 
             return new IndexedIndices(groupData.filter.filteredIndices);
         }

@@ -29,6 +29,7 @@ namespace Svelto.ECS.Schema.Generator
             private readonly uint _count;
 
             private EntityCollection<{1}> _collection;
+            private IndexesDB.IndexerGroupData _groupData;
             private int _indexValue;
 
             internal RefIterator(IndexesDB indexesDB, FasterDictionary<ExclusiveGroupStruct, IndexesDB.IndexerGroupData> dict) : this()
@@ -44,14 +45,14 @@ namespace Svelto.ECS.Schema.Generator
             {{
                 while (++_indexValue < _count)
                 {{
-                    var groupData = _dictValues[_indexValue];
+                    _groupData = _dictValues[_indexValue];
 
-                    if (!groupData.group.IsEnabled())
+                    if (!_groupData.group.IsEnabled())
                         continue;
 
-                    EntityCollection<{1}> collection = _indexesDB.entitiesDB.QueryEntities<{1}>(groupData.group);
+                    EntityCollection<{1}> collection = _indexesDB.entitiesDB.QueryEntities<{1}>(_groupData.group);
 
-                    if (groupData.filter.filteredIndices.Count() == 0)
+                    if (_groupData.filter.filteredIndices.Count() == 0)
                         continue;
 
                     _collection = collection;
@@ -68,30 +69,8 @@ namespace Svelto.ECS.Schema.Generator
 
             public void Reset() {{ _indexValue = -1; }}
 
-            public RefCurrent Current => new RefCurrent(
-                _collection, _dictValues[_indexValue].filter.filteredIndices, _dictValues[_indexValue].group);
-        }}
-
-        public readonly ref struct RefCurrent
-        {{
-            private readonly EntityCollection<{1}> _collection;
-            private readonly FilteredIndices _indices;
-            private readonly ExclusiveGroupStruct _group;
-
-            public RefCurrent(in EntityCollection<{1}> collection, in FilteredIndices indices, in ExclusiveGroupStruct group)
-            {{
-                _collection = collection;
-                _indices = indices;
-                _group = group;
-            }}
-
-            public void Deconstruct(out ({0}, IndexedIndices indices) tuple, out ExclusiveGroupStruct group)
-            {{
-                var ({3}, _) = _collection;
-
-                tuple = ({3}, new IndexedIndices(_indices));
-                group = _group;
-            }}
+            public IndexQueryGroupTuple<{1}> Current => new IndexQueryGroupTuple<{1}>(
+                _collection, new IndexedIndices(_groupData.filter.filteredIndices), _groupData.group);
         }}
     }}
 ";
@@ -122,6 +101,7 @@ namespace Svelto.ECS.Schema.Generator
             private readonly LocalFasterReadOnlyList<ExclusiveGroupStruct> _groups;
 
             private EntityCollection<{1}> _collection;
+            private IndexesDB.IndexerGroupData _groupData;
             private int _indexValue;
 
             internal RefIterator(IndexesDB indexesDB,
@@ -141,17 +121,17 @@ namespace Svelto.ECS.Schema.Generator
 
                 while (++_indexValue < _groups.count)
                 {{
-                    if (!_dict.TryGetValue(_groups[_indexValue], out var groupData))
+                    if (!_dict.TryGetValue(_groups[_indexValue], out _groupData))
                         continue;
 
-                    var indices = groupData.filter.filteredIndices;
+                    var indices = _groupData.filter.filteredIndices;
 
-                    if (!groupData.group.IsEnabled() || indices.Count() == 0)
+                    if (!_groupData.group.IsEnabled() || indices.Count() == 0)
                         continue;
 
-                    EntityCollection<{1}> collection = _indexesDB.entitiesDB.QueryEntities<{1}>(groupData.group);
+                    EntityCollection<{1}> collection = _indexesDB.entitiesDB.QueryEntities<{1}>(_groupData.group);
 
-                    if (groupData.filter.filteredIndices.Count() == 0)
+                    if (_groupData.filter.filteredIndices.Count() == 0)
                         continue;
 
                     _collection = collection;
@@ -168,30 +148,8 @@ namespace Svelto.ECS.Schema.Generator
 
             public void Reset() {{ _indexValue = -1; }}
 
-            public RefCurrent Current => new RefCurrent(
-                _collection, _dict[_groups[_indexValue]].filter.filteredIndices, _groups[_indexValue]);
-        }}
-
-        public readonly ref struct RefCurrent
-        {{
-            private readonly EntityCollection<{1}> _collection;
-            private readonly FilteredIndices _indices;
-            private readonly ExclusiveGroupStruct _group;
-
-            public RefCurrent(in EntityCollection<{1}> collection, in FilteredIndices indices, in ExclusiveGroupStruct group)
-            {{
-                _collection = collection;
-                _indices = indices;
-                _group = group;
-            }}
-
-            public void Deconstruct(out ({0}, IndexedIndices indices) tuple, out ExclusiveGroupStruct group)
-            {{
-                var ({3}, _) = _collection;
-
-                tuple = ({3}, new IndexedIndices(_indices));
-                group = _group;
-            }}
+            public IndexQueryGroupTuple<{1}> Current => new IndexQueryGroupTuple<{1}>(
+                _collection, new IndexedIndices(_groupData.filter.filteredIndices), _groupData.group);
         }}
     }}
 ";
@@ -210,13 +168,11 @@ namespace Svelto.ECS.Schema.Generator
 
         public StringBuilder GenerateIndexQueryEnumerable(string template, int num)
         {
-            var nativeBufferTypeList = "NB<T{0}> c{0}".Repeat(", ", num);
             var genericTypeList = "T{0}".Repeat(", ", num);
-            var typeConstraintList = "                where T{0} : unmanaged, IEntityComponent".Repeat("\n", num);
-            var componentList = "c{0}".Repeat(", ", num);
+            var typeConstraintList = "                where T{0} : struct, IEntityComponent".Repeat("\n", num);
 
             var builder = new StringBuilder();
-            builder.AppendFormat(template, nativeBufferTypeList, genericTypeList, typeConstraintList, componentList);
+            builder.AppendFormat(template, "unused", genericTypeList, typeConstraintList);
             return builder;
         }
 
@@ -225,6 +181,7 @@ namespace Svelto.ECS.Schema.Generator
             string source = $@" // Auto-generated code
 using System.Collections.Generic;
 using Svelto.DataStructures;
+using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema
 {{

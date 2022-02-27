@@ -279,7 +279,7 @@ Now, finally you can iterate over entities with `IndexTag.Index`. You don't have
 
 Just like when you query with `EntitiesDB`, you query with `IndexesDB`. To query entites with `IndexTag.Component.Value` of 3:
 ```csharp
-foreach (var ((health, position, indices), group) in schema.CharactersByController
+foreach (var ((health, position, count), indices, group) in schema.CharactersByController
     .Query(3).Entities<HealthComponent, PositionComponent>(indexesDB))
 {
     foreach (var i in indices)
@@ -292,7 +292,7 @@ Note that you can use foreach loop to iterate indices.  but **DO NOT** update `I
 
 If you want to query index within specific `Table<T>` or `Tables<T>`, use `From` like this:
 ```csharp
-var (health, position, indices) = schema.CharactersByController
+var ((health, position, count), indices) = schema.CharactersByController
     .Query(3).From(schema.FlyingCharacter).Entities<HealthComponent, PositionComponent>(indexesDB);
 ```
 
@@ -382,7 +382,7 @@ Lastly, you can query Entities by calling `StateMachine.Query`. Same as you do w
 ```csharp
 characterFSM.Engine.Step();
 
-foreach (var ((rage, fsm, indices), group) in characterFSM
+foreach (var ((rage, fsm, count), indices, group) in characterFSM
     .Query(CharacterState.Angry).Entities<RageComponent, CharacterFSM.Component>(_indexesDB))
 {
     // ...

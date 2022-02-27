@@ -13,8 +13,8 @@ namespace Svelto.ECS.Schema.Definition
         public static int Generate() => Interlocked.Increment(ref Count);
     }
 
-    public sealed partial class Memo<T> : ISchemaDefinitionMemo, IEntityIndexQuery<T>
-        where T : unmanaged, IEntityComponent
+    public sealed partial class Memo<T> : ISchemaDefinitionMemo, IEntityIndexQuery
+        where T : struct, IEntityComponent
     {
         // equvalent to ExclusiveGroupStruct.Generate()
         internal readonly int _memoID = GlobalMemoCount.Generate();
@@ -141,10 +141,5 @@ namespace Svelto.ECS.Schema.Definition
 
         IndexesDB.IndexerSetData IEntityIndexQuery.GetGroupIndexDataList(IndexesDB indexesDB)
             => GetGroupIndexDataList(indexesDB);
-
-        NB<T> IEntityIndexQuery<T>.GetComponents(IndexesDB indexesDB, in ExclusiveGroupStruct groupID)
-        {
-            return indexesDB.entitiesDB.QueryEntities<T>(groupID).ToBuffer().buffer;
-        }
     }
 }
