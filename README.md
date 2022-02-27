@@ -15,9 +15,10 @@ In Svelto.ECS, groups can hold entities having specific combination of component
 That is why I chose to take friendly terms from RDBMS and define Schema of ECS.
 
 ### Features
-* RDBMS-like Schema Definition with Extendible, Nestable Layout 
-* Indexing Entities and Automatic Tracking over Tables
-* Finite State Machine supporting Transitions, Conditions and Callbacks
+* RDBMS-like Schema Definition with Extendible, Nestable Layout.
+* [Indexing Entities](#index-usage) and Automatic Tracking over Tables.
+* [Finite State Machine](#state-machine-usage) with Transitions, Conditions and Callbacks.
+* Ensures Zero-allocation for Frequently Called Critical Pathes.
 
 ## Basic Usage
 ### Install
@@ -297,14 +298,96 @@ var (health, position, indices) = schema.CharactersByController
 
 ## State Machine Usage
 ### Defining State Machine
+Schema extensions support Finite State Machine (FSM) feature, which automatically changes Component state by condition for you. To define a FSM, first define a enum indicates states.
+```csharp
+public enum CharacterState { Normal, Angry, Fever, MAX }
+```
+
+Now you can define FSM class, inherit `StateMachine<TState, TUnique>`.
+```csharp
+public class CharacterFSM : StateMachine<CharacterState, CharacterFSM.Unique>
+{
+    public struct Unique : IUnique {}
+
+    protected override void Configure()
+    {
+        var stateNormal = AddState(CharacterState.Normal);
+        var stateAngry = AddState(CharacterState.Angry);
+        var stateFever = AddState(CharacterState.Fever);
+    }
+}
+```
+Same manner as `IndexTag`, `StateMachine` has two type parameter. First type is value type represents State of Component. Second type is to ensure uniqueness of generic types.
+
+`Configure` method is used to configure your State Machine. By calling `AddState` you can add State, but it won't have any effect until you add Transitions between States.
 
 ### Adding Transitions
+Transition describes how State changes. In `Configure` you can add Transition and Conditions.
+```csharp
+protected override void Configure()
+{
+    var stateNormal = AddState(CharacterState.Normal);
+    var stateAngry = AddState(CharacterState.Angry);
+    var stateSpecial = AddState(CharacterState.Special);
+
+    stateNormal.AddTransition(stateAngry)
+        .AddCondition((ref RageComponent rage) => rage.value >= 30);
+
+    stateAngry.AddTransition(stateNormal)
+        .AddCondition((ref RageComponent rage) => rage.value < 20);
+
+    stateNormal.AddTransition(stateSpecial)
+        .AddCondition((ref RageComponent rage) => rage.value < 10)
+        .AddCondition((ref TriggerComponent trigger) => trigger.value);
+}
+```
+By calling `FromState.AddTransition(ToState)` you define a Transition. You also should add Condition for Transition to happen, by calling `AddCondition`. Conditions take a lambda with single `ref IEntityComponent` parameter and `bool` return value.
+
+All Conditions must return `true` for the Transition to be executed. If you want another set of Conditions, you can add another Transition with same States. If there are multiple Transition met the Conditions, the Transition added first in `Configure()` has higher priority. 
+
+You can also use special `AnyState` property to define Transition from any States.
 
 ### Adding Callbacks
+If you want to set Component values when Transition happens, you can define `ExecuteOnEnter` and `ExecuteOnExit` Callbacks.
+```csharp
+stateSpecial
+    .ExecuteOnEnter((ref TriggerComponent trigger) => trigger.value = false)
+    .ExecuteOnEnter((ref SpecialTimerComponent timer) => timer.value = 1)
+    .ExecuteOnExit((ref RageComponent rage) => rage.value = 5);
+```
+Callbacks receive same parameter as Conditions, but without return value.
 
-### Adding State Machine
+### Using State Machine
+To use State Machine, first add `StateMachine.Component` to your `EntityDescriptor`. Make sure all other components that your Conditions and Callbacks requires are included as well.
+```csharp
+public class CharacterDescriptor : GenericEntityDescriptor
+    <RageComponent, TriggerComponent, SpecialTimerComponent, CharacterFSM.Component> { }
+```
 
-### 
+Now call `EnginesRoot.AddStateMachine` to add State Machine, along with your Schema.
+```csharp
+IndexesDB indexesDB = _enginesRoot.GenerateIndexesDB();
+GameSchema schema = _enginesRoot.AddSchema<GameSchema>(indexesDB);
+CharacterFSM characterFSM = _enginesRoot.AddStateMachine<CharacterFSM>(indexesDB);
+```
+
+You can build entities as same and can set Initial State with it.
+```csharp
+var builder = _schema.Character.Build(_factory, entityID);
+builder.Init(new CharacterFSM.Component(CharacterState.Normal));
+```
+But to make Transitions happen, **make sure you call `StateMachine.Engine.Step()`**. It is `IStepEngine` so you have option to pass it to `SortedEnginesGroup`, etc.
+
+Lastly, you can query Entities by calling `StateMachine.Query`. Same as you do with Indexes!
+```csharp
+characterFSM.Engine.Step();
+
+foreach (var ((rage, fsm, indices), group) in _characterFSM
+    .Query(CharacterState.Angry).Entities<RageComponent, CharacterFSM.Component>(_indexesDB))
+{
+    // ...
+}
+```
 
 ## Advanced Usage
 ### Extending Schema
