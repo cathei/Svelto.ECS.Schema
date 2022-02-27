@@ -400,7 +400,7 @@ public abstract class GameModeSchemaBase : IEntitySchema
 
     public GameModeSchemaBase(int playerCount)
     {
-        _players = new Ranged<PlayerSchema>(playerCount);
+        Players = new Ranged<PlayerSchema>(playerCount);
     }
 }
 
