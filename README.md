@@ -382,7 +382,7 @@ Lastly, you can query Entities by calling `StateMachine.Query`. Same as you do w
 ```csharp
 characterFSM.Engine.Step();
 
-foreach (var ((rage, fsm, indices), group) in _characterFSM
+foreach (var ((rage, fsm, indices), group) in characterFSM
     .Query(CharacterState.Angry).Entities<RageComponent, CharacterFSM.Component>(_indexesDB))
 {
     // ...
