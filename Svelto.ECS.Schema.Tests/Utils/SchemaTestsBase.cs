@@ -18,7 +18,7 @@ namespace Svelto.ECS.Schema.Tests
         protected IEntityFunctions _functions;
         protected EntitiesDB _entitiesDB;
 
-        protected IndexesDB _indexesDB;
+        protected IndexedDB _indexedDB;
         protected T _schema;
 
         public SchemaTestsBase()
@@ -28,10 +28,9 @@ namespace Svelto.ECS.Schema.Tests
 
             _factory = _enginesRoot.GenerateEntityFactory();
             _functions = _enginesRoot.GenerateEntityFunctions();
-            _entitiesDB = ((IUnitTestingInterface)_enginesRoot).entitiesForTesting;
 
-            _indexesDB = _enginesRoot.GenerateIndexesDB();
-            _schema = _enginesRoot.AddSchema<T>(_indexesDB);
+            _indexedDB = _enginesRoot.GenerateIndexesDB();
+            _schema = _enginesRoot.AddSchema<T>(_indexedDB);
         }
 
         public void Dispose()

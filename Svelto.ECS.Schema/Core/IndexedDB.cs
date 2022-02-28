@@ -5,7 +5,10 @@ using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema
 {
-    public sealed partial class IndexesDB
+    /// <summary>
+    /// *Indexed* EntitiesDB
+    /// </summary>
+    public sealed partial class IndexedDB
     {
         internal readonly FasterList<SchemaMetadata> registeredSchemas = new FasterList<SchemaMetadata>();
         internal readonly FasterList<IEntityStateMachine> registeredStateMachines = new FasterList<IEntityStateMachine>();
@@ -13,15 +16,15 @@ namespace Svelto.ECS.Schema
         // indexer will be created per TComponent
         internal readonly HashSet<RefWrapperType> createdIndexerEngines = new HashSet<RefWrapperType>();
 
-        internal readonly FasterDictionary<int, IndexerData> indexers = new FasterDictionary<int, IndexerData>();
-        internal readonly FasterDictionary<int, IndexerSetData> memos = new FasterDictionary<int, IndexerSetData>();
+        internal readonly FasterDictionary<int, IndexedData> indexers = new FasterDictionary<int, IndexedData>();
+        internal readonly FasterDictionary<int, IndexedKeyData> memos = new FasterDictionary<int, IndexedKeyData>();
 
         // well... let's have some space for user defined filter
         private int filterIdCounter = 10000;
 
         internal EntitiesDB entitiesDB;
 
-        internal IndexesDB() { }
+        internal IndexedDB() { }
 
         internal void RegisterSchema(EnginesRoot enginesRoot, SchemaMetadata metadata)
         {
@@ -69,5 +72,7 @@ namespace Svelto.ECS.Schema
                 UpdateFilters(indexer.IndexerID, ref keyComponent, oldKey, newKey);
             }
         }
+
+        public static implicit operator EntitiesDB(IndexedDB indexedDB) => indexedDB.entitiesDB;
     }
 }

@@ -5,17 +5,13 @@ using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema
 {
-    public sealed partial class IndexesDB
+    public sealed partial class IndexedDB
     {
-        // // cache for FindGroup
-        // internal readonly FasterDictionary<RefWrapperType, FasterList<ExclusiveGroupStruct>> componentToGroup
-        //     = new FasterDictionary<RefWrapperType, FasterList<ExclusiveGroupStruct>>();
-
         // dictionary for each group
-        internal FasterDictionary<ExclusiveGroupStruct, GroupMetadata> groupMetadatas
-            = new FasterDictionary<ExclusiveGroupStruct, GroupMetadata>();
+        private FasterDictionary<ExclusiveGroupStruct, GroupCache> _groupCaches
+            = new FasterDictionary<ExclusiveGroupStruct, GroupCache>();
 
-        internal class GroupMetadata
+        internal class GroupCache
         {
             // cache for indexer update
             public FasterDictionary<RefWrapperType, FasterList<ISchemaDefinitionIndex>> componentToIndexers
@@ -29,23 +25,23 @@ namespace Svelto.ECS.Schema
             var componentType = TypeRefWrapper<TC>.wrapper;
 
             // cache exists?
-            if (groupMetadatas.TryGetValue(groupID, out var groupMetadata) &&
-                groupMetadata.componentToIndexers.TryGetValue(componentType, out var result))
+            if (_groupCaches.TryGetValue(groupID, out var groupCache) &&
+                groupCache.componentToIndexers.TryGetValue(componentType, out var result))
             {
                 return result;
             }
 
-            if (groupMetadata == null)
+            if (groupCache == null)
             {
-                groupMetadata = new GroupMetadata();
-                groupMetadatas.Add(groupID, groupMetadata);
+                groupCache = new GroupCache();
+                _groupCaches.Add(groupID, groupCache);
             }
 
             // Cache doesn't exists, let's build one
             // We don't support dynamic addition of Schemas and StateMachines
             var componentToIndexers = new FasterList<ISchemaDefinitionIndex>();
 
-            groupMetadata.componentToIndexers.Add(componentType, componentToIndexers);
+            groupCache.componentToIndexers.Add(componentType, componentToIndexers);
 
             SchemaMetadata.ShardNode node = null;
 
@@ -85,8 +81,8 @@ namespace Svelto.ECS.Schema
             where TK : unmanaged
             where TC : unmanaged, IIndexedComponent<TK>
         {
-            ref var oldGroupData = ref CreateOrGetIndexerGroup<TK, TC>(indexerId, oldKey, keyComponent.ID.groupID);
-            ref var newGroupData = ref CreateOrGetIndexerGroup<TK, TC>(indexerId, newKey, keyComponent.ID.groupID);
+            ref var oldGroupData = ref CreateOrGetIndexedGroupData<TK, TC>(indexerId, oldKey, keyComponent.ID.groupID);
+            ref var newGroupData = ref CreateOrGetIndexedGroupData<TK, TC>(indexerId, newKey, keyComponent.ID.groupID);
 
             var mapper = entitiesDB.QueryMappedEntities<TC>(keyComponent.ID.groupID);
 
@@ -94,17 +90,17 @@ namespace Svelto.ECS.Schema
             newGroupData.filter.Add(keyComponent.ID.entityID, mapper);
         }
 
-        internal ref IndexerGroupData CreateOrGetIndexerGroup<TK, TC>(int indexerID, in TK key, in ExclusiveGroupStruct groupID)
+        internal ref IndexedGroupData CreateOrGetIndexedGroupData<TK, TC>(int indexerID, in TK key, in ExclusiveGroupStruct groupID)
             where TK : unmanaged
             where TC : unmanaged, IIndexedComponent<TK>
         {
-            var indexerData = CreateOrGetIndexerData<TK>(indexerID);
+            var indexerData = CreateOrGetIndexedData<TK>(indexerID);
 
             var groupDict = indexerData.CreateOrGet(key).groups;
 
             if (!groupDict.ContainsKey(groupID))
             {
-                groupDict[groupID] = new IndexerGroupData
+                groupDict[groupID] = new IndexedGroupData
                 {
                     group = groupID,
                     filter = entitiesDB.GetFilters().CreateOrGetFilterForGroup<TC>(GenerateFilterId(), groupID)
@@ -114,19 +110,19 @@ namespace Svelto.ECS.Schema
             return ref groupDict.GetValueByRef(groupID);
         }
 
-        private IndexerData<TK> CreateOrGetIndexerData<TK>(int indexerId)
+        private IndexedData<TK> CreateOrGetIndexedData<TK>(int indexerId)
             where TK : unmanaged
         {
-            IndexerData<TK> indexerData;
+            IndexedData<TK> indexerData;
 
             if (!indexers.ContainsKey(indexerId))
             {
-                indexerData = new IndexerData<TK>();
+                indexerData = new IndexedData<TK>();
                 indexers[indexerId] = indexerData;
             }
             else
             {
-                indexerData = (IndexerData<TK>)indexers[indexerId];
+                indexerData = (IndexedData<TK>)indexers[indexerId];
             }
 
             return indexerData;

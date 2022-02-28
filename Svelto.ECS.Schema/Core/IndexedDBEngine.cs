@@ -4,21 +4,21 @@ using Svelto.DataStructures;
 
 namespace Svelto.ECS.Schema
 {
-    internal class IndexesDBEngine : IQueryingEntitiesEngine //, IReactOnSubmission
+    internal class IndexedDBEngine : IQueryingEntitiesEngine //, IReactOnSubmission
     {
-        private readonly IndexesDB _indexesDB;
+        private readonly IndexedDB _indexedDB;
 
         public EntitiesDB entitiesDB { private get; set; }
 
-        public IndexesDBEngine(IndexesDB indexesDB)
+        public IndexedDBEngine(IndexedDB indexedDB)
         {
-            _indexesDB = indexesDB;
+            _indexedDB = indexedDB;
         }
 
         public void Ready()
         {
             // this seems like only way to inject entitiesDB...
-            _indexesDB.entitiesDB = entitiesDB;
+            _indexedDB.entitiesDB = entitiesDB;
         }
 
         public void EntitiesSubmitted()
@@ -27,7 +27,7 @@ namespace Svelto.ECS.Schema
             // EntitiesSubmitted only called when there is entities to submit
             // We don't have to do this anyway if we move to new filter system
 
-            // _indexesDB.ClearMemos();
+            // _indexedDB.ClearMemos();
         }
     }
 }

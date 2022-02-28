@@ -5,28 +5,28 @@ namespace Svelto.ECS.Schema
 {
     public partial class StateMachine<TState, TUnique>
     {
-        void IEntityStateMachine.AddEngines(EnginesRoot enginesRoot, IndexesDB indexesDB)
+        void IEntityStateMachine.AddEngines(EnginesRoot enginesRoot, IndexedDB indexedDB)
         {
             // this is required to handle added or removed entities
-            enginesRoot.AddEngine(new TableIndexingEngine<TState, Component>(indexesDB));
+            enginesRoot.AddEngine(new TableIndexingEngine<TState, Component>(indexedDB));
 
             // this is required to validate and change state
-            Engine = new TransitionEngine(indexesDB);
+            Engine = new TransitionEngine(indexedDB);
 
             enginesRoot.AddEngine(Engine);
         }
 
         public sealed class TransitionEngine : IQueryingEntitiesEngine, IStepEngine
         {
-            private readonly IndexesDB _indexesDB;
+            private readonly IndexedDB _indexedDB;
 
             public string name { get; } = $"{typeof(TUnique).Name}.TransitionEngine";
 
             public EntitiesDB entitiesDB { private get; set; }
 
-            internal TransitionEngine(IndexesDB indexesDB)
+            internal TransitionEngine(IndexedDB indexedDB)
             {
-                _indexesDB = indexesDB;
+                _indexedDB = indexedDB;
             }
 
             public void Ready() { }
@@ -40,30 +40,30 @@ namespace Svelto.ECS.Schema
                 // maybe not needed with new filter system
                 for (int i = 0; i < stateCount; ++i)
                 {
-                    states[i]._exitCandidates.Clear(_indexesDB);
-                    states[i]._enterCandidates.Clear(_indexesDB);
+                    states[i]._exitCandidates.Clear(_indexedDB);
+                    states[i]._enterCandidates.Clear(_indexedDB);
                 }
 
                 foreach (var ((component, count), group) in entitiesDB.QueryEntities<Component>(groups))
                 {
                     for (int i = 0; i < stateCount; ++i)
                     {
-                        states[i].Evaluate(_indexesDB, component, group);
+                        states[i].Evaluate(_indexedDB, component, group);
                     }
 
                     // any state transition has lower priority
-                    Config.AnyState.Evaluate(_indexesDB, component, count, group);
+                    Config.AnyState.Evaluate(_indexedDB, component, count, group);
 
                     // check for exit candidates
                     for (int i = 0; i < stateCount; ++i)
                     {
-                        states[i].ProcessExit(_indexesDB, group);
+                        states[i].ProcessExit(_indexedDB, group);
                     }
 
                     // check for enter candidates
                     for (int i = 0; i < stateCount; ++i)
                     {
-                        states[i].ProcessEnter(_indexesDB, component, group);
+                        states[i].ProcessEnter(_indexedDB, component, group);
                     }
                 }
             }

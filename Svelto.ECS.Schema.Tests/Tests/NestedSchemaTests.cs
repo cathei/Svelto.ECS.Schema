@@ -51,10 +51,10 @@ namespace Svelto.ECS.Schema.Tests
         public void MetadataTest()
         {
             // child schema metadata must be null
-            Assert.Null(EntitySchemaHolder<TeamSchema>.Metadata);
+            Assert.Null(EntitySchemaTemplate<TeamSchema>.Metadata);
 
             // only root metadata valid
-            var metadata = EntitySchemaHolder<TestSchema>.Metadata;
+            var metadata = EntitySchemaTemplate<TestSchema>.Metadata;
 
             Assert.NotNull(metadata);
 

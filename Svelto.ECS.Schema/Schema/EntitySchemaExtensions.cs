@@ -9,7 +9,7 @@ namespace Svelto.ECS.Schema
         public static EntitySchemaLock Lock = new EntitySchemaLock();
     }
 
-    internal static class EntitySchemaHolder<T>
+    internal static class EntitySchemaTemplate<T>
         where T : class, IEntitySchema, new()
     {
         public static T Schema { get; private set; }
@@ -30,16 +30,16 @@ namespace Svelto.ECS.Schema
 
     public static class EntitySchemaExtensions
     {
-        public static T AddSchema<T>(this EnginesRoot enginesRoot, IndexesDB indexesDB)
+        public static T AddSchema<T>(this EnginesRoot enginesRoot, IndexedDB indexedDB)
             where T : class, IEntitySchema, new()
         {
             // Root schema - metadata pair will not be directly created
-            EntitySchemaHolder<T>.Create();
+            EntitySchemaTemplate<T>.Create();
 
-            var schema = EntitySchemaHolder<T>.Schema;
-            var metadata = EntitySchemaHolder<T>.Metadata;
+            var schema = EntitySchemaTemplate<T>.Schema;
+            var metadata = EntitySchemaTemplate<T>.Metadata;
 
-            indexesDB.RegisterSchema(enginesRoot, metadata);
+            indexedDB.RegisterSchema(enginesRoot, metadata);
 
             return schema;
         }
@@ -48,32 +48,32 @@ namespace Svelto.ECS.Schema
         /// return value is StateMachine that will work as API of state machine related functions
         /// remember to run StateMachine.Engine to make sure state changes!
         /// </summary>
-        public static T AddStateMachine<T>(this EnginesRoot enginesRoot, IndexesDB indexesDB)
+        public static T AddStateMachine<T>(this EnginesRoot enginesRoot, IndexedDB indexedDB)
             where T : class, IEntityStateMachine, new()
         {
             // State machine will work as API
             // Actual configuration is static variable in StateMachine
             var stateMachine = new T();
 
-            indexesDB.RegisterStateMachine(enginesRoot, stateMachine);
+            indexedDB.RegisterStateMachine(enginesRoot, stateMachine);
 
             return stateMachine;
         }
 
-        public static IndexesDB GenerateIndexesDB(this EnginesRoot enginesRoot)
+        public static IndexedDB GenerateIndexesDB(this EnginesRoot enginesRoot)
         {
-            var indexesDB = new IndexesDB();
+            var indexedDB = new IndexedDB();
 
-            // SchemaContextEngine injects EntitiesDB to IndexesDB
-            enginesRoot.AddEngine(new IndexesDBEngine(indexesDB));
+            // SchemaContextEngine injects EntitiesDB to IndexedDB
+            enginesRoot.AddEngine(new IndexedDBEngine(indexedDB));
 
-            return indexesDB;
+            return indexedDB;
         }
 
         public static void Remove<T>(this T schema, IEntityFunctions functions, EGID egid)
             where T : class, IEntitySchema, new()
         {
-            var metadata = EntitySchemaHolder<T>.Metadata;
+            var metadata = EntitySchemaTemplate<T>.Metadata;
 
             if (metadata == null)
                 throw new ECSException($"Schema {typeof(T).Name} is not root schema!");

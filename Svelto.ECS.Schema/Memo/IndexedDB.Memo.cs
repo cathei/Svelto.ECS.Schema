@@ -6,7 +6,7 @@ using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema
 {
-    public partial class IndexesDB
+    public partial class IndexedDB
     {
         internal void AddMemo<T>(Memo<T> memo, uint entityID, in ExclusiveGroupStruct groupID)
             where T : struct, IEntityComponent
@@ -40,17 +40,17 @@ namespace Svelto.ECS.Schema
                 values[i].Clear();
         }
 
-        internal ref IndexerGroupData CreateOrGetMemoGroup<T>(int memoID, in ExclusiveGroupStruct groupID)
+        internal ref IndexedGroupData CreateOrGetMemoGroup<T>(int memoID, in ExclusiveGroupStruct groupID)
             where T : struct, IEntityComponent
         {
-            ref var setData = ref memos.GetOrCreate(memoID, () => new IndexerSetData
+            ref var setData = ref memos.GetOrCreate(memoID, () => new IndexedKeyData
             {
-                groups = new FasterDictionary<ExclusiveGroupStruct, IndexerGroupData>()
+                groups = new FasterDictionary<ExclusiveGroupStruct, IndexedGroupData>()
             });
 
             if (!setData.groups.ContainsKey(groupID))
             {
-                setData.groups[groupID] = new IndexerGroupData
+                setData.groups[groupID] = new IndexedGroupData
                 {
                     group = groupID,
                     filter = entitiesDB.GetFilters().CreateOrGetFilterForGroup<T>(GenerateFilterId(), groupID)

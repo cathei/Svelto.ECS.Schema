@@ -9,31 +9,31 @@ namespace Svelto.ECS.Schema.Generator
     {
         const string QueryEntitiesTemplate = @"
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public IndexQueryEnumerable<{1}> Entities<{1}>(IndexesDB indexesDB)
+        public IndexQueryEnumerable<{1}> Entities<{1}>(IndexedDB indexedDB)
 {2}
         {{
             return new IndexQueryEnumerable<{1}>(
-                indexesDB, GetGroupIndexDataList(indexesDB).groups);
+                indexedDB, GetIndexedKeyData(indexedDB).groups);
         }}
 ";
 
         const string QueryEntitiesWithGroupTemplate = @"
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public IndexQueryTuple<{1}> Entities<{1}>(IndexesDB indexesDB)
+        public IndexQueryTuple<{1}> Entities<{1}>(IndexedDB indexedDB)
 {2}
         {{
             return new IndexQueryTuple<{1}>(
-                indexesDB.entitiesDB.QueryEntities<{1}>(_group), Indices(indexesDB));
+                indexedDB.entitiesDB.QueryEntities<{1}>(_group), Indices(indexedDB));
         }}
 ";
 
         const string QueryEntitiesWithGroupsTemplate = @"
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public IndexQueryGroupsEnumerable<{1}> Entities<{1}>(IndexesDB indexesDB)
+        public IndexQueryGroupsEnumerable<{1}> Entities<{1}>(IndexedDB indexedDB)
 {2}
         {{
             return new IndexQueryGroupsEnumerable<{1}>(
-                indexesDB, _query.GetGroupIndexDataList(indexesDB).groups, _groups);
+                indexedDB, _query.GetIndexedKeyData(indexedDB).groups, _groups);
         }}
 ";
 

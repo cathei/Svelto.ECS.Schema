@@ -1,33 +1,33 @@
 using System;
 using Svelto.ECS.Schema.Internal;
 
-namespace Svelto.ECS.Schema
+namespace Svelto.ECS.Schema.Internal
 {
-    namespace Internal
+    // IDisposable is required here to ensure zero-allocation
+    // Because compiler has to be able to see Dispose() method
+    // https://ericlippert.com/2011/03/14/to-box-or-not-to-box/
+    public interface IIndicesEnumerator : IDisposable
     {
-        // IDisposable is required here to ensure zero-allocation
-        // Because compiler has to be able to see Dispose() method
-        // https://ericlippert.com/2011/03/14/to-box-or-not-to-box/
-        public interface IIndicesEnumerator : IDisposable
-        {
-            bool MoveNext();
-            void Reset();
-            int Current { get; }
-        }
-
-        public interface IIndicesEnumerable<TIter>
-            where TIter : struct, IIndicesEnumerator
-        {
-            TIter GetEnumerator();
-        }
+        bool MoveNext();
+        void Reset();
+        int Current { get; }
     }
 
-    public struct FilteredIndicesEnumerator : IIndicesEnumerator
+    public interface IIndicesEnumerable<TIter>
+        where TIter : struct, IIndicesEnumerator
+    {
+        TIter GetEnumerator();
+    }
+}
+
+namespace Svelto.ECS.Schema
+{
+    public struct IndexedIndicesEnumerator : IIndicesEnumerator
     {
         private readonly FilteredIndices _indices;
         private int _index;
 
-        internal FilteredIndicesEnumerator(in FilteredIndices indices)
+        internal IndexedIndicesEnumerator(in FilteredIndices indices)
         {
             _indices = indices;
             _index = -1;
@@ -49,7 +49,7 @@ namespace Svelto.ECS.Schema
     }
 
     // To iterate over FilteredIndices with foreach
-    public readonly struct IndexedIndices : IIndicesEnumerable<FilteredIndicesEnumerator>
+    public readonly struct IndexedIndices : IIndicesEnumerable<IndexedIndicesEnumerator>
     {
         private readonly FilteredIndices _indices;
 
@@ -65,6 +65,6 @@ namespace Svelto.ECS.Schema
             _indices = indices;
         }
 
-        public FilteredIndicesEnumerator GetEnumerator() => new FilteredIndicesEnumerator(_indices);
+        public IndexedIndicesEnumerator GetEnumerator() => new IndexedIndicesEnumerator(_indices);
     }
 }

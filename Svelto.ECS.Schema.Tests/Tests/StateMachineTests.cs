@@ -74,7 +74,7 @@ namespace Svelto.ECS.Schema.Tests
 
         public StateMachineTests() : base()
         {
-            _characterFSM = _enginesRoot.AddStateMachine<CharacterFSM>(_indexesDB);
+            _characterFSM = _enginesRoot.AddStateMachine<CharacterFSM>(_indexedDB);
         }
 
         private void AssertIndexer()
@@ -85,7 +85,7 @@ namespace Svelto.ECS.Schema.Tests
 
             for (CharacterState state = 0; state < CharacterState.MAX; ++state)
             {
-                var indices = _characterFSM.Query(state).From(_schema.Character).Indices(_indexesDB);
+                var indices = _characterFSM.Query(state).From(_schema.Character).Indices(_indexedDB);
 
                 foreach (var i in indices)
                 {

@@ -54,10 +54,12 @@ Note that tables are public readonly fields. Tables should not be changed, and p
 Now we defined a schema, we can add it to `EnginesRoot`, do this before any entitiy submission.
 
 ```csharp
-IndexesDB indexesDB = _enginesRoot.GenerateIndexesDB();
-GameSchema schema = _enginesRoot.AddSchema<GameSchema>(indexesDB);
+IndexedDB indexedDB = _enginesRoot.GenerateIndexedDB();
+GameSchema schema = _enginesRoot.AddSchema<GameSchema>(indexedDB);
 ```
-Generating `IndexesDB` is required prior to generate schema. It is the class that will hold runtime information for Schema extension. We will use this later. Make sure you use Schema object returned by `AddSchema`. In other words do NOT call new on root Schema.
+Generating `IndexedDB` is required prior to generate schema. `IndexedDB` holds `EntitiesDB` and indexing information of entities. You can use `IndexedDB` anywhere you need `EntitiesDB`. I recommend you to just inject `IndexedDB` to your Engines instead of inheriting `IQueryingEntitiesEngine` when you using Schema extensions.
+
+And call `AddSchema` for `GameSchema`, you can access to your Schema with return value. Make sure you use Schema object returned by `AddSchema`. In other words do NOT call new on root Schema.
 
 ### Add Entities to Table
 Now to add entity with `Table<T>`, we support two ways. You can pass Table to `BuildEntity` as if it is a `ExclusiveGroup`;
@@ -73,7 +75,7 @@ Results are the same so it is just different expression. But later gives us more
 ### Query Entities from Table
 To query entities of `Table<T>`, it is easy as building entity.
 ```csharp
-var (egid, count) = schema.Character.Entities<EGIDComponent>(entitiesDB);
+var (egid, count) = schema.Character.Entities<EGIDComponent>(indexedDB);
 ```
 
 ### Defining Ranged Table
@@ -95,7 +97,7 @@ Above example shows use case of `Tables` with `int` or `enum`. `Players` has one
 
 `Tables<T>` has underlying `FasterList<ExclusiveGroupStruct>`. Which means you can query over multiple groups with it:
 ```csharp
-foreach (var ((egid, count), group) in schema.Players.Entities<EGIDComponent>(entitiesDB)) { }
+foreach (var ((egid, count), group) in schema.Players.Entities<EGIDComponent>(indexedDB)) { }
 ```
 
 ### Defining Nested Schemas
@@ -147,8 +149,8 @@ public class CompositionRoot
         var enginesRoot = new EnginesRoot(submissionScheduler);
 
         var entityFactory = enginesRoot.GenerateEntityFactory();
-        var indexesDB = _enginesRoot.GenerateIndexesDB();
-        var schema = _enginesRoot.AddSchema<GameSchema>(indexesDB);
+        var indexedDB = _enginesRoot.GeneratedIndexedDB();
+        var schema = _enginesRoot.AddSchema<GameSchema>(indexedDB);
 
         for (int i = 0; i < 10; ++i)
             AddCharacter(entityFactory, schema.AI.AliveCharacter);
@@ -170,7 +172,7 @@ public class CompositionRoot
 ```
 Above we have example to put 10 characters to alive, AI controlled character group, and put another 10 characters to dead, player 0 controlled character group. Now you can inject schema to your preferred engine and query entities. You don't have to specify descriptor when build, swap or remove entity, because group is already implying descriptor type.
 ```csharp
-foreach (var ((healths, positions, count), group) in schema.AllAliveCharacters.Entities<HealthComponent, PositionComponent>(entitiesDB))
+foreach (var ((healths, positions, count), group) in schema.AllAliveCharacters.Entities<HealthComponent, PositionComponent>(indexedDB))
 {
     for (int i = 0; i < count; ++i)
     {
@@ -258,7 +260,7 @@ IndexTag represent a indexable trait of entity. First type parameter is equatabl
 ```csharp
 public class CharacterDescriptor<HealthComponent, PositionComponent, CharacterController.Component> { }
 ```
-`IndexTag.Component` is a special component holds the `Value` to index, and ensures that indexes are up-to-date. It has the first type parameter of `IndexTag`, which is `int` here, as member `Value`, but you cannot change the `Value` directly. Instead you need to call `Update(IndexesDB, TValue)`. `IndexesDB` is returned when `EnginesRoot.GenerateIndexesDB()`, holds runtime state of entity indexes.
+`IndexTag.Component` is a special component holds the `Value` to index, and ensures that indexes are up-to-date. It has the first type parameter of `IndexTag`, which is `int` here, as member `Value`, but you cannot change the `Value` directly. Instead you need to call `Update(IndexedDB, TValue)`.
 
 Before look how to query with indexes, Let's add `CharacterController.Index` to our schema.
 ```csharp
@@ -277,10 +279,10 @@ Also, you can share `IndexTag.Component` across different descriptors. Index wil
 ### Querying Indexes
 Now, finally you can iterate over entities with `IndexTag.Index`. You don't have to include `IndexTag.Component` in the type list. You can query any type of component within the descriptor, because as long as you keep a group with single descriptor you can iterate with same filter.
 
-Just like when you query with `EntitiesDB`, you query with `IndexesDB`. To query entites with `IndexTag.Component.Value` of 3:
+Just like how you query Entities in `Table`, you can query with `IndexedDB`. To query entites with `IndexTag.Component.Value` of 3:
 ```csharp
 foreach (var ((health, position, count), indices, group) in schema.CharactersByController
-    .Query(3).Entities<HealthComponent, PositionComponent>(indexesDB))
+    .Query(3).Entities<HealthComponent, PositionComponent>(indexedDB))
 {
     foreach (var i in indices)
     {
@@ -293,7 +295,7 @@ Note that you can use foreach loop to iterate indices.  but **DO NOT** update `I
 If you want to query index within specific `Table<T>` or `Tables<T>`, use `From` like this:
 ```csharp
 var ((health, position, count), indices) = schema.CharactersByController
-    .Query(3).From(schema.FlyingCharacter).Entities<HealthComponent, PositionComponent>(indexesDB);
+    .Query(3).From(schema.FlyingCharacter).Entities<HealthComponent, PositionComponent>(indexedDB);
 ```
 
 ## State Machine Usage
@@ -366,9 +368,9 @@ public class CharacterDescriptor : GenericEntityDescriptor
 
 Now call `EnginesRoot.AddStateMachine` to add State Machine, along with your Schema.
 ```csharp
-IndexesDB indexesDB = _enginesRoot.GenerateIndexesDB();
-GameSchema schema = _enginesRoot.AddSchema<GameSchema>(indexesDB);
-CharacterFSM characterFSM = _enginesRoot.AddStateMachine<CharacterFSM>(indexesDB);
+IndexedDB indexedDB = _enginesRoot.GeneratedIndexedDB();
+GameSchema schema = _enginesRoot.AddSchema<GameSchema>(indexedDB);
+CharacterFSM characterFSM = _enginesRoot.AddStateMachine<CharacterFSM>(indexedDB);
 ```
 
 You can build entities as same and can set Initial State with it.
@@ -383,7 +385,7 @@ Lastly, you can query Entities by calling `StateMachine.Query`. Same as you do w
 characterFSM.Engine.Step();
 
 foreach (var ((rage, fsm, count), indices, group) in characterFSM
-    .Query(CharacterState.Angry).Entities<RageComponent, CharacterFSM.Component>(_indexesDB))
+    .Query(CharacterState.Angry).Entities<RageComponent, CharacterFSM.Component>(_indexedDB))
 {
     // ...
 }
@@ -391,7 +393,7 @@ foreach (var ((rage, fsm, count), indices, group) in characterFSM
 
 ## Advanced Usage
 ### Extending Schema
-In advance, you can extend your Schema with inheritance, or having multiple Schemas within same `EnginesRoot`. You can still share `IndexesDB` between schemas. Good thing is, underlying groups will remain static and unique per added Schema type.
+In advance, you can extend your Schema with inheritance, or having multiple Schemas within same `EnginesRoot`. You can still share `IndexedDB` between schemas. Good thing is, underlying groups will remain static and unique per added Schema type.
 
 ```csharp
 public abstract class GameModeSchemaBase : IEntitySchema
@@ -422,11 +424,11 @@ public class CoOpGameModeSchema : GameModeSchemaBase
 ### Calculate Union and Intersection of Indexes
 To calculate Union and Intersection of Indexes, you can use temporary filters called `Memo<T>`. It can be included anywhere in Schema. Use it like this:
 ```csharp
-_schema.CharacterByController.Query(0).Union(_indexesDB, _schema.Memo);
-_schema.CharacterByController.Query(3).Union(_indexesDB, _schema.Memo);
-_schema.CharacterByController.Query(6).Union(_indexesDB, _schema.Memo);
+_schema.CharacterByController.Query(0).Union(_indexedDB, _schema.Memo);
+_schema.CharacterByController.Query(3).Union(_indexedDB, _schema.Memo);
+_schema.CharacterByController.Query(6).Union(_indexedDB, _schema.Memo);
 
-_schema.CharacterByState.Query(CharacterState.Happy).Intersect(_indexesDB, _schema.Memo);
+_schema.CharacterByState.Query(CharacterState.Happy).Intersect(_indexedDB, _schema.Memo);
 ```
 Note that you have to clear `Memo<T>` before you reuse it! `Memo<T>` does not have any guarantee to have valid indices after entity submission.
 

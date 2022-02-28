@@ -4,22 +4,22 @@ using Svelto.DataStructures;
 using Svelto.ECS.Schema.Definition;
 using Svelto.ECS.Schema.Internal;
 
-namespace Svelto.ECS.Schema
+namespace Svelto.ECS.Schema.Internal
 {
-    namespace Internal
+    public interface IEntityIndexQuery
     {
-        public interface IEntityIndexQuery
-        {
-            IndexesDB.IndexerSetData GetGroupIndexDataList(IndexesDB indexesDB);
-        }
-
-        public interface IEntityIndexQuery<TC> : IEntityIndexQuery
-            where TC : unmanaged, IEntityComponent
-        {
-            NB<TC> GetComponents(IndexesDB indexesDB, in ExclusiveGroupStruct groupID);
-        }
+        IndexedKeyData GetIndexedKeyData(IndexedDB indexedDB);
     }
 
+    public interface IEntityIndexQuery<TC> : IEntityIndexQuery
+        where TC : unmanaged, IEntityComponent
+    {
+        NB<TC> GetComponents(IndexedDB indexedDB, in ExclusiveGroupStruct groupID);
+    }
+}
+
+namespace Svelto.ECS.Schema
+{
     public readonly partial struct IndexQuery<TK, TC> : IEntityIndexQuery<TC>
         where TK : unmanaged
         where TC : unmanaged, IIndexedComponent<TK>
@@ -33,42 +33,42 @@ namespace Svelto.ECS.Schema
             _key = key;
         }
 
-        private IndexesDB.IndexerSetData GetGroupIndexDataList(IndexesDB indexesDB)
+        private IndexedKeyData GetIndexedKeyData(IndexedDB indexedDB)
         {
-            if (!indexesDB.indexers.ContainsKey(_indexerId))
+            if (!indexedDB.indexers.ContainsKey(_indexerId))
                 return default;
 
-            var indexerData = (IndexesDB.IndexerData<TK>)indexesDB.indexers[_indexerId];
+            var indexerData = (IndexedData<TK>)indexedDB.indexers[_indexerId];
             indexerData.TryGetValue(_key, out var result);
             return result;
         }
 
-        IndexesDB.IndexerSetData IEntityIndexQuery.GetGroupIndexDataList(IndexesDB indexesDB)
-            => GetGroupIndexDataList(indexesDB);
+        IndexedKeyData IEntityIndexQuery.GetIndexedKeyData(IndexedDB indexedDB)
+            => GetIndexedKeyData(indexedDB);
 
         // this is required because of limitation of filters
         // we cannot merge filters without EGID yet
-        NB<TC> IEntityIndexQuery<TC>.GetComponents(IndexesDB indexesDB, in ExclusiveGroupStruct groupID)
+        NB<TC> IEntityIndexQuery<TC>.GetComponents(IndexedDB indexedDB, in ExclusiveGroupStruct groupID)
         {
-            return indexesDB.entitiesDB.QueryEntities<TC>(groupID).ToBuffer().buffer;
+            return indexedDB.entitiesDB.QueryEntities<TC>(groupID).ToBuffer().buffer;
         }
 
-        public void Set<T>(IndexesDB indexesDB, Memo<T> memo)
+        public void Set<T>(IndexedDB indexedDB, Memo<T> memo)
             where T : struct, IEntityComponent
         {
-            memo.Set<IndexQuery<TK, TC>, TC>(indexesDB, this);
+            memo.Set<IndexQuery<TK, TC>, TC>(indexedDB, this);
         }
 
-        public void Union<T>(IndexesDB indexesDB, Memo<T> memo)
+        public void Union<T>(IndexedDB indexedDB, Memo<T> memo)
             where T : struct, IEntityComponent
         {
-            memo.Union<IndexQuery<TK, TC>, TC>(indexesDB, this);
+            memo.Union<IndexQuery<TK, TC>, TC>(indexedDB, this);
         }
 
-        public void Intersect<T>(IndexesDB indexesDB, Memo<T> memo)
+        public void Intersect<T>(IndexedDB indexedDB, Memo<T> memo)
             where T : struct, IEntityComponent
         {
-            memo.Intersect<IndexQuery<TK, TC>, TC>(indexesDB, this);
+            memo.Intersect<IndexQuery<TK, TC>, TC>(indexedDB, this);
         }
     }
 }

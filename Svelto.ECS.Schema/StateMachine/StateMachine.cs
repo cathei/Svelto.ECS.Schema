@@ -188,7 +188,7 @@ namespace Svelto.ECS.Schema
                 _conditions = new FasterList<ConditionConfig>();
             }
 
-            internal void Evaluate<TEnum, TIter>(IndexesDB indexesDB, NB<Component> component, in TEnum indices, in ExclusiveGroupStruct groupID)
+            internal void Evaluate<TEnum, TIter>(IndexedDB indexedDB, NB<Component> component, in TEnum indices, in ExclusiveGroupStruct groupID)
                 where TEnum : struct, IIndicesEnumerable<TIter>
                 where TIter : struct, IIndicesEnumerator
             {
@@ -203,7 +203,7 @@ namespace Svelto.ECS.Schema
                 // evaluate each condition, they will check with components
                 for (int i = 0; i < _conditions.count; ++i)
                 {
-                    _conditions[i].Evaluate<TEnum, TIter>(indexesDB.entitiesDB, component, indices, groupID);
+                    _conditions[i].Evaluate<TEnum, TIter>(indexedDB, component, indices, groupID);
                 }
 
                 // now if transitionState is still available, this transition is selected
@@ -216,8 +216,8 @@ namespace Svelto.ECS.Schema
                         var currentState = new KeyWrapper<TState>(component[i].State);
                         var nextState = new KeyWrapper<TState>(_next);
 
-                        Config.States[currentState]._exitCandidates.Add(indexesDB, component[i].ID);
-                        Config.States[nextState]._enterCandidates.Add(indexesDB, component[i].ID);
+                        Config.States[currentState]._exitCandidates.Add(indexedDB, component[i].ID);
+                        Config.States[nextState]._enterCandidates.Add(indexedDB, component[i].ID);
                     }
                 }
             }
@@ -246,37 +246,37 @@ namespace Svelto.ECS.Schema
                 _onEnter = new FasterList<CallbackConfig>();
             }
 
-            internal void Evaluate(IndexesDB indexesDB, NB<Component> component, in ExclusiveGroupStruct groupID)
+            internal void Evaluate(IndexedDB indexedDB, NB<Component> component, in ExclusiveGroupStruct groupID)
             {
-                var indices = Config.Index.Query(_state).From(groupID).Indices(indexesDB);
+                var indices = Config.Index.Query(_state).From(groupID).Indices(indexedDB);
 
                 // higher priority if added first
                 for (int i = 0; i < _transitions.count; ++i)
                 {
-                    _transitions[i].Evaluate<IndexedIndices, FilteredIndicesEnumerator>
-                        (indexesDB, component, indices, groupID);
+                    _transitions[i].Evaluate<IndexedIndices, IndexedIndicesEnumerator>
+                        (indexedDB, component, indices, groupID);
                 }
             }
 
-            internal void ProcessExit(IndexesDB indexesDB, in ExclusiveGroupStruct groupID)
+            internal void ProcessExit(IndexedDB indexedDB, in ExclusiveGroupStruct groupID)
             {
                 if (_onExit.count == 0)
                     return;
 
-                var indices = _exitCandidates.From(groupID).Indices(indexesDB);
+                var indices = _exitCandidates.From(groupID).Indices(indexedDB);
 
                 if (indices.Count() == 0)
                     return;
 
                 for (int i = 0; i < _onExit.count; ++i)
                 {
-                    _onExit[i].Invoke(indexesDB.entitiesDB, indices, groupID);
+                    _onExit[i].Invoke(indexedDB.entitiesDB, indices, groupID);
                 }
             }
 
-            internal void ProcessEnter(IndexesDB indexesDB, NB<Component> component, in ExclusiveGroupStruct groupID)
+            internal void ProcessEnter(IndexedDB indexedDB, NB<Component> component, in ExclusiveGroupStruct groupID)
             {
-                var indices = _enterCandidates.From(groupID).Indices(indexesDB);
+                var indices = _enterCandidates.From(groupID).Indices(indexedDB);
 
                 if (indices.Count() == 0)
                     return;
@@ -286,12 +286,12 @@ namespace Svelto.ECS.Schema
                     // this group will not be visited again in this step
                     // see you next step
                     component[i].transitionState = TransitionState.Available;
-                    component[i].Update(indexesDB, _state);
+                    component[i].Update(indexedDB, _state);
                 }
 
                 for (int i = 0; i < _onEnter.count; ++i)
                 {
-                    _onEnter[i].Invoke(indexesDB.entitiesDB, indices, groupID);
+                    _onEnter[i].Invoke(indexedDB.entitiesDB, indices, groupID);
                 }
             }
         }
@@ -305,14 +305,14 @@ namespace Svelto.ECS.Schema
                 _transitions = new FasterList<TransitionConfig>();
             }
 
-            internal void Evaluate(IndexesDB indexesDB, NB<Component> state, int count, in ExclusiveGroupStruct groupID)
+            internal void Evaluate(IndexedDB indexedDB, NB<Component> state, int count, in ExclusiveGroupStruct groupID)
             {
                 var indices = new RangeIndiceEnumerable(count);
 
                 for (int i = 0; i < _transitions.count; ++i)
                 {
                     _transitions[i].Evaluate<RangeIndiceEnumerable, RangeIndicesEnumerator>
-                        (indexesDB, state, indices, groupID);
+                        (indexedDB, state, indices, groupID);
                 }
             }
         }

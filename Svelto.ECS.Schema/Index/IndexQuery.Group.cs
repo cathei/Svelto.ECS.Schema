@@ -22,9 +22,9 @@ namespace Svelto.ECS.Schema
             _group = group;
         }
 
-        public IndexedIndices Indices(IndexesDB indexesDB)
+        public IndexedIndices Indices(IndexedDB indexedDB)
         {
-            var setData = _query.GetGroupIndexDataList(indexesDB);
+            var setData = _query.GetIndexedKeyData(indexedDB);
 
             if (setData.groups == null || !_group.IsEnabled() ||
                 !setData.groups.TryGetValue(_group, out var groupData))

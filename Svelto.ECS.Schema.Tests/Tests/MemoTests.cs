@@ -47,20 +47,20 @@ namespace Svelto.ECS.Schema.Tests
 
             _submissionScheduler.SubmitEntities();
 
-            _schema.Memo.Clear(_indexesDB);
+            _schema.Memo.Clear(_indexedDB);
 
             // 30 entities
-            _schema.CharacterByController.Query(0).Union(_indexesDB, _schema.Memo);
-            _schema.CharacterByController.Query(3).Union(_indexesDB, _schema.Memo);
-            _schema.CharacterByController.Query(6).Union(_indexesDB, _schema.Memo);
+            _schema.CharacterByController.Query(0).Union(_indexedDB, _schema.Memo);
+            _schema.CharacterByController.Query(3).Union(_indexedDB, _schema.Memo);
+            _schema.CharacterByController.Query(6).Union(_indexedDB, _schema.Memo);
 
             // 33 entities
-            _schema.CharacterByState.Query(CharacterState.Type.Happy).Union(_indexesDB, _schema.Memo);
+            _schema.CharacterByState.Query(CharacterState.Type.Happy).Union(_indexedDB, _schema.Memo);
 
             int entityCount = 0;
 
             foreach (var ((controller, state, count), indices, group) in
-                _schema.Memo.Entities<CharacterController.Component, CharacterState.Component>(_indexesDB))
+                _schema.Memo.Entities<CharacterController.Component, CharacterState.Component>(_indexedDB))
             {
                 foreach (int i in indices)
                 {
@@ -95,20 +95,20 @@ namespace Svelto.ECS.Schema.Tests
 
             _submissionScheduler.SubmitEntities();
 
-            _schema.Memo.Clear(_indexesDB);
+            _schema.Memo.Clear(_indexedDB);
 
             // 30 entities
-            _schema.CharacterByController.Query(0).Union(_indexesDB, _schema.Memo);
-            _schema.CharacterByController.Query(3).Union(_indexesDB, _schema.Memo);
-            _schema.CharacterByController.Query(6).Union(_indexesDB, _schema.Memo);
+            _schema.CharacterByController.Query(0).Union(_indexedDB, _schema.Memo);
+            _schema.CharacterByController.Query(3).Union(_indexedDB, _schema.Memo);
+            _schema.CharacterByController.Query(6).Union(_indexedDB, _schema.Memo);
 
             // 33 entities
-            _schema.CharacterByState.Query(CharacterState.Type.Happy).Intersect(_indexesDB, _schema.Memo);
+            _schema.CharacterByState.Query(CharacterState.Type.Happy).Intersect(_indexedDB, _schema.Memo);
 
             int entityCount = 0;
 
             foreach (var ((controller, state, _), indices, _) in
-                _schema.Memo.Entities<CharacterController.Component, CharacterState.Component>(_indexesDB))
+                _schema.Memo.Entities<CharacterController.Component, CharacterState.Component>(_indexedDB))
             {
                 foreach (int i in indices)
                 {

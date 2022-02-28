@@ -30,13 +30,13 @@ namespace Svelto.ECS.Schema
                 _state = state;
             }
 
-            internal void Update(IndexesDB indexesDB, in TState state)
+            internal void Update(IndexedDB indexedDB, in TState state)
             {
                 var oldState = _state;
                 _state = state;
 
                 // propagate to fsm index and others indexers in schema
-                indexesDB.NotifyKeyUpdate(ref this, oldState, _state);
+                indexedDB.NotifyKeyUpdate(ref this, oldState, _state);
             }
         }
 

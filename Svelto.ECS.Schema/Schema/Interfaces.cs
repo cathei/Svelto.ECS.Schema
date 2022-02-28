@@ -19,7 +19,7 @@ namespace Svelto.ECS.Schema
         {
             RefWrapperType ComponentType { get; }
             int IndexerID { get; }
-            void AddEngines(EnginesRoot enginesRoot, IndexesDB indexesDB);
+            void AddEngines(EnginesRoot enginesRoot, IndexedDB indexedDB);
         }
 
         internal interface ISchemaDefinitionTables : ISchemaDefinition
@@ -42,16 +42,13 @@ namespace Svelto.ECS.Schema
 
         public interface IEntityStateMachine
         {
-            void AddEngines(EnginesRoot enginesRoot, IndexesDB indexesDB);
+            void AddEngines(EnginesRoot enginesRoot, IndexedDB indexedDB);
             ISchemaDefinitionIndex Index { get; }
         }
     }
 
     namespace Definition
     {
-        // I cannot ensure uniqueness with type argument only
-        public interface IUniqueTag {}
-
         public interface IEntitySchema : ISchemaDefinition { }
     }
 }

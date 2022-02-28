@@ -1,9 +1,6 @@
-using System;
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using Svelto.DataStructures;
-using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema.Internal
 {
@@ -36,9 +33,9 @@ namespace Svelto.ECS.Schema.Internal
 
         int ISchemaDefinitionIndex.IndexerID => _indexerId;
 
-        void ISchemaDefinitionIndex.AddEngines(EnginesRoot enginesRoot, IndexesDB indexesDB)
+        void ISchemaDefinitionIndex.AddEngines(EnginesRoot enginesRoot, IndexedDB indexedDB)
         {
-            enginesRoot.AddEngine(new TableIndexingEngine<TK, TC>(indexesDB));
+            enginesRoot.AddEngine(new TableIndexingEngine<TK, TC>(indexedDB));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

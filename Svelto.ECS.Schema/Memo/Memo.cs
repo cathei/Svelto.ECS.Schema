@@ -21,36 +21,36 @@ namespace Svelto.ECS.Schema.Definition
 
         int ISchemaDefinitionMemo.MemoID => _memoID;
 
-        public void Add(IndexesDB indexesDB, EGID egid)
+        public void Add(IndexedDB indexedDB, EGID egid)
         {
-            indexesDB.AddMemo(this, egid.entityID, egid.groupID);
+            indexedDB.AddMemo(this, egid.entityID, egid.groupID);
         }
 
-        public void Remove(IndexesDB indexesDB, EGID egid)
+        public void Remove(IndexedDB indexedDB, EGID egid)
         {
-            indexesDB.RemoveMemo(this, egid.entityID, egid.groupID);
+            indexedDB.RemoveMemo(this, egid.entityID, egid.groupID);
         }
 
-        public void Clear(IndexesDB indexesDB)
+        public void Clear(IndexedDB indexedDB)
         {
-            indexesDB.ClearMemo(this);
+            indexedDB.ClearMemo(this);
         }
 
         // we have type constraints because it requires INeedEGID
         // it won't be necessary when Svelto update it's filter utility functions
-        internal void Set<TQuery, TC>(IndexesDB indexesDB, TQuery query)
+        internal void Set<TQuery, TC>(IndexedDB indexedDB, TQuery query)
             where TQuery : IEntityIndexQuery<TC>
             where TC : unmanaged, IEntityComponent, INeedEGID
         {
-            Clear(indexesDB);
-            Union<TQuery, TC>(indexesDB, query);
+            Clear(indexedDB);
+            Union<TQuery, TC>(indexedDB, query);
         }
 
-        internal void Union<TQuery, TC>(IndexesDB indexesDB, TQuery query)
+        internal void Union<TQuery, TC>(IndexedDB indexedDB, TQuery query)
             where TQuery : IEntityIndexQuery<TC>
             where TC : unmanaged, IEntityComponent, INeedEGID
         {
-            var queryData = query.GetGroupIndexDataList(indexesDB).groups;
+            var queryData = query.GetIndexedKeyData(indexedDB).groups;
 
             // if empty nothing to add
             if (queryData == null)
@@ -66,32 +66,32 @@ namespace Svelto.ECS.Schema.Definition
                 if (queryGroupData.filter.filteredIndices.Count() == 0)
                     continue;
 
-                var mapper = indexesDB.entitiesDB.QueryMappedEntities<T>(queryGroupData.group);
+                var mapper = indexedDB.entitiesDB.QueryMappedEntities<T>(queryGroupData.group);
 
-                var components = query.GetComponents(indexesDB, queryGroupData.group);
-                ref var originalGroupData = ref indexesDB.CreateOrGetMemoGroup<T>(_memoID, queryGroupData.group);
+                var components = query.GetComponents(indexedDB, queryGroupData.group);
+                ref var originalGroupData = ref indexedDB.CreateOrGetMemoGroup<T>(_memoID, queryGroupData.group);
 
                 foreach (var i in new IndexedIndices(queryGroupData.filter.filteredIndices))
                     originalGroupData.filter.Add(components[i].ID.entityID, mapper);
             }
         }
 
-        internal void Intersect<TQuery, TC>(IndexesDB indexesDB, TQuery query)
+        internal void Intersect<TQuery, TC>(IndexedDB indexedDB, TQuery query)
             where TQuery : IEntityIndexQuery<TC>
             where TC : unmanaged, IEntityComponent, INeedEGID
         {
-            var originalData = GetGroupIndexDataList(indexesDB).groups;
+            var originalData = GetIndexedKeyData(indexedDB).groups;
 
             // if empty nothing to intersect
             if (originalData == null)
                 return;
 
-            var queryData = query.GetGroupIndexDataList(indexesDB).groups;
+            var queryData = query.GetIndexedKeyData(indexedDB).groups;
 
             // if empty nothing to intersect
             if (queryData == null)
             {
-                Clear(indexesDB);
+                Clear(indexedDB);
                 return;
             }
 
@@ -113,7 +113,7 @@ namespace Svelto.ECS.Schema.Definition
                     continue;
                 }
 
-                var components = query.GetComponents(indexesDB, queryGroupData.group);
+                var components = query.GetComponents(indexedDB, queryGroupData.group);
 
                 // ugh I have to check what to delete
                 // since I cannot change filter while iteration
@@ -133,13 +133,13 @@ namespace Svelto.ECS.Schema.Definition
             }
         }
 
-        private IndexesDB.IndexerSetData GetGroupIndexDataList(IndexesDB indexesDB)
+        private IndexedKeyData GetIndexedKeyData(IndexedDB indexedDB)
         {
-            indexesDB.memos.TryGetValue(_memoID, out var result);
+            indexedDB.memos.TryGetValue(_memoID, out var result);
             return result;
         }
 
-        IndexesDB.IndexerSetData IEntityIndexQuery.GetGroupIndexDataList(IndexesDB indexesDB)
-            => GetGroupIndexDataList(indexesDB);
+        IndexedKeyData IEntityIndexQuery.GetIndexedKeyData(IndexedDB indexedDB)
+            => GetIndexedKeyData(indexedDB);
     }
 }

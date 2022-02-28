@@ -28,13 +28,13 @@ namespace Svelto.ECS.Schema.Definition
                 _value = value;
             }
 
-            public void Update(IndexesDB indexesDB, in TValue value)
+            public void Update(IndexedDB indexedDB, in TValue value)
             {
                 var oldValue = _value;
                 _value = value;
 
                 // propagate to indexes
-                indexesDB.NotifyKeyUpdate(ref this, oldValue, value);
+                indexedDB.NotifyKeyUpdate(ref this, oldValue, value);
             }
         }
 

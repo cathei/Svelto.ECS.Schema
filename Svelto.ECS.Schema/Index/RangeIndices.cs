@@ -1,14 +1,4 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using Svelto.DataStructures;
-using Svelto.ECS;
-using Svelto.ECS.DataStructures;
-using Svelto.ECS.Schema.Internal;
-
-namespace Svelto.ECS.Schema
+namespace Svelto.ECS.Schema.Internal
 {
     public struct RangeIndicesEnumerator : IIndicesEnumerator
     {
