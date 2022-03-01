@@ -4,44 +4,59 @@ using System.Runtime.CompilerServices;
 using Svelto.ECS.Hybrid;
 using Svelto.ECS.Schema.Internal;
 
-namespace Svelto.ECS.Schema.Definition
+namespace Svelto.ECS.Schema.Internal
 {
-    public sealed partial class Table<T> : ISchemaDefinitionTable
-        where T : IEntityDescriptor, new()
+    public abstract partial class TableBase
     {
-        private readonly ExclusiveGroupStruct _exclusiveGroup;
+        protected readonly ExclusiveGroupStruct _exclusiveGroup;
 
         public ref readonly ExclusiveGroupStruct ExclusiveGroup => ref _exclusiveGroup;
 
-        public Table()
+        internal TableBase()
         {
             _exclusiveGroup = new ExclusiveGroup();
         }
 
+        // [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        // public bool Exists<T>(EntitiesDB entitiesDB, uint entityID) where T : struct, IEntityComponent
+        //     => entitiesDB.Exists<T>(entityID, _exclusiveGroup);
+
+        // [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        // public int Count<T>(EntitiesDB entitiesDB) where T : struct, IEntityComponent
+        //     => entitiesDB.Count<T>(_exclusiveGroup);
+
+        public static implicit operator ExclusiveGroupStruct(in TableBase group) => group._exclusiveGroup;
+    }
+
+    public interface IEntityTable<out TRow> : IEntityTable where TRow : IEntityRow
+    {
+        EntityInitializer Build(IEntityFactory factory, uint entityID);
+        void Insert(IEntityFunctions functions, EGID fromID);
+    }
+}
+
+namespace Svelto.ECS.Schema.Definition
+{
+    public sealed partial class Table<TRow> : TableBase, IEntityTable<TRow>, IEntityTablesBuilder<TRow>
+        where TRow : IEntityRow
+    {
+        public Table() : base() { }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EntityInitializer Build(IEntityFactory factory, uint entityID)
-        {
-            return factory.BuildEntity<T>(entityID, _exclusiveGroup);
-        }
+            => factory.BuildEntity<RowDescriptor<TRow>>(entityID, _exclusiveGroup);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Insert(IEntityFunctions functions, EGID fromID)
-        {
-            functions.SwapEntityGroup<T>(fromID, _exclusiveGroup);
-        }
+            => functions.SwapEntityGroup<RowDescriptor<TRow>>(fromID, _exclusiveGroup);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Remove(IEntityFunctions functions, uint entityID)
+            => functions.RemoveEntity<RowDescriptor<TRow>>(entityID, _exclusiveGroup);
+
+        IEnumerable<IEntityTable<TRow>> IEntityTablesBuilder<TRow>.Tables
         {
-            functions.RemoveEntity<T>(entityID, _exclusiveGroup);
+            get { yield return this; }
         }
-
-        public static TablesBuilder<T> operator+(in Table<T> a, in Table<T> b)
-        {
-            return new TablesBuilder<T>(new Table<T>[] { a, b });
-        }
-
-        public static implicit operator ExclusiveGroupStruct(in Table<T> group) => group._exclusiveGroup;
-
     }
 }

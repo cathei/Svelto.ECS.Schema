@@ -50,12 +50,12 @@ namespace Svelto.ECS.Schema.Tests
             _schema.Memo.Clear(_indexedDB);
 
             // 30 entities
-            _schema.CharacterByController.Query(0).Union(_indexedDB, _schema.Memo);
-            _schema.CharacterByController.Query(3).Union(_indexedDB, _schema.Memo);
-            _schema.CharacterByController.Query(6).Union(_indexedDB, _schema.Memo);
+            _schema.CharacterByController.Where(0).Union(_indexedDB, _schema.Memo);
+            _schema.CharacterByController.Where(3).Union(_indexedDB, _schema.Memo);
+            _schema.CharacterByController.Where(6).Union(_indexedDB, _schema.Memo);
 
             // 33 entities
-            _schema.CharacterByState.Query(CharacterState.Type.Happy).Union(_indexedDB, _schema.Memo);
+            _schema.CharacterByState.Where(CharacterState.Type.Happy).Union(_indexedDB, _schema.Memo);
 
             int entityCount = 0;
 
@@ -98,12 +98,12 @@ namespace Svelto.ECS.Schema.Tests
             _schema.Memo.Clear(_indexedDB);
 
             // 30 entities
-            _schema.CharacterByController.Query(0).Union(_indexedDB, _schema.Memo);
-            _schema.CharacterByController.Query(3).Union(_indexedDB, _schema.Memo);
-            _schema.CharacterByController.Query(6).Union(_indexedDB, _schema.Memo);
+            _schema.CharacterByController.Where(0).Union(_indexedDB, _schema.Memo);
+            _schema.CharacterByController.Where(3).Union(_indexedDB, _schema.Memo);
+            _schema.CharacterByController.Where(6).Union(_indexedDB, _schema.Memo);
 
             // 33 entities
-            _schema.CharacterByState.Query(CharacterState.Type.Happy).Intersect(_indexedDB, _schema.Memo);
+            _schema.CharacterByState.Where(CharacterState.Type.Happy).Intersect(_indexedDB, _schema.Memo);
 
             int entityCount = 0;
 

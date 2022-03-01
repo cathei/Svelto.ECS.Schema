@@ -11,16 +11,16 @@ namespace Svelto.ECS.Schema.Tests
             public struct Unique : IUnique {}
         }
 
-        // descriptors
-        public class CharacterDescriptor : GenericEntityDescriptor<EGIDComponent> { }
+        // rows
+        public class CharacterRow : IEntityRow<EGIDComponent> {}
 
-        public class ItemDescriptor : GenericEntityDescriptor<ItemOwner.Component> { }
+        public class ItemRow : IEntityRow<ItemOwner.Component> {}
 
         // schemas
         public class PlayerSchema : IEntitySchema
         {
-            public readonly Table<CharacterDescriptor> Character = new Table<CharacterDescriptor>();
-            public readonly Table<ItemDescriptor> Item = new Table<ItemDescriptor>();
+            public readonly Table<CharacterRow> Character = new Table<CharacterRow>();
+            public readonly Table<ItemRow> Item = new Table<ItemRow>();
 
             public readonly ItemOwner.Index ItemsByOwner = new ItemOwner.Index();
         }
@@ -32,13 +32,13 @@ namespace Svelto.ECS.Schema.Tests
 
             public readonly ItemOwner.Index ItemsByOwner = new ItemOwner.Index();
 
-            public readonly Tables<CharacterDescriptor> AllCharacters;
-            public readonly Tables<ItemDescriptor> AllItems;
+            public readonly Tables<CharacterRow> AllCharacters;
+            public readonly Tables<ItemRow> AllItems;
 
             public TestSchema()
             {
-                AllCharacters = AI.Character + Players.Combine(x => x.Character);
-                AllItems = AI.Item + Players.Combine(x => x.Item);
+                AllCharacters = AI.Character.Append(Players.Combine(x => x.Character));
+                AllItems = Players.Combine(x => x.Item).Append(AI.Item);
             }
         }
 
@@ -67,7 +67,7 @@ namespace Svelto.ECS.Schema.Tests
 
             _submissionScheduler.SubmitEntities();
 
-            var queriedGroups = _schema.ItemsByOwner.Query(0)
+            var queriedGroups = _schema.ItemsByOwner.Where(0)
                 .Entities<ItemOwner.Component>(_indexedDB).ToList();
 
             var queriedComponents = queriedGroups
@@ -89,7 +89,7 @@ namespace Svelto.ECS.Schema.Tests
             for (int i = 0; i < count; ++i)
                 owner[i].Update(_indexedDB, 1);
 
-            queriedGroups = _schema.ItemsByOwner.Query(0)
+            queriedGroups = _schema.ItemsByOwner.Where(0)
                 .Entities<ItemOwner.Component>(_indexedDB).ToList();
 
             queriedComponents = queriedGroups
@@ -103,7 +103,7 @@ namespace Svelto.ECS.Schema.Tests
             Assert.DoesNotContain(10u, queriedComponents.Select(x => x.ID.entityID));
             Assert.Contains(20u, queriedComponents.Select(x => x.ID.entityID));
 
-            queriedGroups = _schema.ItemsByOwner.Query(1)
+            queriedGroups = _schema.ItemsByOwner.Where(1)
                 .Entities<ItemOwner.Component>(_indexedDB).ToList();
 
             queriedComponents = queriedGroups
@@ -143,7 +143,7 @@ namespace Svelto.ECS.Schema.Tests
 
             _submissionScheduler.SubmitEntities();
 
-            var queriedGroups = _schema.AI.ItemsByOwner.Query(0)
+            var queriedGroups = _schema.AI.ItemsByOwner.Where(0)
                 .Entities<ItemOwner.Component>(_indexedDB).ToList();
 
             var queriedComponents = queriedGroups
@@ -164,7 +164,7 @@ namespace Svelto.ECS.Schema.Tests
 
             _submissionScheduler.SubmitEntities();
 
-            queriedGroups = _schema.AI.ItemsByOwner.Query(0)
+            queriedGroups = _schema.AI.ItemsByOwner.Where(0)
                 .Entities<ItemOwner.Component>(_indexedDB).ToList();
 
             queriedComponents = queriedGroups
@@ -177,7 +177,7 @@ namespace Svelto.ECS.Schema.Tests
             Assert.DoesNotContain(0u, queriedComponents.Select(x => x.ID.entityID));
             Assert.Contains(5u, queriedComponents.Select(x => x.ID.entityID));
 
-            queriedGroups = _schema.Players[1].ItemsByOwner.Query(0)
+            queriedGroups = _schema.Players[1].ItemsByOwner.Where(0)
                 .Entities<ItemOwner.Component>(_indexedDB).ToList();
 
             queriedComponents = queriedGroups
@@ -218,14 +218,14 @@ namespace Svelto.ECS.Schema.Tests
 
             _submissionScheduler.SubmitEntities();
 
-            var ((buffer, count), indices) = _schema.ItemsByOwner.Query(0)
+            var ((buffer, count), indices) = _schema.ItemsByOwner.Where(0)
                 .From(_schema.AI.Item)
                 .Entities<ItemOwner.Component>(_indexedDB);
 
             Assert.Equal(1, indices.Count());
             Assert.Equal(0u, buffer[indices[0]].ID.entityID);
 
-            var queriedGroups = _schema.ItemsByOwner.Query(7)
+            var queriedGroups = _schema.ItemsByOwner.Where(7)
                 .From(_schema.AllItems)
                 .Entities<ItemOwner.Component>(_indexedDB).ToList();
 

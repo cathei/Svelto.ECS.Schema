@@ -54,17 +54,14 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Svelto.DataStructures;
 
-namespace Svelto.ECS.Schema.Definition
+namespace Svelto.ECS.Schema.Internal
 {{
-    public partial class Table<T>
+    public partial class TableBase
     {{
 {GenerateQueryEntities(QueryTableTemplate)}
     }}
-}}
 
-namespace Svelto.ECS.Schema.Internal
-{{
-    public partial class TablesBase<TDesc>
+    public partial class TablesBase
     {{
 {GenerateQueryEntities(QueryTablesTemplate)}
     }}

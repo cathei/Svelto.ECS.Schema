@@ -6,38 +6,40 @@ using Svelto.DataStructures;
 using Svelto.ECS;
 using Svelto.ECS.DataStructures;
 using Svelto.ECS.Schema.Definition;
+using Svelto.ECS.Schema.Internal;
+
+namespace Svelto.ECS.Schema.Internal
+{
+    public interface IEntityTablesBuilder<out TRow>
+        where TRow : IEntityRow
+    {
+        IEnumerable<IEntityTable<TRow>> Tables { get; }
+    }
+}
 
 namespace Svelto.ECS.Schema
 {
-    public readonly ref struct TablesBuilder<T> where T : IEntityDescriptor, new()
+    public readonly struct TablesBuilder<TRow> : IEntityTablesBuilder<TRow>
+        where TRow : IEntityRow
     {
-        public readonly IEnumerable<Table<T>> items;
+        internal readonly IEnumerable<IEntityTable<TRow>> _tables;
 
-        public TablesBuilder(IEnumerable<Table<T>> items)
+        public IEnumerable<IEntityTable<TRow>> Tables => _tables;
+
+        public TablesBuilder(IEnumerable<IEntityTable<TRow>> items) => _tables = items;
+
+        public Tables<TRow> Build() => new Tables<TRow>(_tables);
+
+        public static implicit operator Tables<TRow>(in TablesBuilder<TRow> builder) => builder.Build();
+    }
+
+    public static class TablesBuilderExtensions
+    {
+        public static TablesBuilder<TRow> Append<TRow>(
+                this IEntityTablesBuilder<TRow> a, IEntityTablesBuilder<TRow> b)
+            where TRow : IEntityRow
         {
-            this.items = items;
+            return new TablesBuilder<TRow>(a.Tables.Concat(b.Tables));
         }
-
-        public Tables<T> Build()
-        {
-            return new Tables<T>(items);
-        }
-
-        public static TablesBuilder<T> operator+(TablesBuilder<T> a, TablesBuilder<T> b)
-        {
-            return new TablesBuilder<T>(a.items.Concat(b.items));
-        }
-
-        public static TablesBuilder<T> operator+(TablesBuilder<T> a, Table<T> b)
-        {
-            return new TablesBuilder<T>(a.items.Append(b));
-        }
-
-        public static TablesBuilder<T> operator+(Table<T> a, TablesBuilder<T> b)
-        {
-            return new TablesBuilder<T>(b.items.Prepend(a));
-        }
-
-        public static implicit operator Tables<T>(in TablesBuilder<T> builder) => builder.Build();
     }
 }

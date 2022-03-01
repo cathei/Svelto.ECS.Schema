@@ -38,10 +38,14 @@ namespace Svelto.ECS.Schema.Internal
             enginesRoot.AddEngine(new TableIndexingEngine<TK, TC>(indexedDB));
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public IndexQuery<TK, TC> Query(in TK key)
+        public IndexQuery<TK, TC> this[in TK key]
         {
-            return new IndexQuery<TK, TC>(_indexerId, key);
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => new IndexQuery<TK, TC>(_indexerId, key);
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public IndexQuery<TK, TC> Where(in TK key)
+            => new IndexQuery<TK, TC>(_indexerId, key);
     }
 }

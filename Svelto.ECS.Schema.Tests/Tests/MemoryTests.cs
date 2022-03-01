@@ -91,7 +91,7 @@ namespace Svelto.ECS.Schema.Tests
             int loop = 0;
 
             // warming up
-            foreach (var ((indexed, count), indices, group) in _schema.ItemsByOwner.Query(0).Entities<ItemOwner.Component>(_indexedDB))
+            foreach (var ((indexed, count), indices, group) in _schema.ItemsByOwner.Where(0).Entities<ItemOwner.Component>(_indexedDB))
             {
                 ++loop;
 
@@ -104,7 +104,7 @@ namespace Svelto.ECS.Schema.Tests
 
             long before = GC.GetAllocatedBytesForCurrentThread();
 
-            foreach (var ((indexed, count), indices, group) in _schema.ItemsByOwner.Query(0).Entities<ItemOwner.Component>(_indexedDB))
+            foreach (var ((indexed, count), indices, group) in _schema.ItemsByOwner.Where(0).Entities<ItemOwner.Component>(_indexedDB))
             {
                 ++loop;
             }

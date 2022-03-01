@@ -26,32 +26,19 @@ namespace Svelto.ECS.Schema
                     _schemas[i] = new TSchema();
             }
 
-            public delegate TablesBuilder<TDesc> TablesBuilderSelector<TDesc>(TSchema schema)
-                where TDesc : IEntityDescriptor, new();
+            public TablesBuilder<TRow> Combine<TRow>(
+                    Func<TSchema, IEntityTablesBuilder<TRow>> selector)
+                where TRow : IEntityRow
+            {
+                return Combine(Enumerable.Range(0, _range), selector);
+            }
 
-            public TablesBuilder<TDesc> Combine<TDesc>(Func<TSchema, Table<TDesc>> selector)
-                    where TDesc : IEntityDescriptor, new()
-                => Combine(Enumerable.Range(0, _range), selector);
-
-            public TablesBuilder<TDesc> Combine<TDesc>(TablesBuilderSelector<TDesc> selector)
-                    where TDesc : IEntityDescriptor, new()
-                => Combine(Enumerable.Range(0, _range), selector);
-
-            public TablesBuilder<TDesc> Combine<TDesc>(Func<TSchema, TablesBase<TDesc>> selector)
-                    where TDesc : IEntityDescriptor, new()
-                => Combine(Enumerable.Range(0, _range), selector);
-
-            public TablesBuilder<TDesc> Combine<TDesc>(IEnumerable<int> indexes, Func<TSchema, Table<TDesc>> selector)
-                    where TDesc : IEntityDescriptor, new()
-                => new TablesBuilder<TDesc>(indexes.Select(x => selector(_schemas[x])));
-
-            public TablesBuilder<TDesc> Combine<TDesc>(IEnumerable<int> indexes, TablesBuilderSelector<TDesc> selector)
-                    where TDesc : IEntityDescriptor, new()
-                => new TablesBuilder<TDesc>(indexes.SelectMany(x => selector(_schemas[x]).items));
-
-            public TablesBuilder<TDesc> Combine<TDesc>(IEnumerable<int> indexes, Func<TSchema, TablesBase<TDesc>> selector)
-                    where TDesc : IEntityDescriptor, new()
-                => Combine(indexes, x => (TablesBuilder<TDesc>)selector(x));
+            public TablesBuilder<TRow> Combine<TRow>(
+                    IEnumerable<int> indexes, Func<TSchema, IEntityTablesBuilder<TRow>> selector)
+                where TRow : IEntityRow
+            {
+                return Combine(indexes, x => (TablesBuilder<TRow>)selector(x));
+            }
 
             public TSchema this[int index] => _schemas[index];
             public TSchema Get(int index) => _schemas[index];
@@ -72,17 +59,12 @@ namespace Svelto.ECS.Schema
                 _mapper = mapper;
             }
 
-            public TablesBuilder<TDesc> Combine<TDesc>(IEnumerable<TIndex> indexes, Func<TSchema, Table<TDesc>> selector)
-                    where TDesc : IEntityDescriptor, new()
-                => Combine(indexes.Select(_mapper), selector);
-
-            public TablesBuilder<TDesc> Combine<TDesc>(IEnumerable<TIndex> indexes, TablesBuilderSelector<TDesc> selector)
-                    where TDesc : IEntityDescriptor, new()
-                => Combine(indexes.Select(_mapper), selector);
-
-            public TablesBuilder<TDesc> Combine<TDesc>(IEnumerable<TIndex> indexes, Func<TSchema, TablesBase<TDesc>> selector)
-                    where TDesc : IEntityDescriptor, new()
-                => Combine(indexes.Select(_mapper), selector);
+            public TablesBuilder<TRow> Combine<TRow>(
+                    IEnumerable<TIndex> indexes, Func<TSchema, IEntityTablesBuilder<TRow>> selector)
+                where TRow : IEntityRow
+            {
+                return Combine(indexes.Select(_mapper), selector);
+            }
 
             public TSchema this[TIndex index] => _schemas[_mapper(index)];
             public TSchema Get(TIndex index) => _schemas[_mapper(index)];

@@ -13,7 +13,7 @@ namespace Svelto.ECS.Schema
         internal class TableNode
         {
             public ShardNode parent;
-            public ISchemaDefinitionTable table;
+            public IEntityTable table;
         }
 
         internal class ShardNode
@@ -54,11 +54,11 @@ namespace Svelto.ECS.Schema
 
                 switch (element)
                 {
-                    case ISchemaDefinitionTable table:
+                    case IEntityTable table:
                         RegisterTable(node, table, $"{name}.{fieldInfo.Name}");
                         break;
 
-                    case ISchemaDefinitionTables rangedTable:
+                    case IEntityTables rangedTable:
                         // metadata should not include combined tables
                         if (rangedTable.IsCombined)
                             break;
@@ -89,7 +89,7 @@ namespace Svelto.ECS.Schema
             }
         }
 
-        private void RegisterTable(ShardNode parent, ISchemaDefinitionTable table, string name)
+        private void RegisterTable(ShardNode parent, IEntityTable table, string name)
         {
             groupToTable[table.ExclusiveGroup] = new TableNode
             {

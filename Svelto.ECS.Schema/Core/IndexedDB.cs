@@ -24,8 +24,6 @@ namespace Svelto.ECS.Schema
 
         internal EntitiesDB entitiesDB;
 
-        internal IndexedDB() { }
-
         internal void RegisterSchema(EnginesRoot enginesRoot, SchemaMetadata metadata)
         {
             registeredSchemas.Add(metadata);

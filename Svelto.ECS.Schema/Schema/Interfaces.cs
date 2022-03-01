@@ -9,7 +9,7 @@ namespace Svelto.ECS.Schema
     {
         public interface ISchemaDefinition { }
 
-        public interface ISchemaDefinitionTable : ISchemaDefinition
+        public interface IEntityTable : ISchemaDefinition
         {
             ref readonly ExclusiveGroupStruct ExclusiveGroup { get; }
             void Remove(IEntityFunctions functions, uint entityID);
@@ -22,11 +22,12 @@ namespace Svelto.ECS.Schema
             void AddEngines(EnginesRoot enginesRoot, IndexedDB indexedDB);
         }
 
-        internal interface ISchemaDefinitionTables : ISchemaDefinition
+        public interface IEntityTables : ISchemaDefinition
         {
             bool IsCombined { get; }
             int Range { get; }
-            ISchemaDefinitionTable GetTable(int index);
+            LocalFasterReadOnlyList<ExclusiveGroupStruct> ExclusiveGroups { get; }
+            IEntityTable GetTable(int index);
         }
 
         internal interface ISchemaDefinitionRangedSchema : ISchemaDefinition
