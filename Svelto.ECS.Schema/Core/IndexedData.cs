@@ -5,17 +5,19 @@ using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema.Internal
 {
-    internal struct IndexedGroupData
+    internal struct IndexedGroupData<TRow> : IEquatable<IndexedGroupData<TRow>>
+        where TRow : IEntityRow
     {
-        public ExclusiveGroupStruct group;
+        public IEntityTable<TRow> table;
         public FilterGroup filter;
 
-        public override int GetHashCode() => group.GetHashCode();
+        public bool Equals(IndexedGroupData<TRow> other) => table == other.table;
+        public override int GetHashCode() => table.ExclusiveGroup.GetHashCode();
     }
 
-    public struct IndexedKeyData
+    public struct IndexedKeyData<TRow> where TRow : IEntityRow
     {
-        internal FasterDictionary<ExclusiveGroupStruct, IndexedGroupData> groups;
+        internal FasterDictionary<ExclusiveGroupStruct, IndexedGroupData<TRow>> groups;
 
         // Do I want to delete group from dictionary, but only cache filter id?
         // Can be rewarded in faster iteration
@@ -32,21 +34,22 @@ namespace Svelto.ECS.Schema.Internal
 
     internal abstract class IndexedData { }
 
-    internal sealed class IndexedData<TKey> : IndexedData
+    internal sealed class IndexedData<TRow, TKey> : IndexedData
+        where TRow : IEntityRow
         where TKey : unmanaged
     {
-        private readonly FasterDictionary<KeyWrapper<TKey>, IndexedKeyData> keyToGroups
-            = new FasterDictionary<KeyWrapper<TKey>, IndexedKeyData>();
+        private readonly FasterDictionary<KeyWrapper<TKey>, IndexedKeyData<TRow>> keyToGroups
+            = new FasterDictionary<KeyWrapper<TKey>, IndexedKeyData<TRow>>();
 
-        public ref IndexedKeyData CreateOrGet(in TKey key)
+        public ref IndexedKeyData<TRow> CreateOrGet(in TKey key)
         {
-            return ref keyToGroups.GetOrCreate(new KeyWrapper<TKey>(key), () => new IndexedKeyData
+            return ref keyToGroups.GetOrCreate(new KeyWrapper<TKey>(key), () => new IndexedKeyData<TRow>
             {
-                groups = new FasterDictionary<ExclusiveGroupStruct, IndexedGroupData>()
+                groups = new FasterDictionary<ExclusiveGroupStruct, IndexedGroupData<TRow>>()
             });
         }
 
-        public bool TryGetValue(in TKey key, out IndexedKeyData result)
+        public bool TryGetValue(in TKey key, out IndexedKeyData<TRow> result)
         {
             return keyToGroups.TryGetValue(new KeyWrapper<TKey>(key), out result);
         }

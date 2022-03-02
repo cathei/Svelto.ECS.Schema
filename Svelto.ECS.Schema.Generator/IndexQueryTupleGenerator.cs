@@ -29,25 +29,26 @@ namespace Svelto.ECS.Schema.Generator
 ";
 
         const string IndexQueryGroupTupleTemplate = @"
-    public readonly ref struct IndexQueryGroupTuple<{1}>
+    public readonly ref struct IndexQueryTableTuple<TR, {1}>
+        where TR : IEntityRow
 {2}
     {{
         private readonly EntityCollection<{1}> _collection;
         private readonly IndexedIndices _indices;
-        private readonly ExclusiveGroupStruct _group;
+        private readonly IEntityTable<TR> _table;
 
-        public IndexQueryGroupTuple(in EntityCollection<{1}> collection, in IndexedIndices indices, in ExclusiveGroupStruct group)
+        public IndexQueryTableTuple(in EntityCollection<{1}> collection, in IndexedIndices indices, IEntityTable<TR> table)
         {{
             _collection = collection;
             _indices = indices;
-            _group = group;
+            _table = table;
         }}
 
-        public void Deconstruct(out EntityCollection<{1}> collection, out IndexedIndices indices, out ExclusiveGroupStruct group)
+        public void Deconstruct(out EntityCollection<{1}> collection, out IndexedIndices indices, out IEntityTable<TR> table)
         {{
             collection = _collection;
             indices = _indices;
-            group = _group;
+            table = _table;
         }}
     }}
 ";

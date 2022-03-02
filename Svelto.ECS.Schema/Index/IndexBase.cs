@@ -42,9 +42,9 @@ namespace Svelto.ECS.Schema.Internal
             enginesRoot.AddEngine(new TableIndexingEngine<TK, TC>(indexedDB));
         }
 
-        public IndexQuery<TK, TC> Query(in TK key)
+        public IndexQuery<TR, TK, TC> Query(in TK key)
         {
-            return new IndexQuery<TK, TC>(_indexerId, key);
+            return new IndexQuery<TR, TK, TC>(_indexerId, key);
         }
     }
 }

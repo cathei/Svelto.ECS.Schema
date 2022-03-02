@@ -11,12 +11,12 @@ namespace Svelto.ECS.Schema.Internal
         where TK : unmanaged
         where TC : unmanaged, IIndexableComponent<TK>
     {
-        IndexQuery<TK, TC> Query(in TK key);
+        IndexQuery<TR, TK, TC> Query(in TK key);
     }
 
-    public interface IIndexQuery
+    public interface IIndexQuery<TR> where TR : IEntityRow
     {
-        IndexedKeyData GetIndexedKeyData(IndexedDB indexedDB);
+        IndexedKeyData<TR> GetIndexedKeyData(IndexedDB indexedDB);
     }
 
     // public interface IIndexQuery<TC> : IIndexQuery
@@ -25,7 +25,8 @@ namespace Svelto.ECS.Schema.Internal
     //     NB<TC> GetComponents(IndexedDB indexedDB, in ExclusiveGroupStruct groupID);
     // }
 
-    public readonly struct IndexQuery<TK, TC> : IIndexQuery
+    public readonly struct IndexQuery<TR, TK, TC> : IIndexQuery<TR>
+        where TR : IEntityRow
         where TK : unmanaged
         where TC : unmanaged, IIndexableComponent<TK>
     {
@@ -38,17 +39,17 @@ namespace Svelto.ECS.Schema.Internal
             _key = key;
         }
 
-        private IndexedKeyData GetIndexedKeyData(IndexedDB indexedDB)
+        private IndexedKeyData<TR> GetIndexedKeyData(IndexedDB indexedDB)
         {
             if (!indexedDB.indexers.ContainsKey(_indexerId))
                 return default;
 
-            var indexerData = (IndexedData<TK>)indexedDB.indexers[_indexerId];
+            var indexerData = (IndexedData<TR, TK>)indexedDB.indexers[_indexerId];
             indexerData.TryGetValue(_key, out var result);
             return result;
         }
 
-        IndexedKeyData IIndexQuery.GetIndexedKeyData(IndexedDB indexedDB)
+        IndexedKeyData<TR> IIndexQuery<TR>.GetIndexedKeyData(IndexedDB indexedDB)
             => GetIndexedKeyData(indexedDB);
     }
 }

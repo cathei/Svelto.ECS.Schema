@@ -33,26 +33,23 @@ namespace Svelto.ECS.Schema.Internal
         EntityInitializer Build(IEntityFactory factory, uint entityID);
         void Insert(IEntityFunctions functions, EGID fromID);
     }
-}
 
-namespace Svelto.ECS.Schema.Definition
-{
-    public sealed partial class Table<TRow> : TableBase, IEntityTable<TRow>, IEntityTablesBuilder<TRow>
-        where TRow : IEntityRow
+    public abstract class TableBase<TRow> : TableBase, IEntityTable<TRow>, IEntityTablesBuilder<TRow>
+        where TRow : DescriptorRow<TRow>
     {
-        public Table() : base() { }
+        internal TableBase() : base() { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EntityInitializer Build(IEntityFactory factory, uint entityID)
-            => factory.BuildEntity<RowDescriptor<TRow>>(entityID, _exclusiveGroup);
+            => factory.BuildEntity<DescriptorRow<TRow>.Descriptor>(entityID, _exclusiveGroup);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Insert(IEntityFunctions functions, EGID fromID)
-            => functions.SwapEntityGroup<RowDescriptor<TRow>>(fromID, _exclusiveGroup);
+            => functions.SwapEntityGroup<DescriptorRow<TRow>.Descriptor>(fromID, _exclusiveGroup);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Remove(IEntityFunctions functions, uint entityID)
-            => functions.RemoveEntity<RowDescriptor<TRow>>(entityID, _exclusiveGroup);
+            => functions.RemoveEntity<DescriptorRow<TRow>.Descriptor>(entityID, _exclusiveGroup);
 
         IEnumerable<IEntityTable<TRow>> IEntityTablesBuilder<TRow>.Tables
         {

@@ -33,7 +33,9 @@ namespace Svelto.ECS.Schema
 
             public void Step()
             {
-                var groups = entitiesDB.FindGroups<Component>();
+                var tables = _indexedDB.Select<IRow>().Tables();
+
+                //entitiesDB.FindGroups<Component>();
                 var states = Config.States.GetValues(out var stateCount);
 
                 // clear all filters before proceed
@@ -44,26 +46,27 @@ namespace Svelto.ECS.Schema
                     states[i]._enterCandidates.Clear(_indexedDB);
                 }
 
-                foreach (var ((component, count), group) in entitiesDB.QueryEntities<Component>(groups))
+                foreach (var ((component, count), table) in
+                    _indexedDB.Select<Component.IRow>().From(tables).Entities())
                 {
                     for (int i = 0; i < stateCount; ++i)
                     {
-                        states[i].Evaluate(_indexedDB, component, group);
+                        states[i].Evaluate(_indexedDB, component, table);
                     }
 
                     // any state transition has lower priority
-                    Config.AnyState.Evaluate(_indexedDB, component, count, group);
+                    Config.AnyState.Evaluate(_indexedDB, component, count, table);
 
                     // check for exit candidates
                     for (int i = 0; i < stateCount; ++i)
                     {
-                        states[i].ProcessExit(_indexedDB, group);
+                        states[i].ProcessExit(_indexedDB, table);
                     }
 
                     // check for enter candidates
                     for (int i = 0; i < stateCount; ++i)
                     {
-                        states[i].ProcessEnter(_indexedDB, component, group);
+                        states[i].ProcessEnter(_indexedDB, component, table);
                     }
                 }
             }

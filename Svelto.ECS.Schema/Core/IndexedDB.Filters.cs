@@ -11,37 +11,31 @@ namespace Svelto.ECS.Schema
         private FasterDictionary<ExclusiveGroupStruct, GroupCache> _groupCaches
             = new FasterDictionary<ExclusiveGroupStruct, GroupCache>();
 
-        internal class GroupCache
+        // cache for indexer update
+        internal struct GroupCache
         {
-            // cache for indexer update
-            public FasterDictionary<RefWrapperType, FasterList<ISchemaDefinitionIndex>> componentToIndexers
-                = new FasterDictionary<RefWrapperType, FasterList<ISchemaDefinitionIndex>>();
+            public FasterDictionary<RefWrapperType, FasterList<ISchemaDefinitionIndex>> componentToIndexers;
         }
 
-        public FasterList<ISchemaDefinitionIndex> FindIndexers<TK, TC>(in ExclusiveGroupStruct groupID)
+        internal FasterList<ISchemaDefinitionIndex> FindIndexers<TK, TC>(in ExclusiveGroupStruct groupID)
             where TK : unmanaged
             where TC : IIndexableComponent<TK>
         {
             var componentType = TypeRefWrapper<TC>.wrapper;
 
-            // cache exists?
-            if (_groupCaches.TryGetValue(groupID, out var groupCache) &&
-                groupCache.componentToIndexers.TryGetValue(componentType, out var result))
+            var groupCache = _groupCaches.GetOrCreate(groupID, () => new GroupCache
             {
-                return result;
-            }
+                componentToIndexers = new FasterDictionary<RefWrapperType, FasterList<ISchemaDefinitionIndex>>()
+            });
 
-            if (groupCache == null)
-            {
-                groupCache = new GroupCache();
-                _groupCaches.Add(groupID, groupCache);
-            }
+            if (groupCache.componentToIndexers.TryGetValue(componentType, out var result))
+                return result;
 
             // Cache doesn't exists, let's build one
             // We don't support dynamic addition of Schemas and StateMachines
-            var componentToIndexers = new FasterList<ISchemaDefinitionIndex>();
+            var componentIndexers = new FasterList<ISchemaDefinitionIndex>();
 
-            groupCache.componentToIndexers.Add(componentType, componentToIndexers);
+            groupCache.componentToIndexers.Add(componentType, componentIndexers);
 
             SchemaMetadata.ShardNode node = null;
 
@@ -61,7 +55,7 @@ namespace Svelto.ECS.Schema
                     foreach (var indexer in node.indexers)
                     {
                         if (indexer.ComponentType.Equals(componentType))
-                            componentToIndexers.Add(indexer);
+                            componentIndexers.Add(indexer);
                     }
                 }
 
@@ -71,18 +65,21 @@ namespace Svelto.ECS.Schema
             foreach (var stateMachine in registeredStateMachines)
             {
                 if (stateMachine.Index.ComponentType.Equals(componentType))
-                    componentToIndexers.Add(stateMachine.Index);
+                    componentIndexers.Add(stateMachine.Index);
             }
 
-            return componentToIndexers;
+            return componentIndexers;
         }
 
-        private void UpdateFilters<TK, TC>(int indexerId, ref TC keyComponent, in TK oldKey, in TK newKey)
+        private void UpdateFilters<TR, TK, TC>(int indexerId, ref TC keyComponent, in TK oldKey, in TK newKey)
+            where TR : IIndexableRow<TK, TC>
             where TK : unmanaged
             where TC : unmanaged, IIndexableComponent<TK>
         {
-            ref var oldGroupData = ref CreateOrGetIndexedGroupData<TK, TC>(indexerId, oldKey, keyComponent.ID.groupID);
-            ref var newGroupData = ref CreateOrGetIndexedGroupData<TK, TC>(indexerId, newKey, keyComponent.ID.groupID);
+            var table = FindTable<TR>(keyComponent.ID.groupID);
+
+            ref var oldGroupData = ref CreateOrGetIndexedGroupData<TR, TK, TC>(indexerId, oldKey, keyComponent.ID.groupID);
+            ref var newGroupData = ref CreateOrGetIndexedGroupData<TR, TK, TC>(indexerId, newKey, keyComponent.ID.groupID);
 
             var mapper = entitiesDB.QueryMappedEntities<TC>(keyComponent.ID.groupID);
 
@@ -90,39 +87,42 @@ namespace Svelto.ECS.Schema
             newGroupData.filter.Add(keyComponent.ID.entityID, mapper);
         }
 
-        internal ref IndexedGroupData CreateOrGetIndexedGroupData<TK, TC>(int indexerID, in TK key, in ExclusiveGroupStruct groupID)
+        internal ref IndexedGroupData<TR> CreateOrGetIndexedGroupData<TR, TK, TC>(int indexerID, in TK key, IEntityTable<TR> table)
+            where TR : IIndexableRow<TK, TC>
             where TK : unmanaged
             where TC : unmanaged, IIndexableComponent<TK>
         {
-            var indexerData = CreateOrGetIndexedData<TK>(indexerID);
+            var indexerData = CreateOrGetIndexedData<TR, TK>(indexerID);
 
             var groupDict = indexerData.CreateOrGet(key).groups;
 
-            if (!groupDict.ContainsKey(groupID))
+            if (!groupDict.ContainsKey(table.ExclusiveGroup))
             {
-                groupDict[groupID] = new IndexedGroupData
+                groupDict[table.ExclusiveGroup] = new IndexedGroupData<TR>
                 {
-                    group = groupID,
-                    filter = entitiesDB.GetFilters().CreateOrGetFilterForGroup<TC>(GenerateFilterId(), groupID)
+                    table = table,
+                    filter = entitiesDB.GetFilters()
+                        .CreateOrGetFilterForGroup<TC>(GenerateFilterId(), table.ExclusiveGroup)
                 };
             }
 
-            return ref groupDict.GetValueByRef(groupID);
+            return ref groupDict.GetValueByRef(table.ExclusiveGroup);
         }
 
-        private IndexedData<TK> CreateOrGetIndexedData<TK>(int indexerId)
+        private IndexedData<TR, TK> CreateOrGetIndexedData<TR, TK>(int indexerId)
+            where TR : IEntityRow
             where TK : unmanaged
         {
-            IndexedData<TK> indexerData;
+            IndexedData<TR, TK> indexerData;
 
             if (!indexers.ContainsKey(indexerId))
             {
-                indexerData = new IndexedData<TK>();
+                indexerData = new IndexedData<TR, TK>();
                 indexers[indexerId] = indexerData;
             }
             else
             {
-                indexerData = (IndexedData<TK>)indexers[indexerId];
+                indexerData = (IndexedData<TR, TK>)indexers[indexerId];
             }
 
             return indexerData;

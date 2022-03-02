@@ -17,62 +17,45 @@ namespace Svelto.ECS.Schema.Generator
             return query.Item1.entitiesDB.FindGroups<{1}>();
         }}
 
-        // Select -> Entities
-        public static GroupsEnumerable<{1}> Entities<{1}>(
-                this (IndexedDB, IEntityRow<{1}>) query)
-{2}
-        {{
-            // TODO : is it possible to have findgroups cache inside of IndexedDB?
-            // Is it better to cache tables or just rely on FindGroups?
-            var groups = query.Item1.entitiesDB.FindGroups<{1}>();
-            return query.Item1.entitiesDB.QueryEntities<{1}>(groups);
-        }}
-
         // Select -> From Table -> Entities
-        public static EntityCollection<{1}> Entities<{1}>(
-                this (IndexedDB, IEntityRow<{1}>, IEntityTable) query)
+        public static EntityCollection<{1}> Entities<TR, {1}>(
+                this (IndexedDB, IEntityRow<{1}>, IEntityTable<TR>) query)
+            where TR : IEntityRow<{1}>
 {2}
         {{
             return query.Item1.entitiesDB.QueryEntities<{1}>(query.Item3.ExclusiveGroup);
         }}
 
         // Select -> From Tables -> Entities
-        public static GroupsEnumerable<{1}> Entities<{1}>(
-                this (IndexedDB, IEntityRow<{1}>, IEntityTables) query)
+        public static TablesEnumerable<TR, {1}> Entities<TR, {1}>(
+                this (IndexedDB, IEntityRow<{1}>, IEntityTables<TR>) query)
+            where TR : IEntityRow<{1}>
 {2}
         {{
-            return query.Item1.entitiesDB.QueryEntities<{1}>(query.Item3.ExclusiveGroups);
-        }}
-
-        // Select -> Where -> Entities
-        public static IndexQueryEnumerable<{1}> Entities<{1}, TI>(
-                this (IndexedDB, IEntityRow<{1}>, TI) query)
-{2}
-            where TI : struct, IIndexQuery
-        {{
-            return new IndexQueryEnumerable<{1}>(
-                query.Item1, query.Item3.GetIndexedKeyData(query.Item1).groups);
+            return new TablesEnumerable<TR, {1}>(query.Item1, query.Item3);
         }}
 
         // Select -> From Table -> Where -> Entities
-        public static IndexQueryTuple<{1}> Entities<{1}, TI>(
-                this (IndexedDB, IEntityRow<{1}>, IEntityTable, TI) query)
+        public static IndexQueryTuple<{1}> Entities<TI, TIR, {1}>(
+                this (IndexedDB, IEntityRow<{1}>, IEntityTable, TI, TIR) query)
+            where TI : IIndexQuery<TIR>
+            where TIR : IEntityRow
 {2}
-            where TI : struct, IIndexQuery
         {{
             return new IndexQueryTuple<{1}>(
                 (query.Item1, query.Item2, query.Item3).Entities(), query.Indices());
         }}
 
         // Select -> From Tables -> Where -> Entities
-        public static IndexQueryGroupsEnumerable<{1}> Entities<{1}, TI>(
-                this (IndexedDB, IEntityRow<{1}>, IEntityTables, TI) query)
+        public static IndexQueryEnumerable<TR, TIR, {1}> Entities<TR, TI, TIR, {1}>(
+                this (IndexedDB, IEntityRow<{1}>, IEntityTables<TR>, TI, TIR) query)
+            where TR : TIR
+            where TI : IIndexQuery<TIR>
+            where TIR : IEntityRow
 {2}
-            where TI : struct, IIndexQuery
         {{
-            var groups = query.Item3.ExclusiveGroups;
-            return new IndexQueryGroupsEnumerable<{1}>(
-                query.Item1, query.Item4.GetIndexedKeyData(query.Item1).groups, groups);
+            return new IndexQueryEnumerable<{1}>(
+                query.Item1, query.Item3, query.Item4.GetIndexedKeyData(query.Item1).groups);
         }}
 ";
 

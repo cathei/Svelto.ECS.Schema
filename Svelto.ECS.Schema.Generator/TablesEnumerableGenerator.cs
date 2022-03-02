@@ -5,67 +5,55 @@ using Microsoft.CodeAnalysis;
 namespace Svelto.ECS.Schema.Generator
 {
     [Generator]
-    public class IndexQueryEnumerableGenerator : ISourceGenerator
+    public class TablesEnumerableGenerator : ISourceGenerator
     {
-        const string IndexQueryEnumerableTemplate = @"
-    public readonly ref struct IndexQueryEnumerable<TR, TIR, {1}>
-        where TR : IEntityRow, TIR
-        where TIR : IEntityRow
+        const string TablesEnumerableTemplate = @"
+    public readonly ref struct TablesEnumerable<TR, {1}>
+        where TR : IEntityRow<{1}>
 {2}
     {{
         private readonly IndexedDB _indexedDB;
         private readonly IEntityTables<TR> _tables;
-        private readonly FasterDictionary<ExclusiveGroupStruct, IndexedGroupData<TIR>> _dict;
 
-        internal IndexQueryEnumerable(IndexedDB indexedDB,
-            IEntityTables<TR> tables,
-            FasterDictionary<ExclusiveGroupStruct, IndexedGroupData<TIR>> dict)
+        internal TablesEnumerable(IndexedDB indexedDB, in IEntityTables<TR> tables)
         {{
             _indexedDB = indexedDB;
             _tables = tables;
-            _dict = dict;
         }}
 
-        public RefIterator GetEnumerator() => new RefIterator(_indexedDB, _tables, _dict);
+        public RefIterator GetEnumerator() => new RefIterator(_indexedDB, _tables);
 
         public ref struct RefIterator
         {{
             private readonly IndexedDB _indexedDB;
             private readonly IEntityTables<TR> _tables;
-            private readonly FasterDictionary<ExclusiveGroupStruct, IndexedGroupData<TIR>> _dict;
 
             private EntityCollection<{1}> _collection;
-            private FilteredIndices _indices;
             private int _indexValue;
 
-            internal RefIterator(IndexedDB indexedDB,
-                IEntityTables<TR> tables,
-                FasterDictionary<ExclusiveGroupStruct, IndexedGroupData<TIR>> dict) : this()
+            internal RefIterator(IndexedDB indexedDB, in IEntityTables<TR> tables) : this()
             {{
                 _indexedDB = indexedDB;
                 _tables = tables;
-                _dict = dict;
                 _indexValue = -1;
             }}
 
             public bool MoveNext()
             {{
-                if (_dict == null)
-                    return false;
-
                 while (++_indexValue < _tables.Range)
                 {{
-                    var table = _tables.GetTable(_indexValue);
+                    var group = _tables.GetTable(_indexValue).ExclusiveGroup;
 
-                    if (!_dict.TryGetValue(table.ExclusiveGroup, out var groupData))
+                    if (!group.IsEnabled())
                         continue;
 
-                    _indices = groupData.filter.filteredIndices;
+                    var collection = _indexedDB.entitiesDB.QueryEntities<{1}>(group);
 
-                    if (!table.ExclusiveGroup.IsEnabled() || _indices.Count() == 0)
-                        continue;
+                    // cannot do this due because count is internal...
+                    // if (collection.count == 0)
+                    //     continue;
 
-                    _collection = _indexedDB.Select<TR>().From(table).Entities();
+                    _collection = collection;
                     break;
                 }}
 
@@ -79,8 +67,25 @@ namespace Svelto.ECS.Schema.Generator
 
             public void Reset() {{ _indexValue = -1; }}
 
-            public IndexQueryTableTuple<TR, {1}> Current => new IndexQueryTableTuple<TR, {1}>(
-                _collection, new IndexedIndices(_indices), _tables.GetTable(_indexValue));
+            public RefCurrent Current => new RefCurrent(_collection, _tables.GetTable(_indexValue));
+
+            public readonly ref struct RefCurrent
+            {{
+                public readonly EntityCollection<{1}> _buffers;
+                public readonly IEntityTable<TR> _table;
+
+                public RefCurrent(in EntityCollection<{1}> buffers, IEntityTable<TR> table)
+                {{
+                    _buffers = buffers;
+                    _table = table;
+                }}
+
+                public void Deconstruct(out EntityCollection<{1}> buffers, out IEntityTable<TR> table)
+                {{
+                    buffers = _buffers;
+                    table = _table;
+                }}
+            }}
         }}
     }}
 ";
@@ -116,10 +121,10 @@ using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema
 {{
-{Generate(IndexQueryEnumerableTemplate)}
+{Generate(TablesEnumerableTemplate)}
 }}";
 
-            context.AddSource("IndexQueryEnumerable.g.cs", source);
+            context.AddSource("TablesEnumerable.g.cs", source);
         }
 
         public void Initialize(GeneratorInitializationContext context)

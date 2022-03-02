@@ -28,9 +28,9 @@ namespace Svelto.ECS.Schema
 
         public TablesBuilder(IEnumerable<IEntityTable<TRow>> items) => _tables = items;
 
-        public Tables<TRow> Build() => new Tables<TRow>(_tables);
+        public EntityTables<TRow> Build() => new EntityTables<TRow>(_tables);
 
-        public static implicit operator Tables<TRow>(in TablesBuilder<TRow> builder) => builder.Build();
+        public static implicit operator EntityTables<TRow>(in TablesBuilder<TRow> builder) => builder.Build();
     }
 
     public static class TablesBuilderExtensions

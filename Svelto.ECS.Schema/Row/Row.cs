@@ -4,13 +4,20 @@ using System.Runtime.CompilerServices;
 using Svelto.ECS.Hybrid;
 using Svelto.ECS.Schema.Internal;
 
-namespace Svelto.ECS.Schema
+namespace Svelto.ECS.Schema.Internal
 {
     public interface IEntityRow {}
 
+    // okay for technical reason we only have 1 type variant for this
+    // Usage: IEntityRowWith<INeedEGID>
+    public interface IEntityRowWith<out T> { }
+}
+
+namespace Svelto.ECS.Schema
+{
     // We only have 4 variant of IEntityRow becase that is the most we can query
     // I might write code to fetch more from EntitiesDB
-    public interface IEntityRow<T1> : IEntityRow
+    public interface IEntityRow<T1> : IEntityRow, IEntityRowWith<T1>
         where T1 : struct, IEntityComponent
     {
         internal static IComponentBuilder[] componentBuilders = new IComponentBuilder[] {
@@ -54,11 +61,19 @@ namespace Svelto.ECS.Schema
         };
     }
 
-    public abstract class EntityRow<TSelf> where TSelf : EntityRow<TSelf>
+    public interface IReactiveRow<TR, TC> : IEntityRow<TC>
+        where TR : IReactiveRow<TR, TC>
+        where TC : struct, IEntityComponent
     {
-        public class Table
+        public interface IReactOnAddAndRemove
         {
+            void Add(ref TC entityComponent, IEntityTable<TR> table, uint entityID);
+            void Remove(ref TC entityComponent, IEntityTable<TR> table, uint entityID);
+        }
 
+        public interface IReactOnSwap
+        {
+            void MovedTo(ref TC entityComponent, IEntityTable<TR> previousTable, IEntityTable<TR> table, uint entityID);
         }
     }
 }

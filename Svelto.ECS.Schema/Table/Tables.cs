@@ -8,7 +8,10 @@ using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema.Internal
 {
-    public interface IEntityTables<out TRow> : IEntityTables where TRow : IEntityRow { }
+    public interface IEntityTables<out TRow> : IEntityTables where TRow : IEntityRow
+    {
+        new IEntityTable<TRow> GetTable(int index);
+    }
 
     public abstract partial class TablesBase
     {
@@ -31,19 +34,11 @@ namespace Svelto.ECS.Schema.Internal
 
         public int Range => _tables.Length;
 
-        protected TablesBase(int range)
+        protected TablesBase(IEntityTable<TRow>[] tables, bool isCombined)
         {
-            IsCombined = false;
+            IsCombined = isCombined;
 
-            _tables = new Table<TRow>[range];
-            _groups = _tables.Select(x => x.ExclusiveGroup).ToFasterList();
-        }
-
-        protected TablesBase(IEnumerable<IEntityTable<TRow>> tables)
-        {
-            IsCombined = true;
-
-            _tables = tables.ToArray();
+            _tables = tables;
             _groups = _tables.Select(x => x.ExclusiveGroup).ToFasterList();
         }
 
@@ -58,29 +53,16 @@ namespace Svelto.ECS.Schema.Internal
         public LocalFasterReadOnlyList<ExclusiveGroupStruct> ExclusiveGroups => this;
 
         IEntityTable IEntityTables.GetTable(int index) => _tables[index];
+        IEntityTable<TRow> IEntityTables<TRow>.GetTable(int index) => _tables[index];
     }
 }
 
 namespace Svelto.ECS.Schema.Definition
 {
-    public sealed class Tables<TDesc> : TablesBase<TDesc>
-        where TDesc : IEntityRow
+    public sealed class EntityTables<TRow> : TablesBase<TRow>
+        where TRow : IEntityRow
     {
-        public Tables(int range) : base(range) { }
-        internal Tables(IEnumerable<IEntityTable<TDesc>> tables) : base(tables) { }
-    }
-
-    public sealed class Tables<TDesc, TIndex> : TablesBase<TDesc>
-        where TDesc : IEntityRow
-    {
-        internal readonly Func<TIndex, int> _mapper;
-
-        internal Tables(int range, Func<TIndex, int> mapper) : base(range)
-        {
-            _mapper = mapper;
-        }
-
-        public IEntityTable<TDesc> this[TIndex index] => _tables[_mapper(index)];
-        public IEntityTable<TDesc> Get(TIndex index) => _tables[_mapper(index)];
+        internal EntityTables(IEnumerable<IEntityTable<TRow>> tables) : base(tables.ToArray(), true) { }
+        internal EntityTables(FasterList<IEntityTable<TRow>> tables) : base(tables.ToArray(), true) { }
     }
 }

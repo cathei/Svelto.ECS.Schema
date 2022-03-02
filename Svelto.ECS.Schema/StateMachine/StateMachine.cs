@@ -240,44 +240,49 @@ namespace Svelto.ECS.Schema
                 _state = state;
                 _transitions = new FasterList<TransitionConfig>();
 
-                _exitCandidates = new Memo<Component>();
-                _enterCandidates = new Memo<Component>();
+                _exitCandidates = new Memo<IRow>();
+                _enterCandidates = new Memo<IRow>();
 
                 _onExit = new FasterList<CallbackConfig>();
                 _onEnter = new FasterList<CallbackConfig>();
             }
 
-            internal void Evaluate(IndexedDB indexedDB, NB<Component> component, in ExclusiveGroupStruct groupID)
+            internal void Evaluate(IndexedDB indexedDB, NB<Component> component, IEntityTable<IRow> table)
             {
-                var indices = Config.Index.Where(_state).From(groupID).Indices(indexedDB);
+                // var indices = Config.Index.Where(_state).From(groupID).Indices(indexedDB);
+
+                var indices = indexedDB
+                    .Select<IRow>().From(table).Where(Config.Index, _state).Indices();
 
                 // higher priority if added first
                 for (int i = 0; i < _transitions.count; ++i)
                 {
                     _transitions[i].Evaluate<IndexedIndices, IndexedIndicesEnumerator>
-                        (indexedDB, component, indices, groupID);
+                        (indexedDB, component, indices, table.ExclusiveGroup);
                 }
             }
 
-            internal void ProcessExit(IndexedDB indexedDB, in ExclusiveGroupStruct groupID)
+            internal void ProcessExit(IndexedDB indexedDB, IEntityTable<IRow> table)
             {
                 if (_onExit.count == 0)
                     return;
 
-                var indices = _exitCandidates.From(groupID).Indices(indexedDB);
+                var indices = indexedDB
+                    .Select<IRow>().From(table).Where(_exitCandidates).Indices();
 
                 if (indices.Count() == 0)
                     return;
 
                 for (int i = 0; i < _onExit.count; ++i)
                 {
-                    _onExit[i].Invoke(indexedDB.entitiesDB, indices, groupID);
+                    _onExit[i].Invoke(indexedDB.entitiesDB, indices, table.ExclusiveGroup);
                 }
             }
 
-            internal void ProcessEnter(IndexedDB indexedDB, NB<Component> component, in ExclusiveGroupStruct groupID)
+            internal void ProcessEnter(IndexedDB indexedDB, NB<Component> component, IEntityTable<IRow> table)
             {
-                var indices = _enterCandidates.From(groupID).Indices(indexedDB);
+                var indices = indexedDB
+                    .Select<IMemorableRow>().From(table).Where(_enterCandidates).Indices();
 
                 if (indices.Count() == 0)
                     return;
@@ -292,7 +297,7 @@ namespace Svelto.ECS.Schema
 
                 for (int i = 0; i < _onEnter.count; ++i)
                 {
-                    _onEnter[i].Invoke(indexedDB.entitiesDB, indices, groupID);
+                    _onEnter[i].Invoke(indexedDB.entitiesDB, indices, table.ExclusiveGroup);
                 }
             }
         }
@@ -306,14 +311,14 @@ namespace Svelto.ECS.Schema
                 _transitions = new FasterList<TransitionConfig>();
             }
 
-            internal void Evaluate(IndexedDB indexedDB, NB<Component> state, int count, in ExclusiveGroupStruct groupID)
+            internal void Evaluate(IndexedDB indexedDB, NB<Component> state, int count, IEntityTable<IRow> table)
             {
                 var indices = new RangeIndiceEnumerable(count);
 
                 for (int i = 0; i < _transitions.count; ++i)
                 {
                     _transitions[i].Evaluate<RangeIndiceEnumerable, RangeIndicesEnumerator>
-                        (indexedDB, state, indices, groupID);
+                        (indexedDB, state, indices, table.ExclusiveGroup);
                 }
             }
         }

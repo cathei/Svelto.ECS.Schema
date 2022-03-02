@@ -26,7 +26,18 @@
     <ProjectReference Include="..\Svelto.ECS.Schema.Generator\Svelto.ECS.Schema.Generator.csproj"
                     OutputItemType="Analyzer"
                     ReferenceOutputAssembly="false" />
+    <Compile Remove="Generated\**\*.cs" />
   </ItemGroup>
+  
+  <Target Name="CopyGeneratedFiles" AfterTargets="AfterBuild">
+    <PropertyGroup>
+      <GeneratedOutputPath>$(IntermediateOutputPath)generated\Svelto.ECS.Schema.Generator\</GeneratedOutputPath>
+    </PropertyGroup>
+    <ItemGroup>
+      <GeneratedFiles Include="$(GeneratedOutputPath)*\*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(GeneratedFiles)" DestinationFolder="Generated" />
+  </Target>
 
   <ItemGroup>
     <None Include="..\README.md" Pack="true" PackagePath="\" />

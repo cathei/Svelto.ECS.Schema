@@ -4,7 +4,7 @@ using System.Threading;
 using Svelto.DataStructures;
 using Svelto.ECS.Schema.Internal;
 
-namespace Svelto.ECS.Schema.Definition
+namespace Svelto.ECS.Schema.Internal
 {
     internal static class GlobalMemoCount
     {
@@ -13,26 +13,38 @@ namespace Svelto.ECS.Schema.Definition
         public static int Generate() => Interlocked.Increment(ref Count);
     }
 
-    // we have EGIDComponent constraints because it requires INeedEGID
-    // it won't be necessary when Svelto update it's filter utility functions
-    public interface IMemorableRow : IEntityRow<EGIDComponent> { }
-
-    public sealed class Memo<TRow> : ISchemaDefinitionMemo, IIndexQuery
-        where TRow : IMemorableRow
+    public class MemoBase : ISchemaDefinitionMemo
     {
         // equvalent to ExclusiveGroupStruct.Generate()
         internal readonly int _memoID = GlobalMemoCount.Generate();
 
         int ISchemaDefinitionMemo.MemoID => _memoID;
 
-        public void Add(IndexedDB indexedDB, EGID egid)
+        internal MemoBase() { }
+    }
+
+    public class MemoBase<TR, TC> : MemoBase, IIndexQuery<TR>
+        where TR : IEntityRow<TC>
+        where TC : unmanaged, IEntityComponent, INeedEGID
+    {
+        internal MemoBase() { }
+
+        public void Set<TQR, TQK, TQC>(IndexedDB indexedDB, IIndexQueryable<TQR, TQK, TQC> index, in TQK key)
+            where TQR : IIndexableRow<TQK, TQC>, TR
+            where TQK : unmanaged
+            where TQC : unmanaged, IIndexableComponent<TQK>
         {
-            indexedDB.AddMemo(this, egid.entityID, egid.groupID);
+            Set<IndexQuery<TQR, TQK, TQC>, TQR>(indexedDB, index.Query(key));
         }
 
-        public void Remove(IndexedDB indexedDB, EGID egid)
+        public void Add(IndexedDB indexedDB, ref TC component)
         {
-            indexedDB.RemoveMemo(this, egid.entityID, egid.groupID);
+            indexedDB.AddMemo(this, component.ID.entityID, component.ID.groupID);
+        }
+
+        public void Remove(IndexedDB indexedDB, ref TC component)
+        {
+            indexedDB.RemoveMemo(this, component.ID.entityID, component.ID.groupID);
         }
 
         public void Clear(IndexedDB indexedDB)
@@ -40,28 +52,22 @@ namespace Svelto.ECS.Schema.Definition
             indexedDB.ClearMemo(this);
         }
 
-        public void Set<TQR, TQK, TQC>(IndexedDB indexedDB, IIndexQueryable<TQR, TQK, TQC> index, in TQK key)
-            where TQR : IIndexableRow<TQK, TQC>, TRow
-            where TQK : unmanaged
-            where TQC : unmanaged, IIndexableComponent<TQK>
-        {
-            Set(indexedDB, index.Query(key));
-        }
-
-        public void Set<TMR>(IndexedDB indexedDB, Memo<TMR> other)
-            where TMR : IMemorableRow
+        public void Set(IndexedDB indexedDB, MemoBase other)
         {
             Set(indexedDB, other);
         }
 
-        internal void Set<TQ>(IndexedDB indexedDB, TQ query) where TQ : IIndexQuery
+        internal void Set<TQ, TQR>(IndexedDB indexedDB, TQ query)
+            where TQ : IIndexQuery<TQR>
+            where TQR : IEntityRow
         {
             Clear(indexedDB);
-            Union(indexedDB, query);
+            Union<TQ, TQR>(indexedDB, query);
         }
 
-        internal void Union<TQ>(IndexedDB indexedDB, TQ query)
-            where TQ : IIndexQuery
+        internal void Union<TQ, TQR>(IndexedDB indexedDB, TQ query)
+            where TQ : IIndexQuery<TQR>
+            where TQR : IEntityRow
         {
             var queryData = query.GetIndexedKeyData(indexedDB).groups;
 
@@ -79,13 +85,12 @@ namespace Svelto.ECS.Schema.Definition
                 if (queryGroupData.filter.filteredIndices.Count() == 0)
                     continue;
 
-                var mapper = indexedDB.entitiesDB.QueryMappedEntities<EGIDComponent>(queryGroupData.group);
+                var mapper = indexedDB.entitiesDB.QueryMappedEntities<TC>(queryGroupData.table.ExclusiveGroup);
 
                 // TODO: change group to table!
-                // var components = indexedDB.Select<IMemorableRow>().From(queryGroupData.group).Entities();
-                var (components, _) = indexedDB.entitiesDB.QueryEntities<EGIDComponent>(queryGroupData.group);
+                var (components, _) = indexedDB.Select<TQR>().From(queryGroupData.table).Entities();
 
-                ref var originalGroupData = ref indexedDB.CreateOrGetMemoGroup<EGIDComponent>(_memoID, queryGroupData.group);
+                ref var originalGroupData = ref indexedDB.CreateOrGetMemoGroup<TC>(_memoID, queryGroupData.table);
 
                 foreach (var i in new IndexedIndices(queryGroupData.filter.filteredIndices))
                     originalGroupData.filter.Add(components[i].ID.entityID, mapper);
@@ -150,13 +155,26 @@ namespace Svelto.ECS.Schema.Definition
             }
         }
 
-        private IndexedKeyData GetIndexedKeyData(IndexedDB indexedDB)
+        private IndexedKeyData<TR> GetIndexedKeyData(IndexedDB indexedDB)
         {
             indexedDB.memos.TryGetValue(_memoID, out var result);
             return result;
         }
 
-        IndexedKeyData IIndexQuery.GetIndexedKeyData(IndexedDB indexedDB)
+        IndexedKeyData<TR> IIndexQuery<TR>.GetIndexedKeyData(IndexedDB indexedDB)
             => GetIndexedKeyData(indexedDB);
+    }
+}
+
+namespace Svelto.ECS.Schema.Definition
+{
+    // we have EGIDComponent constraints because it requires INeedEGID
+    // it won't be necessary when Svelto update it's filter utility functions
+    public interface IMemorableRow : IEntityRow<EGIDComponent> { }
+
+    public sealed class Memo<TRow> : MemoBase<TRow, EGIDComponent>
+        where TRow : IMemorableRow
+    {
+
     }
 }
