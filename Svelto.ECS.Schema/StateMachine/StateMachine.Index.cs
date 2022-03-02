@@ -1,9 +1,10 @@
 using System;
+using Svelto.ECS.Schema.Definition;
 using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema
 {
-    public partial class StateMachine<TState, TUnique>
+    public partial class StateMachine<TTag, TState>
     {
         // 'available' has to be default (0)
         internal enum TransitionState
@@ -13,7 +14,9 @@ namespace Svelto.ECS.Schema
             Confirmed
         }
 
-        public struct Component : IIndexedComponent<TState>
+        public interface IRow : IIndexableRow<TState, Component>, IMemorableRow { }
+
+        public struct Component : IIndexableComponent<TState>
         {
             public EGID ID { get; set; }
 
@@ -22,7 +25,7 @@ namespace Svelto.ECS.Schema
             private TState _state;
             public TState State => _state;
 
-            TState IIndexedComponent<TState>.Value => _state;
+            TState IIndexableComponent<TState>.Value => _state;
 
             // constructors should be only called when building entity
             public Component(in TState state) : this()
@@ -40,12 +43,13 @@ namespace Svelto.ECS.Schema
             }
         }
 
-        public sealed class Index : IndexBase<TState, Component>
+        public sealed class Index : IndexBase<IRow, TState, Component>
         {
         }
 
-        ISchemaDefinitionIndex IEntityStateMachine.Index => Config.Index;
+        IndexQuery<TState, Component> IIndexQueryable<IRow, TState, Component>.Query(in TState key)
+            => Config.Index.Query(key);
 
-        public IndexQuery<TState, Component> Where(TState state) => Config.Index.Where(state);
+        ISchemaDefinitionIndex IEntityStateMachine.Index => Config.Index;
     }
 }

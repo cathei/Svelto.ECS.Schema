@@ -3,7 +3,7 @@ using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema
 {
-    public partial class StateMachine<TState, TUnique>
+    public partial class StateMachine<TTag, TState>
     {
         void IEntityStateMachine.AddEngines(EnginesRoot enginesRoot, IndexedDB indexedDB)
         {
@@ -20,7 +20,7 @@ namespace Svelto.ECS.Schema
         {
             private readonly IndexedDB _indexedDB;
 
-            public string name { get; } = $"{typeof(TUnique).Name}.TransitionEngine";
+            public string name { get; } = $"{typeof(TTag).FullName}.TransitionEngine";
 
             public EntitiesDB entitiesDB { private get; set; }
 

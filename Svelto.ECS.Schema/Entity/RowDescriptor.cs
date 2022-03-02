@@ -94,7 +94,7 @@ namespace Svelto.ECS.Schema
                 // var (position, speed, _, count) = indexedDB.Select<IMovableRow>().From(damagables).Entities();
             }
         }
-    // }
+    }
 
 
     // Row => Table restrain possible

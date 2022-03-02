@@ -8,7 +8,7 @@ namespace Svelto.ECS.Schema.Internal
     internal class TableIndexingEngine<TK, TC> :
             IReactOnAddAndRemove<TC>, IReactOnSwap<TC>, IReactOnSubmission
         where TK : unmanaged
-        where TC : unmanaged, IIndexedComponent<TK>
+        where TC : unmanaged, IIndexableComponent<TK>
     {
         private readonly IndexedDB _indexedDB;
 

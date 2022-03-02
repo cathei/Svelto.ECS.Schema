@@ -53,4 +53,12 @@ namespace Svelto.ECS.Schema
             new ComponentBuilder<T4>(),
         };
     }
+
+    public abstract class EntityRow<TSelf> where TSelf : EntityRow<TSelf>
+    {
+        public class Table
+        {
+
+        }
+    }
 }

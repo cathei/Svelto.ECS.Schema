@@ -6,7 +6,7 @@ namespace Svelto.ECS.Schema.Tests
 {
     public class IndexingTests : SchemaTestsBase<IndexingTests.TestSchema>
     {
-        public class ItemOwner : IndexTag<int, ItemOwner.Unique>
+        public class ItemOwner : IIndexedRow<int, ItemOwner.Unique>
         {
             public struct Unique : IUnique {}
         }

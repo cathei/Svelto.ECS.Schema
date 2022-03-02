@@ -28,7 +28,7 @@ namespace Svelto.ECS.Schema.Tests
 
         public class CharacterFSM : StateMachine<CharacterState, CharacterFSM.Unique>
         {
-            public struct Unique : IUnique {}
+            public struct Unique : ITag {}
 
             protected override void Configure()
             {

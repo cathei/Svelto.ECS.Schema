@@ -57,7 +57,7 @@ namespace Svelto.ECS.Schema
 
         internal void NotifyKeyUpdate<TK, TC>(ref TC keyComponent, in TK oldKey, in TK newKey)
             where TK : unmanaged
-            where TC : unmanaged, IIndexedComponent<TK>
+            where TC : unmanaged, IIndexableComponent<TK>
         {
             // component updated but key didn't change
             if (oldKey.Equals(newKey))

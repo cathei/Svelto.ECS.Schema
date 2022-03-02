@@ -7,7 +7,7 @@ using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema
 {
-    public partial class StateMachine<TState, TUnique>
+    public partial class StateMachine<TTag, TState>
     {
         protected AnyStateBuilder AnyState => new AnyStateBuilder(Config.AnyState);
 

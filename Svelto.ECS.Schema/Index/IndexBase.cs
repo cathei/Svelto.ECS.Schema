@@ -1,6 +1,7 @@
 using System.Runtime.CompilerServices;
 using System.Threading;
 using Svelto.DataStructures;
+using Svelto.ECS.Schema.Definition;
 
 namespace Svelto.ECS.Schema.Internal
 {
@@ -11,41 +12,39 @@ namespace Svelto.ECS.Schema.Internal
         public static int Generate() => Interlocked.Increment(ref Count);
     }
 
-    public interface IIndexedComponent<T> : IEntityComponent, INeedEGID
+    public interface IIndexableComponent<T> : IEntityComponent, INeedEGID
         where T : unmanaged
     {
         T Value { get; }
     }
 
-    public abstract class IndexBase
+    public interface IIndexableRow<TK, TC> : IEntityRow<TC>
+        where TK : unmanaged
+        where TC : unmanaged, IIndexableComponent<TK>
+    { }
+
+    public abstract class IndexBase<TR, TK, TC> : ISchemaDefinitionIndex, IIndexQueryable<TR, TK, TC>
+        where TR : IIndexableRow<TK, TC>
+        where TK : unmanaged
+        where TC : unmanaged, IIndexableComponent<TK>
     {
         // equvalent to ExclusiveGroupStruct.Generate()
         protected internal readonly int _indexerId = GlobalIndexCount.Generate();
 
-        internal IndexBase() { }
-    }
-
-    public abstract class IndexBase<TK, TC> : IndexBase, ISchemaDefinitionIndex
-        where TK : unmanaged
-        where TC : unmanaged, IIndexedComponent<TK>
-    {
         RefWrapperType ISchemaDefinitionIndex.ComponentType => TypeRefWrapper<TC>.wrapper;
 
         int ISchemaDefinitionIndex.IndexerID => _indexerId;
+
+        internal IndexBase() { }
 
         void ISchemaDefinitionIndex.AddEngines(EnginesRoot enginesRoot, IndexedDB indexedDB)
         {
             enginesRoot.AddEngine(new TableIndexingEngine<TK, TC>(indexedDB));
         }
 
-        public IndexQuery<TK, TC> this[in TK key]
+        public IndexQuery<TK, TC> Query(in TK key)
         {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => new IndexQuery<TK, TC>(_indexerId, key);
+            return new IndexQuery<TK, TC>(_indexerId, key);
         }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public IndexQuery<TK, TC> Where(in TK key)
-            => new IndexQuery<TK, TC>(_indexerId, key);
     }
 }

@@ -12,13 +12,14 @@ namespace Svelto.ECS.Schema
     /// <summary>
     /// State machine on Svelto ECS
     /// </summary>
+    /// <typeparam name="TTag">Type to ensure uniqueness. It can be done with TSelf, but IsUnmanagedEx is on the way</typeparam>
     /// <typeparam name="TState">Value type representing a state. Usually enum type.</typeparam>
-    /// <typeparam name="TUnique">Type to ensure uniqueness. It can be done with TSelf, but IsUnmanagedEx is on the way</typeparam>
-    public abstract partial class StateMachine<TState, TUnique> : IEntityStateMachine
+    public abstract partial class StateMachine<TTag, TState> : IEntityStateMachine,
+            IIndexQueryable<StateMachine<TTag, TState>.IRow, TState, StateMachine<TTag, TState>.Component>
+        where TTag : unmanaged, StateMachine<TTag, TState>.ITag
         where TState : unmanaged
-        where TUnique : unmanaged, StateMachine<TState, TUnique>.IUnique
     {
-        public interface IUnique {}
+        public interface ITag {}
 
         internal static readonly StateMachineConfig Config = new StateMachineConfig();
 
@@ -228,8 +229,8 @@ namespace Svelto.ECS.Schema
             internal readonly TState _state;
             internal readonly FasterList<TransitionConfig> _transitions;
 
-            internal readonly Memo<Component> _exitCandidates;
-            internal readonly Memo<Component> _enterCandidates;
+            internal readonly Memo<IRow> _exitCandidates;
+            internal readonly Memo<IRow> _enterCandidates;
 
             internal readonly FasterList<CallbackConfig> _onExit;
             internal readonly FasterList<CallbackConfig> _onEnter;

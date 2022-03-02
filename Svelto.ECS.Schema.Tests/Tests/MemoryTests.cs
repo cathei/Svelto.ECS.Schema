@@ -9,7 +9,7 @@ namespace Svelto.ECS.Schema.Tests
     // just to make sure it does not take excessive memory
     public class MemoryTests : SchemaTestsBase<MemoryTests.TestSchema>
     {
-        public class ItemOwner : IndexTag<int, ItemOwner.Unique>
+        public class ItemOwner : IIndexedRow<int, ItemOwner.Unique>
         {
             public struct Unique : IUnique {}
         }

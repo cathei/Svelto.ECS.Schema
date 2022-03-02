@@ -20,7 +20,7 @@ namespace Svelto.ECS.Schema
 
         public FasterList<ISchemaDefinitionIndex> FindIndexers<TK, TC>(in ExclusiveGroupStruct groupID)
             where TK : unmanaged
-            where TC : IIndexedComponent<TK>
+            where TC : IIndexableComponent<TK>
         {
             var componentType = TypeRefWrapper<TC>.wrapper;
 
@@ -79,7 +79,7 @@ namespace Svelto.ECS.Schema
 
         private void UpdateFilters<TK, TC>(int indexerId, ref TC keyComponent, in TK oldKey, in TK newKey)
             where TK : unmanaged
-            where TC : unmanaged, IIndexedComponent<TK>
+            where TC : unmanaged, IIndexableComponent<TK>
         {
             ref var oldGroupData = ref CreateOrGetIndexedGroupData<TK, TC>(indexerId, oldKey, keyComponent.ID.groupID);
             ref var newGroupData = ref CreateOrGetIndexedGroupData<TK, TC>(indexerId, newKey, keyComponent.ID.groupID);
@@ -92,7 +92,7 @@ namespace Svelto.ECS.Schema
 
         internal ref IndexedGroupData CreateOrGetIndexedGroupData<TK, TC>(int indexerID, in TK key, in ExclusiveGroupStruct groupID)
             where TK : unmanaged
-            where TC : unmanaged, IIndexedComponent<TK>
+            where TC : unmanaged, IIndexableComponent<TK>
         {
             var indexerData = CreateOrGetIndexedData<TK>(indexerID);
 

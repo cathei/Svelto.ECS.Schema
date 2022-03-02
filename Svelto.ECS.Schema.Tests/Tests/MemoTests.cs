@@ -9,12 +9,12 @@ namespace Svelto.ECS.Schema.Tests
 {
     public class MemoTests : SchemaTestsBase<MemoTests.TestSchema>
     {
-        public class CharacterController : IndexTag<int, CharacterController.Unique>
+        public class CharacterController : IIndexedRow<int, CharacterController.Unique>
         {
             public struct Unique : IUnique {}
         }
 
-        public class CharacterState : IndexTag<CharacterState.Type, CharacterState.Unique>
+        public class CharacterState : IIndexedRow<CharacterState.Type, CharacterState.Unique>
         {
             public enum Type { Happy, Sad, Angry, MAX }
 

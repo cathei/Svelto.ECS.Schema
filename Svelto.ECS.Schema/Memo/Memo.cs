@@ -13,8 +13,12 @@ namespace Svelto.ECS.Schema.Definition
         public static int Generate() => Interlocked.Increment(ref Count);
     }
 
-    public sealed partial class Memo<T> : ISchemaDefinitionMemo, IEntityIndexQuery
-        where T : struct, IEntityComponent
+    // we have EGIDComponent constraints because it requires INeedEGID
+    // it won't be necessary when Svelto update it's filter utility functions
+    public interface IMemorableRow : IEntityRow<EGIDComponent> { }
+
+    public sealed class Memo<TRow> : ISchemaDefinitionMemo, IIndexQuery
+        where TRow : IMemorableRow
     {
         // equvalent to ExclusiveGroupStruct.Generate()
         internal readonly int _memoID = GlobalMemoCount.Generate();
@@ -36,19 +40,28 @@ namespace Svelto.ECS.Schema.Definition
             indexedDB.ClearMemo(this);
         }
 
-        // we have type constraints because it requires INeedEGID
-        // it won't be necessary when Svelto update it's filter utility functions
-        internal void Set<TQuery, TC>(IndexedDB indexedDB, TQuery query)
-            where TQuery : IEntityIndexQuery<TC>
-            where TC : unmanaged, IEntityComponent, INeedEGID
+        public void Set<TQR, TQK, TQC>(IndexedDB indexedDB, IIndexQueryable<TQR, TQK, TQC> index, in TQK key)
+            where TQR : IIndexableRow<TQK, TQC>, TRow
+            where TQK : unmanaged
+            where TQC : unmanaged, IIndexableComponent<TQK>
         {
-            Clear(indexedDB);
-            Union<TQuery, TC>(indexedDB, query);
+            Set(indexedDB, index.Query(key));
         }
 
-        internal void Union<TQuery, TC>(IndexedDB indexedDB, TQuery query)
-            where TQuery : IEntityIndexQuery<TC>
-            where TC : unmanaged, IEntityComponent, INeedEGID
+        public void Set<TMR>(IndexedDB indexedDB, Memo<TMR> other)
+            where TMR : IMemorableRow
+        {
+            Set(indexedDB, other);
+        }
+
+        internal void Set<TQ>(IndexedDB indexedDB, TQ query) where TQ : IIndexQuery
+        {
+            Clear(indexedDB);
+            Union(indexedDB, query);
+        }
+
+        internal void Union<TQ>(IndexedDB indexedDB, TQ query)
+            where TQ : IIndexQuery
         {
             var queryData = query.GetIndexedKeyData(indexedDB).groups;
 
@@ -66,19 +79,21 @@ namespace Svelto.ECS.Schema.Definition
                 if (queryGroupData.filter.filteredIndices.Count() == 0)
                     continue;
 
-                var mapper = indexedDB.entitiesDB.QueryMappedEntities<T>(queryGroupData.group);
+                var mapper = indexedDB.entitiesDB.QueryMappedEntities<EGIDComponent>(queryGroupData.group);
 
-                var components = query.GetComponents(indexedDB, queryGroupData.group);
-                ref var originalGroupData = ref indexedDB.CreateOrGetMemoGroup<T>(_memoID, queryGroupData.group);
+                // TODO: change group to table!
+                // var components = indexedDB.Select<IMemorableRow>().From(queryGroupData.group).Entities();
+                var (components, _) = indexedDB.entitiesDB.QueryEntities<EGIDComponent>(queryGroupData.group);
+
+                ref var originalGroupData = ref indexedDB.CreateOrGetMemoGroup<EGIDComponent>(_memoID, queryGroupData.group);
 
                 foreach (var i in new IndexedIndices(queryGroupData.filter.filteredIndices))
                     originalGroupData.filter.Add(components[i].ID.entityID, mapper);
             }
         }
 
-        internal void Intersect<TQuery, TC>(IndexedDB indexedDB, TQuery query)
-            where TQuery : IEntityIndexQuery<TC>
-            where TC : unmanaged, IEntityComponent, INeedEGID
+        internal void Intersect<TQ>(IndexedDB indexedDB, TQ query)
+            where TQ : IIndexQuery
         {
             var originalData = GetIndexedKeyData(indexedDB).groups;
 
@@ -113,7 +128,9 @@ namespace Svelto.ECS.Schema.Definition
                     continue;
                 }
 
-                var components = query.GetComponents(indexedDB, queryGroupData.group);
+                // TODO: change group to table!
+                // var components = indexedDB.Select<IMemorableRow>().From(queryGroupData.group).Entities();
+                var (components, _) = indexedDB.entitiesDB.QueryEntities<EGIDComponent>(queryGroupData.group);
 
                 // ugh I have to check what to delete
                 // since I cannot change filter while iteration
@@ -139,7 +156,7 @@ namespace Svelto.ECS.Schema.Definition
             return result;
         }
 
-        IndexedKeyData IEntityIndexQuery.GetIndexedKeyData(IndexedDB indexedDB)
+        IndexedKeyData IIndexQuery.GetIndexedKeyData(IndexedDB indexedDB)
             => GetIndexedKeyData(indexedDB);
     }
 }
