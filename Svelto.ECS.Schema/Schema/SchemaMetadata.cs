@@ -99,7 +99,7 @@ namespace Svelto.ECS.Schema
 
             // ok we have to set three internal Svelto Dictionary here to support serialization
             // GroupHashMap
-            GroupHashMapRegisterGroup?.Invoke(null, new object[] { table.ExclusiveGroup, name });
+            // GroupHashMapRegisterGroup?.Invoke(null, new object[] { table.ExclusiveGroup, name });
             // GroupNamesMap.idToName
             GroupNamesMapIdToName?.Add(table.ExclusiveGroup, $"{name} {table.ExclusiveGroup.id})");
             // ExclusiveGroup._knownGroups

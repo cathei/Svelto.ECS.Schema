@@ -37,7 +37,7 @@ namespace Svelto.ECS.Schema
                     IEnumerable<int> indexes, Func<TSchema, IEntityTablesBuilder<TRow>> selector)
                 where TRow : IEntityRow
             {
-                return Combine(indexes, x => (TablesBuilder<TRow>)selector(x));
+                return new TablesBuilder<TRow>(indexes.SelectMany(i => selector(_schemas[i]).Tables));
             }
 
             public TSchema this[int index] => _schemas[index];

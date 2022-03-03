@@ -22,6 +22,7 @@ namespace Svelto.ECS.Schema
                 // reflection time!
                 // for all interface the row implements
                 var interfaceTypes = typeof(TSelf).GetInterfaces();
+                var componentBuilderDict = new FasterDictionary<RefWrapperType, IComponentBuilder>();
 
                 foreach (var interfaceType in interfaceTypes)
                 {
@@ -30,7 +31,6 @@ namespace Svelto.ECS.Schema
                         continue;
 
                     var genericDefinition = interfaceType.GetGenericTypeDefinition();
-                    var componentBuilderDict = new FasterDictionary<RefWrapperType, IComponentBuilder>();
 
                     if (genericDefinition == typeof(IEntityRow<>) ||
                         genericDefinition == typeof(IEntityRow<,>) ||
@@ -50,10 +50,10 @@ namespace Svelto.ECS.Schema
                             componentBuilderDict[wrapper] = componentBuilder;
                         }
                     }
-
-                    componentsToBuild = new IComponentBuilder[componentBuilderDict.count];
-                    Array.Copy(componentBuilderDict.unsafeValues, componentsToBuild, componentBuilderDict.count);
                 }
+
+                componentsToBuild = new IComponentBuilder[componentBuilderDict.count];
+                componentBuilderDict.CopyValuesTo(componentsToBuild);
             }
         }
 

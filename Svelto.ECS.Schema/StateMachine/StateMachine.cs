@@ -1,10 +1,5 @@
-using System;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using System.Threading;
 using Svelto.DataStructures;
 using Svelto.ECS.Hybrid;
-using Svelto.ECS.Schema.Definition;
 using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema.Internal
@@ -42,13 +37,15 @@ namespace Svelto.ECS.Schema
 
         protected StateMachine()
         {
-            if (Config == null)
+            if (Config != null)
                 return;
 
-            lock (Config)
+            lock (EntitySchemaLock.Lock)
             {
-                if (Config == null)
-                    OnConfigure();
+                if (Config != null)
+                    return;
+
+                OnConfigure();
             }
 
             if (Config == null)
@@ -256,8 +253,6 @@ namespace Svelto.ECS.Schema
                     NB<Component> component, IEntityTable<TR> table)
                 where TR : class, IIndexedRow
             {
-                // var indices = Config.Index.Where(_state).From(groupID).Indices(indexedDB);
-
                 var indices = indexedDB
                     .Select<IIndexedRow>().From(table).Where(config._index, _state).Indices();
 

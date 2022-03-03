@@ -10,7 +10,7 @@ namespace Svelto.ECS.Schema
     public partial class StateMachine<TState, TTag>
     {
         protected Builder<TRow> Configure<TRow>()
-            where TRow : class, IRow
+            where TRow : class, IIndexedRow
         {
             if (Config != null)
                 throw new ECSException("Configure should only called once!");
@@ -21,7 +21,7 @@ namespace Svelto.ECS.Schema
         }
 
         public readonly ref struct Builder<TRow>
-            where TRow : class, IRow
+            where TRow : class, IIndexedRow
         {
             private readonly StateMachineConfig<TRow> _config;
 
@@ -106,7 +106,7 @@ namespace Svelto.ECS.Schema
                 PredicateNative<TC> preciate)
             where TT : unmanaged, StateMachine<TS, TT>.ITag
             where TS : unmanaged
-            where TR : class, StateMachine<TS, TT>.IRow, IEntityRow<TC>
+            where TR : class, StateMachine<TS, TT>.IIndexedRow, IEntityRow<TC>
             where TC : unmanaged, IEntityComponent
         {
             var condition = new StateMachine<TS, TT>.ConditionConfigNative<TC>(preciate);
@@ -119,7 +119,7 @@ namespace Svelto.ECS.Schema
                 PredicateManaged<TC> preciate)
             where TS : unmanaged
             where TT : unmanaged, StateMachine<TS, TT>.ITag
-            where TR : class, StateMachine<TS, TT>.IRow, IEntityRow<TC>
+            where TR : class, StateMachine<TS, TT>.IIndexedRow, IEntityRow<TC>
             where TC : struct, IEntityViewComponent
         {
             var condition = new StateMachine<TS, TT>.ConditionConfigManaged<TC>(preciate);
@@ -132,7 +132,7 @@ namespace Svelto.ECS.Schema
                 CallbackNative<TC> callback)
             where TS : unmanaged
             where TT : unmanaged, StateMachine<TS, TT>.ITag
-            where TR : class, StateMachine<TS, TT>.IRow, IEntityRow<TC>
+            where TR : class, StateMachine<TS, TT>.IIndexedRow, IEntityRow<TC>
             where TC : unmanaged, IEntityComponent
         {
             var config = new StateMachine<TS, TT>.CallbackConfigNative<TC>(callback);
@@ -145,7 +145,7 @@ namespace Svelto.ECS.Schema
                 CallbackManaged<TC> callback)
             where TS : unmanaged
             where TT : unmanaged, StateMachine<TS, TT>.ITag
-            where TR : class, StateMachine<TS, TT>.IRow, IEntityRow<TC>
+            where TR : class, StateMachine<TS, TT>.IIndexedRow, IEntityRow<TC>
             where TC : struct, IEntityViewComponent
         {
             var config = new StateMachine<TS, TT>.CallbackConfigManaged<TC>(callback);
@@ -158,7 +158,7 @@ namespace Svelto.ECS.Schema
                 CallbackNative<TC> callback)
             where TS : unmanaged
             where TT : unmanaged, StateMachine<TS, TT>.ITag
-            where TR : class, StateMachine<TS, TT>.IRow, IEntityRow<TC>
+            where TR : class, StateMachine<TS, TT>.IIndexedRow, IEntityRow<TC>
             where TC : unmanaged, IEntityComponent
         {
             var config = new StateMachine<TS, TT>.CallbackConfigNative<TC>(callback);
@@ -171,7 +171,7 @@ namespace Svelto.ECS.Schema
                 CallbackManaged<TC> callback)
             where TS : unmanaged
             where TT : unmanaged, StateMachine<TS, TT>.ITag
-            where TR : class, StateMachine<TS, TT>.IRow, IEntityRow<TC>
+            where TR : class, StateMachine<TS, TT>.IIndexedRow, IEntityRow<TC>
             where TC : struct, IEntityViewComponent
         {
             var config = new StateMachine<TS, TT>.CallbackConfigManaged<TC>(callback);

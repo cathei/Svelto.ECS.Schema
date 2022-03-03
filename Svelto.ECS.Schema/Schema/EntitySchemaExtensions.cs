@@ -17,6 +17,9 @@ namespace Svelto.ECS.Schema
 
         public static void Create()
         {
+            if (Schema != null)
+                return;
+
             lock (EntitySchemaLock.Lock)
             {
                 if (Schema != null)

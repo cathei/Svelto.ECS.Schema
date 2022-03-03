@@ -8,18 +8,11 @@ using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema.Internal
 {
-    public abstract partial class TablesBase
-    {
-        internal FasterReadOnlyList<ExclusiveGroupStruct> _groups;
-
-        public static implicit operator FasterReadOnlyList<ExclusiveGroupStruct>(TablesBase tables) => tables._groups;
-        public static implicit operator LocalFasterReadOnlyList<ExclusiveGroupStruct>(TablesBase tables) => tables._groups;
-    }
-
-    public abstract partial class TablesBase<TRow> : TablesBase, IEntityTables<TRow>, IEntityTablesBuilder<TRow>
+    public abstract class TablesBase<TRow> : IEntityTables<TRow>, IEntityTablesBuilder<TRow>
         where TRow : IEntityRow
     {
         internal readonly IEntityTable<TRow>[] _tables;
+        internal FasterList<ExclusiveGroupStruct> _groups;
 
         /// <summary>
         /// Indicates if Tables<T> is combined form of existing tables
@@ -34,7 +27,15 @@ namespace Svelto.ECS.Schema.Internal
             IsCombined = isCombined;
 
             _tables = tables;
+        }
+
+        protected LocalFasterReadOnlyList<ExclusiveGroupStruct> Build()
+        {
+            if (_groups != null)
+                return _groups;
+
             _groups = _tables.Select(x => x.ExclusiveGroup).ToFasterList();
+            return _groups;
         }
 
         public IEntityTable<TRow> this[int index] => _tables[index];
@@ -45,7 +46,7 @@ namespace Svelto.ECS.Schema.Internal
 
         IEnumerable<IEntityTable<TRow>> IEntityTablesBuilder<TRow>.Tables => _tables;
 
-        public LocalFasterReadOnlyList<ExclusiveGroupStruct> ExclusiveGroups => this;
+        public LocalFasterReadOnlyList<ExclusiveGroupStruct> ExclusiveGroups => Build();
 
         IEntityTable IEntityTables.GetTable(int index) => _tables[index];
         IEntityTable<TRow> IEntityTables<TRow>.GetTable(int index) => _tables[index];

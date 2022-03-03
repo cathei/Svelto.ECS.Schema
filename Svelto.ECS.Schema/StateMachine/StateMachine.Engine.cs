@@ -17,7 +17,6 @@ namespace Svelto.ECS.Schema
             enginesRoot.AddEngine(Engine);
         }
 
-
         internal interface IStateMachineConfig
         {
             Index Index { get; }
@@ -39,15 +38,12 @@ namespace Svelto.ECS.Schema
             {
                 _states = new FasterDictionary<KeyWrapper<TState>, StateConfig>();
                 _anyState = new AnyStateConfig();
-
                 _index = new Index();
             }
 
             public void Process(IndexedDB indexedDB)
             {
                 var tables = indexedDB.Select<TRow>().Tables();
-
-                //entitiesDB.FindGroups<Component>();
                 var states = _states.GetValues(out var stateCount);
 
                 // clear all filters before proceed

@@ -53,19 +53,19 @@ namespace Svelto.ECS.Schema.Generator
     }}
 ";
 
-        public string GenerateIndexQueryTuple(string template)
+        public string Generate(string template)
         {
             StringBuilder builder = new StringBuilder();
 
             for (int i = 1; i <= 4; ++i)
             {
-                builder.Append(GenerateIndexQueryTuple(template, i));
+                builder.Append(Generate(template, i));
             }
 
             return builder.ToString();
         }
 
-        public StringBuilder GenerateIndexQueryTuple(string template, int num)
+        public StringBuilder Generate(string template, int num)
         {
             var genericTypeList = "T{0}".Repeat(", ", num);
             var typeConstraintList = "                where T{0} : struct, IEntityComponent".Repeat("\n", num);
@@ -83,8 +83,8 @@ using Svelto.DataStructures;
 
 namespace Svelto.ECS.Schema.Internal
 {{
-{GenerateIndexQueryTuple(IndexQueryTupleTemplate)}
-{GenerateIndexQueryTuple(IndexQueryGroupTupleTemplate)}
+{Generate(IndexQueryTupleTemplate)}
+{Generate(IndexQueryGroupTupleTemplate)}
 }}";
 
             context.AddSource("IndexQueryTuple.g.cs", source);

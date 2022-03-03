@@ -1,7 +1,4 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using Svelto.ECS.Schedulers;
 using Svelto.ECS.Schema.Definition;
 using Xunit;
 
@@ -30,7 +27,7 @@ namespace Svelto.ECS.Schema.Tests
         public interface IAllFourRow : IEntityRow<RageComponent, TriggerComponent, SpecialTimerComponent, CharacterFSM.Component>
         { }
 
-        public interface ICharacterRow : CharacterFSM.IIndexedRow, IRageCharacterRow, IAllFourRow
+        public interface ICharacterRow : CharacterFSM.IRow, IRageCharacterRow, IAllFourRow
         { }
 
         public enum CharacterState { Normal, Upset, Angry, Special, MAX }

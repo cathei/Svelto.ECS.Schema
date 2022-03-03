@@ -87,7 +87,10 @@ namespace Svelto.ECS.Schema.Tests
 
             var (owner, count) = _indexedDB.Select<IIndexedItemOwner>().From(_schema.Players[0].Item).Entities();
             for (int i = 0; i < count; ++i)
-                _indexedDB.Update(ref owner[i], 0);
+                _indexedDB.Update(ref owner[i], 1);
+
+            queriedGroups = _indexedDB.Select<IIndexedItemOwner>()
+                .All().Where(_schema.ItemOwner, 0).Entities().ToList();
 
             queriedComponents = queriedGroups
                 .SelectMany(x => Enumerable.Range(0, x.indices.Count()).Select(i => x.buffer[x.indices[i]]))
@@ -141,7 +144,7 @@ namespace Svelto.ECS.Schema.Tests
             _submissionScheduler.SubmitEntities();
 
             var queriedGroups = _indexedDB.Select<IIndexedItemOwner>()
-                .All().Where(_schema.ItemOwner, 0).Entities().ToList();
+                .All().Where(_schema.AI.ItemOwner, 0).Entities().ToList();
 
             var queriedComponents = queriedGroups
                 .SelectMany(x => Enumerable.Range(0, x.indices.Count()).Select(i => x.buffer[x.indices[i]]))
