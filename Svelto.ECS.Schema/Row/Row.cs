@@ -65,15 +65,9 @@ namespace Svelto.ECS.Schema
         where TR : IReactiveRow<TR, TC>
         where TC : struct, IEntityComponent
     {
-        public interface IReactOnAddAndRemove
+        public abstract class Engine : ReactiveRowEngine<TR, TC>
         {
-            void Add(ref TC entityComponent, IEntityTable<TR> table, uint entityID);
-            void Remove(ref TC entityComponent, IEntityTable<TR> table, uint entityID);
-        }
-
-        public interface IReactOnSwap
-        {
-            void MovedTo(ref TC entityComponent, IEntityTable<TR> previousTable, IEntityTable<TR> table, uint entityID);
+            protected Engine(IndexedDB indexedDB) : base(indexedDB) {}
         }
     }
 }

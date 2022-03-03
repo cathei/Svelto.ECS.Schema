@@ -78,8 +78,11 @@ namespace Svelto.ECS.Schema
         {
             var table = FindTable<TR>(keyComponent.ID.groupID);
 
-            ref var oldGroupData = ref CreateOrGetIndexedGroupData<TR, TK, TC>(indexerId, oldKey, keyComponent.ID.groupID);
-            ref var newGroupData = ref CreateOrGetIndexedGroupData<TR, TK, TC>(indexerId, newKey, keyComponent.ID.groupID);
+            if (table == null)
+                return;
+
+            ref var oldGroupData = ref CreateOrGetIndexedGroupData<TR, TK, TC>(indexerId, oldKey, table);
+            ref var newGroupData = ref CreateOrGetIndexedGroupData<TR, TK, TC>(indexerId, newKey, table);
 
             var mapper = entitiesDB.QueryMappedEntities<TC>(keyComponent.ID.groupID);
 

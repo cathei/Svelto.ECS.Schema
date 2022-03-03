@@ -1,4 +1,5 @@
 using System;
+using Svelto.DataStructures;
 using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema
@@ -8,7 +9,7 @@ namespace Svelto.ECS.Schema
         void IEntityStateMachine.AddEngines(EnginesRoot enginesRoot, IndexedDB indexedDB)
         {
             // this is required to handle added or removed entities
-            enginesRoot.AddEngine(new TableIndexingEngine<TState, Component>(indexedDB));
+            enginesRoot.AddEngine(new TableIndexingEngine<IRow, TState, Component>(indexedDB));
 
             // this is required to validate and change state
             Engine = new TransitionEngine(indexedDB);
@@ -16,59 +17,84 @@ namespace Svelto.ECS.Schema
             enginesRoot.AddEngine(Engine);
         }
 
-        public sealed class TransitionEngine : IQueryingEntitiesEngine, IStepEngine
+
+        internal interface IStateMachineConfig
+        {
+            void Process(IndexedDB indexedDB);
+        }
+
+        internal sealed class StateMachineConfig<TRow> : IStateMachineConfig
+            where TRow : class, IRow
+        {
+            internal readonly FasterDictionary<KeyWrapper<TState>, StateConfig> _states;
+            internal readonly AnyStateConfig _anyState;
+
+            // this will manage filters for state machine
+            internal readonly Index _index;
+
+            public StateMachineConfig()
+            {
+                _states = new FasterDictionary<KeyWrapper<TState>, StateConfig>();
+                _anyState = new AnyStateConfig();
+
+                _index = new Index();
+            }
+
+            public void Process(IndexedDB indexedDB)
+            {
+                var tables = indexedDB.Select<TRow>().Tables();
+
+                //entitiesDB.FindGroups<Component>();
+                var states = _states.GetValues(out var stateCount);
+
+                // clear all filters before proceed
+                // maybe not needed with new filter system
+                for (int i = 0; i < stateCount; ++i)
+                {
+                    states[i]._exitCandidates.Clear(indexedDB);
+                    states[i]._enterCandidates.Clear(indexedDB);
+                }
+
+                foreach (var ((component, count), table) in
+                    indexedDB.Select<TRow>().From(tables).Entities())
+                {
+                    for (int i = 0; i < stateCount; ++i)
+                    {
+                        states[i].Evaluate(this, indexedDB, component, table);
+                    }
+
+                    // any state transition has lower priority
+                    _anyState.Evaluate(this, indexedDB, component, count, table);
+
+                    // check for exit candidates
+                    for (int i = 0; i < stateCount; ++i)
+                    {
+                        states[i].ProcessExit(indexedDB, table);
+                    }
+
+                    // check for enter candidates
+                    for (int i = 0; i < stateCount; ++i)
+                    {
+                        states[i].ProcessEnter(indexedDB, component, table);
+                    }
+                }
+            }
+        }
+
+        public sealed class TransitionEngine : IStepEngine
         {
             private readonly IndexedDB _indexedDB;
 
             public string name { get; } = $"{typeof(TTag).FullName}.TransitionEngine";
-
-            public EntitiesDB entitiesDB { private get; set; }
 
             internal TransitionEngine(IndexedDB indexedDB)
             {
                 _indexedDB = indexedDB;
             }
 
-            public void Ready() { }
-
             public void Step()
             {
-                var tables = _indexedDB.Select<IRow>().Tables();
-
-                //entitiesDB.FindGroups<Component>();
-                var states = Config.States.GetValues(out var stateCount);
-
-                // clear all filters before proceed
-                // maybe not needed with new filter system
-                for (int i = 0; i < stateCount; ++i)
-                {
-                    states[i]._exitCandidates.Clear(_indexedDB);
-                    states[i]._enterCandidates.Clear(_indexedDB);
-                }
-
-                foreach (var ((component, count), table) in
-                    _indexedDB.Select<Component.IRow>().From(tables).Entities())
-                {
-                    for (int i = 0; i < stateCount; ++i)
-                    {
-                        states[i].Evaluate(_indexedDB, component, table);
-                    }
-
-                    // any state transition has lower priority
-                    Config.AnyState.Evaluate(_indexedDB, component, count, table);
-
-                    // check for exit candidates
-                    for (int i = 0; i < stateCount; ++i)
-                    {
-                        states[i].ProcessExit(_indexedDB, table);
-                    }
-
-                    // check for enter candidates
-                    for (int i = 0; i < stateCount; ++i)
-                    {
-                        states[i].ProcessEnter(_indexedDB, component, table);
-                    }
-                }
+                Config.Process(_indexedDB);
             }
         }
     }

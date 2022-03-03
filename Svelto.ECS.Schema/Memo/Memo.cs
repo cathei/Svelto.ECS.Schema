@@ -30,7 +30,7 @@ namespace Svelto.ECS.Schema.Internal
         internal MemoBase() { }
 
         public void Set<TQR, TQK, TQC>(IndexedDB indexedDB, IIndexQueryable<TQR, TQK, TQC> index, in TQK key)
-            where TQR : IIndexableRow<TQK, TQC>, TR
+            where TQR : class, IIndexableRow<TQK, TQC>, TR
             where TQK : unmanaged
             where TQC : unmanaged, IIndexableComponent<TQK>
         {
@@ -39,12 +39,12 @@ namespace Svelto.ECS.Schema.Internal
 
         public void Add(IndexedDB indexedDB, ref TC component)
         {
-            indexedDB.AddMemo(this, component.ID.entityID, component.ID.groupID);
+            indexedDB.AddMemo(this, component.ID.entityID, indexedDB.FindTable<TR>(component.ID.groupID));
         }
 
         public void Remove(IndexedDB indexedDB, ref TC component)
         {
-            indexedDB.RemoveMemo(this, component.ID.entityID, component.ID.groupID);
+            indexedDB.RemoveMemo(this, component.ID.entityID, indexedDB.FindTable<TR>(component.ID.groupID));
         }
 
         public void Clear(IndexedDB indexedDB)
@@ -59,7 +59,7 @@ namespace Svelto.ECS.Schema.Internal
 
         internal void Set<TQ, TQR>(IndexedDB indexedDB, TQ query)
             where TQ : IIndexQuery<TQR>
-            where TQR : IEntityRow
+            where TQR : class, TR
         {
             Clear(indexedDB);
             Union<TQ, TQR>(indexedDB, query);
@@ -67,7 +67,7 @@ namespace Svelto.ECS.Schema.Internal
 
         internal void Union<TQ, TQR>(IndexedDB indexedDB, TQ query)
             where TQ : IIndexQuery<TQR>
-            where TQR : IEntityRow
+            where TQR : class, TR
         {
             var queryData = query.GetIndexedKeyData(indexedDB).groups;
 
@@ -90,15 +90,16 @@ namespace Svelto.ECS.Schema.Internal
                 // TODO: change group to table!
                 var (components, _) = indexedDB.Select<TQR>().From(queryGroupData.table).Entities();
 
-                ref var originalGroupData = ref indexedDB.CreateOrGetMemoGroup<TC>(_memoID, queryGroupData.table);
+                ref var originalGroupData = ref indexedDB.CreateOrGetMemoGroup<TR, TC>(_memoID, queryGroupData.table);
 
                 foreach (var i in new IndexedIndices(queryGroupData.filter.filteredIndices))
                     originalGroupData.filter.Add(components[i].ID.entityID, mapper);
             }
         }
 
-        internal void Intersect<TQ>(IndexedDB indexedDB, TQ query)
-            where TQ : IIndexQuery
+        internal void Intersect<TQ, TQR>(IndexedDB indexedDB, TQ query)
+            where TQ : IIndexQuery<TQR>
+            where TQR : TR
         {
             var originalData = GetIndexedKeyData(indexedDB).groups;
 
@@ -126,7 +127,7 @@ namespace Svelto.ECS.Schema.Internal
                     continue;
 
                 // if target is empty there is no intersection
-                if (!queryData.TryGetValue(originalDataValues[groupIndex].group, out var queryGroupData) ||
+                if (!queryData.TryGetValue(originalDataValues[groupIndex].table.ExclusiveGroup, out var queryGroupData) ||
                     queryGroupData.filter.filteredIndices.Count() == 0)
                 {
                     originalGroupData.filter.Clear();
@@ -134,8 +135,7 @@ namespace Svelto.ECS.Schema.Internal
                 }
 
                 // TODO: change group to table!
-                // var components = indexedDB.Select<IMemorableRow>().From(queryGroupData.group).Entities();
-                var (components, _) = indexedDB.entitiesDB.QueryEntities<EGIDComponent>(queryGroupData.group);
+                var (components, _) = indexedDB.Select<TQR>().From(queryGroupData.table).Entities();
 
                 // ugh I have to check what to delete
                 // since I cannot change filter while iteration
@@ -157,8 +157,9 @@ namespace Svelto.ECS.Schema.Internal
 
         private IndexedKeyData<TR> GetIndexedKeyData(IndexedDB indexedDB)
         {
-            indexedDB.memos.TryGetValue(_memoID, out var result);
-            return result;
+            if (indexedDB.memos.TryGetValue(_memoID, out var result))
+                return ((MemoData<TR>)result).keyData;
+            return default;
         }
 
         IndexedKeyData<TR> IIndexQuery<TR>.GetIndexedKeyData(IndexedDB indexedDB)

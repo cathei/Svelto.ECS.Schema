@@ -32,9 +32,9 @@ namespace Svelto.ECS.Schema.Internal
         }
     }
 
-    internal abstract class IndexedData { }
+    internal interface IIndexedData { }
 
-    internal sealed class IndexedData<TRow, TKey> : IndexedData
+    internal sealed class IndexedData<TRow, TKey> : IIndexedData
         where TRow : IEntityRow
         where TKey : unmanaged
     {
@@ -52,6 +52,30 @@ namespace Svelto.ECS.Schema.Internal
         public bool TryGetValue(in TKey key, out IndexedKeyData<TRow> result)
         {
             return keyToGroups.TryGetValue(new KeyWrapper<TKey>(key), out result);
+        }
+    }
+
+    internal interface IMemoData
+    {
+        void Clear();
+    }
+
+    internal sealed class MemoData<TRow> : IMemoData
+        where TRow : IEntityRow
+    {
+        public readonly IndexedKeyData<TRow> keyData;
+
+        public MemoData()
+        {
+            keyData = new IndexedKeyData<TRow>
+            {
+                groups = new FasterDictionary<ExclusiveGroupStruct, IndexedGroupData<TRow>>()
+            };
+        }
+
+        public void Clear()
+        {
+            keyData.Clear();
         }
     }
 }

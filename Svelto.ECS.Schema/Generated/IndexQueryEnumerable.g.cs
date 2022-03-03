@@ -6,58 +6,68 @@ using Svelto.ECS.Schema.Internal;
 namespace Svelto.ECS.Schema
 {
 
-    public readonly ref struct IndexQueryEnumerable<T1>
+    public readonly ref struct IndexQueryEnumerable<TR, TIR, T1>
+        where TR : IEntityRow<T1>, TIR
+        where TIR : IEntityRow
                 where T1 : struct, IEntityComponent
     {
         private readonly IndexedDB _indexedDB;
-        private readonly FasterDictionary<ExclusiveGroupStruct, IndexedGroupData> _dict;
+        private readonly IEntityTables<TR> _tables;
+        private readonly FasterDictionary<ExclusiveGroupStruct, IndexedGroupData<TIR>> _dict;
 
-        internal IndexQueryEnumerable(IndexedDB indexedDB, FasterDictionary<ExclusiveGroupStruct, IndexedGroupData> dict)
+        internal IndexQueryEnumerable(IndexedDB indexedDB,
+            IEntityTables<TR> tables,
+            FasterDictionary<ExclusiveGroupStruct, IndexedGroupData<TIR>> dict)
         {
             _indexedDB = indexedDB;
+            _tables = tables;
             _dict = dict;
         }
 
-        public RefIterator GetEnumerator() => new RefIterator(_indexedDB, _dict);
+        public RefIterator GetEnumerator() => new RefIterator(_indexedDB, _tables, _dict);
 
         public ref struct RefIterator
         {
             private readonly IndexedDB _indexedDB;
-            private readonly MB<IndexedGroupData> _dictValues;
-            private readonly uint _count;
+            private readonly IEntityTables<TR> _tables;
+            private readonly FasterDictionary<ExclusiveGroupStruct, IndexedGroupData<TIR>> _dict;
 
             private EntityCollection<T1> _collection;
-            private IndexedGroupData _groupData;
+            private FilteredIndices _indices;
             private int _indexValue;
 
-            internal RefIterator(IndexedDB indexedDB, FasterDictionary<ExclusiveGroupStruct, IndexedGroupData> dict) : this()
+            internal RefIterator(IndexedDB indexedDB,
+                IEntityTables<TR> tables,
+                FasterDictionary<ExclusiveGroupStruct, IndexedGroupData<TIR>> dict) : this()
             {
                 _indexedDB = indexedDB;
+                _tables = tables;
+                _dict = dict;
                 _indexValue = -1;
-
-                if (dict != null)
-                    _dictValues = dict.GetValues(out _count);
             }
 
             public bool MoveNext()
             {
-                while (++_indexValue < _count)
+                if (_dict == null)
+                    return false;
+
+                while (++_indexValue < _tables.Range)
                 {
-                    _groupData = _dictValues[_indexValue];
+                    var table = _tables.GetTable(_indexValue);
 
-                    if (!_groupData.group.IsEnabled())
+                    if (!_dict.TryGetValue(table.ExclusiveGroup, out var groupData))
                         continue;
 
-                    EntityCollection<T1> collection = _indexedDB.entitiesDB.QueryEntities<T1>(_groupData.group);
+                    _indices = groupData.filter.filteredIndices;
 
-                    if (_groupData.filter.filteredIndices.Count() == 0)
+                    if (!table.ExclusiveGroup.IsEnabled() || _indices.Count() == 0)
                         continue;
 
-                    _collection = collection;
+                    _collection = _indexedDB.Select<TR>().From(table).Entities();
                     break;
                 }
 
-                var moveNext = _indexValue < _count;
+                var moveNext = _indexValue < _tables.Range;
 
                 if (!moveNext)
                     Reset();
@@ -67,64 +77,74 @@ namespace Svelto.ECS.Schema
 
             public void Reset() { _indexValue = -1; }
 
-            public IndexQueryGroupTuple<T1> Current => new IndexQueryGroupTuple<T1>(
-                _collection, new IndexedIndices(_groupData.filter.filteredIndices), _groupData.group);
+            public IndexQueryTableTuple<TR, T1> Current => new IndexQueryTableTuple<TR, T1>(
+                _collection, new IndexedIndices(_indices), _tables.GetTable(_indexValue));
         }
     }
 
-    public readonly ref struct IndexQueryEnumerable<T1, T2>
+    public readonly ref struct IndexQueryEnumerable<TR, TIR, T1, T2>
+        where TR : IEntityRow<T1, T2>, TIR
+        where TIR : IEntityRow
                 where T1 : struct, IEntityComponent
                 where T2 : struct, IEntityComponent
     {
         private readonly IndexedDB _indexedDB;
-        private readonly FasterDictionary<ExclusiveGroupStruct, IndexedGroupData> _dict;
+        private readonly IEntityTables<TR> _tables;
+        private readonly FasterDictionary<ExclusiveGroupStruct, IndexedGroupData<TIR>> _dict;
 
-        internal IndexQueryEnumerable(IndexedDB indexedDB, FasterDictionary<ExclusiveGroupStruct, IndexedGroupData> dict)
+        internal IndexQueryEnumerable(IndexedDB indexedDB,
+            IEntityTables<TR> tables,
+            FasterDictionary<ExclusiveGroupStruct, IndexedGroupData<TIR>> dict)
         {
             _indexedDB = indexedDB;
+            _tables = tables;
             _dict = dict;
         }
 
-        public RefIterator GetEnumerator() => new RefIterator(_indexedDB, _dict);
+        public RefIterator GetEnumerator() => new RefIterator(_indexedDB, _tables, _dict);
 
         public ref struct RefIterator
         {
             private readonly IndexedDB _indexedDB;
-            private readonly MB<IndexedGroupData> _dictValues;
-            private readonly uint _count;
+            private readonly IEntityTables<TR> _tables;
+            private readonly FasterDictionary<ExclusiveGroupStruct, IndexedGroupData<TIR>> _dict;
 
             private EntityCollection<T1, T2> _collection;
-            private IndexedGroupData _groupData;
+            private FilteredIndices _indices;
             private int _indexValue;
 
-            internal RefIterator(IndexedDB indexedDB, FasterDictionary<ExclusiveGroupStruct, IndexedGroupData> dict) : this()
+            internal RefIterator(IndexedDB indexedDB,
+                IEntityTables<TR> tables,
+                FasterDictionary<ExclusiveGroupStruct, IndexedGroupData<TIR>> dict) : this()
             {
                 _indexedDB = indexedDB;
+                _tables = tables;
+                _dict = dict;
                 _indexValue = -1;
-
-                if (dict != null)
-                    _dictValues = dict.GetValues(out _count);
             }
 
             public bool MoveNext()
             {
-                while (++_indexValue < _count)
+                if (_dict == null)
+                    return false;
+
+                while (++_indexValue < _tables.Range)
                 {
-                    _groupData = _dictValues[_indexValue];
+                    var table = _tables.GetTable(_indexValue);
 
-                    if (!_groupData.group.IsEnabled())
+                    if (!_dict.TryGetValue(table.ExclusiveGroup, out var groupData))
                         continue;
 
-                    EntityCollection<T1, T2> collection = _indexedDB.entitiesDB.QueryEntities<T1, T2>(_groupData.group);
+                    _indices = groupData.filter.filteredIndices;
 
-                    if (_groupData.filter.filteredIndices.Count() == 0)
+                    if (!table.ExclusiveGroup.IsEnabled() || _indices.Count() == 0)
                         continue;
 
-                    _collection = collection;
+                    _collection = _indexedDB.Select<TR>().From(table).Entities();
                     break;
                 }
 
-                var moveNext = _indexValue < _count;
+                var moveNext = _indexValue < _tables.Range;
 
                 if (!moveNext)
                     Reset();
@@ -134,65 +154,75 @@ namespace Svelto.ECS.Schema
 
             public void Reset() { _indexValue = -1; }
 
-            public IndexQueryGroupTuple<T1, T2> Current => new IndexQueryGroupTuple<T1, T2>(
-                _collection, new IndexedIndices(_groupData.filter.filteredIndices), _groupData.group);
+            public IndexQueryTableTuple<TR, T1, T2> Current => new IndexQueryTableTuple<TR, T1, T2>(
+                _collection, new IndexedIndices(_indices), _tables.GetTable(_indexValue));
         }
     }
 
-    public readonly ref struct IndexQueryEnumerable<T1, T2, T3>
+    public readonly ref struct IndexQueryEnumerable<TR, TIR, T1, T2, T3>
+        where TR : IEntityRow<T1, T2, T3>, TIR
+        where TIR : IEntityRow
                 where T1 : struct, IEntityComponent
                 where T2 : struct, IEntityComponent
                 where T3 : struct, IEntityComponent
     {
         private readonly IndexedDB _indexedDB;
-        private readonly FasterDictionary<ExclusiveGroupStruct, IndexedGroupData> _dict;
+        private readonly IEntityTables<TR> _tables;
+        private readonly FasterDictionary<ExclusiveGroupStruct, IndexedGroupData<TIR>> _dict;
 
-        internal IndexQueryEnumerable(IndexedDB indexedDB, FasterDictionary<ExclusiveGroupStruct, IndexedGroupData> dict)
+        internal IndexQueryEnumerable(IndexedDB indexedDB,
+            IEntityTables<TR> tables,
+            FasterDictionary<ExclusiveGroupStruct, IndexedGroupData<TIR>> dict)
         {
             _indexedDB = indexedDB;
+            _tables = tables;
             _dict = dict;
         }
 
-        public RefIterator GetEnumerator() => new RefIterator(_indexedDB, _dict);
+        public RefIterator GetEnumerator() => new RefIterator(_indexedDB, _tables, _dict);
 
         public ref struct RefIterator
         {
             private readonly IndexedDB _indexedDB;
-            private readonly MB<IndexedGroupData> _dictValues;
-            private readonly uint _count;
+            private readonly IEntityTables<TR> _tables;
+            private readonly FasterDictionary<ExclusiveGroupStruct, IndexedGroupData<TIR>> _dict;
 
             private EntityCollection<T1, T2, T3> _collection;
-            private IndexedGroupData _groupData;
+            private FilteredIndices _indices;
             private int _indexValue;
 
-            internal RefIterator(IndexedDB indexedDB, FasterDictionary<ExclusiveGroupStruct, IndexedGroupData> dict) : this()
+            internal RefIterator(IndexedDB indexedDB,
+                IEntityTables<TR> tables,
+                FasterDictionary<ExclusiveGroupStruct, IndexedGroupData<TIR>> dict) : this()
             {
                 _indexedDB = indexedDB;
+                _tables = tables;
+                _dict = dict;
                 _indexValue = -1;
-
-                if (dict != null)
-                    _dictValues = dict.GetValues(out _count);
             }
 
             public bool MoveNext()
             {
-                while (++_indexValue < _count)
+                if (_dict == null)
+                    return false;
+
+                while (++_indexValue < _tables.Range)
                 {
-                    _groupData = _dictValues[_indexValue];
+                    var table = _tables.GetTable(_indexValue);
 
-                    if (!_groupData.group.IsEnabled())
+                    if (!_dict.TryGetValue(table.ExclusiveGroup, out var groupData))
                         continue;
 
-                    EntityCollection<T1, T2, T3> collection = _indexedDB.entitiesDB.QueryEntities<T1, T2, T3>(_groupData.group);
+                    _indices = groupData.filter.filteredIndices;
 
-                    if (_groupData.filter.filteredIndices.Count() == 0)
+                    if (!table.ExclusiveGroup.IsEnabled() || _indices.Count() == 0)
                         continue;
 
-                    _collection = collection;
+                    _collection = _indexedDB.Select<TR>().From(table).Entities();
                     break;
                 }
 
-                var moveNext = _indexValue < _count;
+                var moveNext = _indexValue < _tables.Range;
 
                 if (!moveNext)
                     Reset();
@@ -202,116 +232,51 @@ namespace Svelto.ECS.Schema
 
             public void Reset() { _indexValue = -1; }
 
-            public IndexQueryGroupTuple<T1, T2, T3> Current => new IndexQueryGroupTuple<T1, T2, T3>(
-                _collection, new IndexedIndices(_groupData.filter.filteredIndices), _groupData.group);
+            public IndexQueryTableTuple<TR, T1, T2, T3> Current => new IndexQueryTableTuple<TR, T1, T2, T3>(
+                _collection, new IndexedIndices(_indices), _tables.GetTable(_indexValue));
         }
     }
 
-    public readonly ref struct IndexQueryEnumerable<T1, T2, T3, T4>
+    public readonly ref struct IndexQueryEnumerable<TR, TIR, T1, T2, T3, T4>
+        where TR : IEntityRow<T1, T2, T3, T4>, TIR
+        where TIR : IEntityRow
                 where T1 : struct, IEntityComponent
                 where T2 : struct, IEntityComponent
                 where T3 : struct, IEntityComponent
                 where T4 : struct, IEntityComponent
     {
         private readonly IndexedDB _indexedDB;
-        private readonly FasterDictionary<ExclusiveGroupStruct, IndexedGroupData> _dict;
+        private readonly IEntityTables<TR> _tables;
+        private readonly FasterDictionary<ExclusiveGroupStruct, IndexedGroupData<TIR>> _dict;
 
-        internal IndexQueryEnumerable(IndexedDB indexedDB, FasterDictionary<ExclusiveGroupStruct, IndexedGroupData> dict)
+        internal IndexQueryEnumerable(IndexedDB indexedDB,
+            IEntityTables<TR> tables,
+            FasterDictionary<ExclusiveGroupStruct, IndexedGroupData<TIR>> dict)
         {
             _indexedDB = indexedDB;
+            _tables = tables;
             _dict = dict;
         }
 
-        public RefIterator GetEnumerator() => new RefIterator(_indexedDB, _dict);
+        public RefIterator GetEnumerator() => new RefIterator(_indexedDB, _tables, _dict);
 
         public ref struct RefIterator
         {
             private readonly IndexedDB _indexedDB;
-            private readonly MB<IndexedGroupData> _dictValues;
-            private readonly uint _count;
+            private readonly IEntityTables<TR> _tables;
+            private readonly FasterDictionary<ExclusiveGroupStruct, IndexedGroupData<TIR>> _dict;
 
             private EntityCollection<T1, T2, T3, T4> _collection;
-            private IndexedGroupData _groupData;
-            private int _indexValue;
-
-            internal RefIterator(IndexedDB indexedDB, FasterDictionary<ExclusiveGroupStruct, IndexedGroupData> dict) : this()
-            {
-                _indexedDB = indexedDB;
-                _indexValue = -1;
-
-                if (dict != null)
-                    _dictValues = dict.GetValues(out _count);
-            }
-
-            public bool MoveNext()
-            {
-                while (++_indexValue < _count)
-                {
-                    _groupData = _dictValues[_indexValue];
-
-                    if (!_groupData.group.IsEnabled())
-                        continue;
-
-                    EntityCollection<T1, T2, T3, T4> collection = _indexedDB.entitiesDB.QueryEntities<T1, T2, T3, T4>(_groupData.group);
-
-                    if (_groupData.filter.filteredIndices.Count() == 0)
-                        continue;
-
-                    _collection = collection;
-                    break;
-                }
-
-                var moveNext = _indexValue < _count;
-
-                if (!moveNext)
-                    Reset();
-
-                return moveNext;
-            }
-
-            public void Reset() { _indexValue = -1; }
-
-            public IndexQueryGroupTuple<T1, T2, T3, T4> Current => new IndexQueryGroupTuple<T1, T2, T3, T4>(
-                _collection, new IndexedIndices(_groupData.filter.filteredIndices), _groupData.group);
-        }
-    }
-
-
-    public readonly ref struct IndexQueryGroupsEnumerable<T1>
-                where T1 : struct, IEntityComponent
-    {
-        private readonly IndexedDB _indexedDB;
-        private readonly FasterDictionary<ExclusiveGroupStruct, IndexedGroupData> _dict;
-        private readonly LocalFasterReadOnlyList<ExclusiveGroupStruct> _groups;
-
-        internal IndexQueryGroupsEnumerable(IndexedDB indexedDB,
-            FasterDictionary<ExclusiveGroupStruct, IndexedGroupData> dict,
-            in LocalFasterReadOnlyList<ExclusiveGroupStruct> groups)
-        {
-            _indexedDB = indexedDB;
-            _dict = dict;
-            _groups = groups;
-        }
-
-        public RefIterator GetEnumerator() => new RefIterator(_indexedDB, _dict, _groups);
-
-        public ref struct RefIterator
-        {
-            private readonly IndexedDB _indexedDB;
-            private readonly FasterDictionary<ExclusiveGroupStruct, IndexedGroupData> _dict;
-            private readonly LocalFasterReadOnlyList<ExclusiveGroupStruct> _groups;
-
-            private EntityCollection<T1> _collection;
-            private IndexedGroupData _groupData;
+            private FilteredIndices _indices;
             private int _indexValue;
 
             internal RefIterator(IndexedDB indexedDB,
-                FasterDictionary<ExclusiveGroupStruct, IndexedGroupData> dict,
-                in LocalFasterReadOnlyList<ExclusiveGroupStruct> groups) : this()
+                IEntityTables<TR> tables,
+                FasterDictionary<ExclusiveGroupStruct, IndexedGroupData<TIR>> dict) : this()
             {
                 _indexedDB = indexedDB;
+                _tables = tables;
                 _dict = dict;
-                _groups = groups;
                 _indexValue = -1;
             }
 
@@ -320,26 +285,23 @@ namespace Svelto.ECS.Schema
                 if (_dict == null)
                     return false;
 
-                while (++_indexValue < _groups.count)
+                while (++_indexValue < _tables.Range)
                 {
-                    if (!_dict.TryGetValue(_groups[_indexValue], out _groupData))
+                    var table = _tables.GetTable(_indexValue);
+
+                    if (!_dict.TryGetValue(table.ExclusiveGroup, out var groupData))
                         continue;
 
-                    var indices = _groupData.filter.filteredIndices;
+                    _indices = groupData.filter.filteredIndices;
 
-                    if (!_groupData.group.IsEnabled() || indices.Count() == 0)
+                    if (!table.ExclusiveGroup.IsEnabled() || _indices.Count() == 0)
                         continue;
 
-                    EntityCollection<T1> collection = _indexedDB.entitiesDB.QueryEntities<T1>(_groupData.group);
-
-                    if (_groupData.filter.filteredIndices.Count() == 0)
-                        continue;
-
-                    _collection = collection;
+                    _collection = _indexedDB.Select<TR>().From(table).Entities();
                     break;
                 }
 
-                var moveNext = _indexValue < _groups.count;
+                var moveNext = _indexValue < _tables.Range;
 
                 if (!moveNext)
                     Reset();
@@ -349,245 +311,8 @@ namespace Svelto.ECS.Schema
 
             public void Reset() { _indexValue = -1; }
 
-            public IndexQueryGroupTuple<T1> Current => new IndexQueryGroupTuple<T1>(
-                _collection, new IndexedIndices(_groupData.filter.filteredIndices), _groupData.group);
-        }
-    }
-
-    public readonly ref struct IndexQueryGroupsEnumerable<T1, T2>
-                where T1 : struct, IEntityComponent
-                where T2 : struct, IEntityComponent
-    {
-        private readonly IndexedDB _indexedDB;
-        private readonly FasterDictionary<ExclusiveGroupStruct, IndexedGroupData> _dict;
-        private readonly LocalFasterReadOnlyList<ExclusiveGroupStruct> _groups;
-
-        internal IndexQueryGroupsEnumerable(IndexedDB indexedDB,
-            FasterDictionary<ExclusiveGroupStruct, IndexedGroupData> dict,
-            in LocalFasterReadOnlyList<ExclusiveGroupStruct> groups)
-        {
-            _indexedDB = indexedDB;
-            _dict = dict;
-            _groups = groups;
-        }
-
-        public RefIterator GetEnumerator() => new RefIterator(_indexedDB, _dict, _groups);
-
-        public ref struct RefIterator
-        {
-            private readonly IndexedDB _indexedDB;
-            private readonly FasterDictionary<ExclusiveGroupStruct, IndexedGroupData> _dict;
-            private readonly LocalFasterReadOnlyList<ExclusiveGroupStruct> _groups;
-
-            private EntityCollection<T1, T2> _collection;
-            private IndexedGroupData _groupData;
-            private int _indexValue;
-
-            internal RefIterator(IndexedDB indexedDB,
-                FasterDictionary<ExclusiveGroupStruct, IndexedGroupData> dict,
-                in LocalFasterReadOnlyList<ExclusiveGroupStruct> groups) : this()
-            {
-                _indexedDB = indexedDB;
-                _dict = dict;
-                _groups = groups;
-                _indexValue = -1;
-            }
-
-            public bool MoveNext()
-            {
-                if (_dict == null)
-                    return false;
-
-                while (++_indexValue < _groups.count)
-                {
-                    if (!_dict.TryGetValue(_groups[_indexValue], out _groupData))
-                        continue;
-
-                    var indices = _groupData.filter.filteredIndices;
-
-                    if (!_groupData.group.IsEnabled() || indices.Count() == 0)
-                        continue;
-
-                    EntityCollection<T1, T2> collection = _indexedDB.entitiesDB.QueryEntities<T1, T2>(_groupData.group);
-
-                    if (_groupData.filter.filteredIndices.Count() == 0)
-                        continue;
-
-                    _collection = collection;
-                    break;
-                }
-
-                var moveNext = _indexValue < _groups.count;
-
-                if (!moveNext)
-                    Reset();
-
-                return moveNext;
-            }
-
-            public void Reset() { _indexValue = -1; }
-
-            public IndexQueryGroupTuple<T1, T2> Current => new IndexQueryGroupTuple<T1, T2>(
-                _collection, new IndexedIndices(_groupData.filter.filteredIndices), _groupData.group);
-        }
-    }
-
-    public readonly ref struct IndexQueryGroupsEnumerable<T1, T2, T3>
-                where T1 : struct, IEntityComponent
-                where T2 : struct, IEntityComponent
-                where T3 : struct, IEntityComponent
-    {
-        private readonly IndexedDB _indexedDB;
-        private readonly FasterDictionary<ExclusiveGroupStruct, IndexedGroupData> _dict;
-        private readonly LocalFasterReadOnlyList<ExclusiveGroupStruct> _groups;
-
-        internal IndexQueryGroupsEnumerable(IndexedDB indexedDB,
-            FasterDictionary<ExclusiveGroupStruct, IndexedGroupData> dict,
-            in LocalFasterReadOnlyList<ExclusiveGroupStruct> groups)
-        {
-            _indexedDB = indexedDB;
-            _dict = dict;
-            _groups = groups;
-        }
-
-        public RefIterator GetEnumerator() => new RefIterator(_indexedDB, _dict, _groups);
-
-        public ref struct RefIterator
-        {
-            private readonly IndexedDB _indexedDB;
-            private readonly FasterDictionary<ExclusiveGroupStruct, IndexedGroupData> _dict;
-            private readonly LocalFasterReadOnlyList<ExclusiveGroupStruct> _groups;
-
-            private EntityCollection<T1, T2, T3> _collection;
-            private IndexedGroupData _groupData;
-            private int _indexValue;
-
-            internal RefIterator(IndexedDB indexedDB,
-                FasterDictionary<ExclusiveGroupStruct, IndexedGroupData> dict,
-                in LocalFasterReadOnlyList<ExclusiveGroupStruct> groups) : this()
-            {
-                _indexedDB = indexedDB;
-                _dict = dict;
-                _groups = groups;
-                _indexValue = -1;
-            }
-
-            public bool MoveNext()
-            {
-                if (_dict == null)
-                    return false;
-
-                while (++_indexValue < _groups.count)
-                {
-                    if (!_dict.TryGetValue(_groups[_indexValue], out _groupData))
-                        continue;
-
-                    var indices = _groupData.filter.filteredIndices;
-
-                    if (!_groupData.group.IsEnabled() || indices.Count() == 0)
-                        continue;
-
-                    EntityCollection<T1, T2, T3> collection = _indexedDB.entitiesDB.QueryEntities<T1, T2, T3>(_groupData.group);
-
-                    if (_groupData.filter.filteredIndices.Count() == 0)
-                        continue;
-
-                    _collection = collection;
-                    break;
-                }
-
-                var moveNext = _indexValue < _groups.count;
-
-                if (!moveNext)
-                    Reset();
-
-                return moveNext;
-            }
-
-            public void Reset() { _indexValue = -1; }
-
-            public IndexQueryGroupTuple<T1, T2, T3> Current => new IndexQueryGroupTuple<T1, T2, T3>(
-                _collection, new IndexedIndices(_groupData.filter.filteredIndices), _groupData.group);
-        }
-    }
-
-    public readonly ref struct IndexQueryGroupsEnumerable<T1, T2, T3, T4>
-                where T1 : struct, IEntityComponent
-                where T2 : struct, IEntityComponent
-                where T3 : struct, IEntityComponent
-                where T4 : struct, IEntityComponent
-    {
-        private readonly IndexedDB _indexedDB;
-        private readonly FasterDictionary<ExclusiveGroupStruct, IndexedGroupData> _dict;
-        private readonly LocalFasterReadOnlyList<ExclusiveGroupStruct> _groups;
-
-        internal IndexQueryGroupsEnumerable(IndexedDB indexedDB,
-            FasterDictionary<ExclusiveGroupStruct, IndexedGroupData> dict,
-            in LocalFasterReadOnlyList<ExclusiveGroupStruct> groups)
-        {
-            _indexedDB = indexedDB;
-            _dict = dict;
-            _groups = groups;
-        }
-
-        public RefIterator GetEnumerator() => new RefIterator(_indexedDB, _dict, _groups);
-
-        public ref struct RefIterator
-        {
-            private readonly IndexedDB _indexedDB;
-            private readonly FasterDictionary<ExclusiveGroupStruct, IndexedGroupData> _dict;
-            private readonly LocalFasterReadOnlyList<ExclusiveGroupStruct> _groups;
-
-            private EntityCollection<T1, T2, T3, T4> _collection;
-            private IndexedGroupData _groupData;
-            private int _indexValue;
-
-            internal RefIterator(IndexedDB indexedDB,
-                FasterDictionary<ExclusiveGroupStruct, IndexedGroupData> dict,
-                in LocalFasterReadOnlyList<ExclusiveGroupStruct> groups) : this()
-            {
-                _indexedDB = indexedDB;
-                _dict = dict;
-                _groups = groups;
-                _indexValue = -1;
-            }
-
-            public bool MoveNext()
-            {
-                if (_dict == null)
-                    return false;
-
-                while (++_indexValue < _groups.count)
-                {
-                    if (!_dict.TryGetValue(_groups[_indexValue], out _groupData))
-                        continue;
-
-                    var indices = _groupData.filter.filteredIndices;
-
-                    if (!_groupData.group.IsEnabled() || indices.Count() == 0)
-                        continue;
-
-                    EntityCollection<T1, T2, T3, T4> collection = _indexedDB.entitiesDB.QueryEntities<T1, T2, T3, T4>(_groupData.group);
-
-                    if (_groupData.filter.filteredIndices.Count() == 0)
-                        continue;
-
-                    _collection = collection;
-                    break;
-                }
-
-                var moveNext = _indexValue < _groups.count;
-
-                if (!moveNext)
-                    Reset();
-
-                return moveNext;
-            }
-
-            public void Reset() { _indexValue = -1; }
-
-            public IndexQueryGroupTuple<T1, T2, T3, T4> Current => new IndexQueryGroupTuple<T1, T2, T3, T4>(
-                _collection, new IndexedIndices(_groupData.filter.filteredIndices), _groupData.group);
+            public IndexQueryTableTuple<TR, T1, T2, T3, T4> Current => new IndexQueryTableTuple<TR, T1, T2, T3, T4>(
+                _collection, new IndexedIndices(_indices), _tables.GetTable(_indexValue));
         }
     }
 

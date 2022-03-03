@@ -7,6 +7,21 @@ using Svelto.ECS.Hybrid;
 using Svelto.ECS.Schema.Definition;
 using Svelto.ECS.Schema.Internal;
 
+namespace Svelto.ECS.Schema.Internal
+{
+    public delegate bool PredicateNative<TComponent>(ref TComponent component)
+        where TComponent : unmanaged, IEntityComponent;
+
+    public delegate bool PredicateManaged<TComponent>(ref TComponent component)
+        where TComponent : struct, IEntityViewComponent;
+
+    public delegate void CallbackNative<TComponent>(ref TComponent component)
+        where TComponent : unmanaged, IEntityComponent;
+
+    public delegate void CallbackManaged<TComponent>(ref TComponent component)
+        where TComponent : struct, IEntityViewComponent;
+}
+
 namespace Svelto.ECS.Schema
 {
     /// <summary>
@@ -21,38 +36,26 @@ namespace Svelto.ECS.Schema
     {
         public interface ITag {}
 
-        internal static readonly StateMachineConfig Config = new StateMachineConfig();
+        internal static IStateMachineConfig Config = null;
 
         public TransitionEngine Engine { get; internal set; }
 
         protected StateMachine()
         {
-            if (Config.configured)
+            if (Config == null)
                 return;
 
             lock (Config)
             {
-                if (Config.configured)
-                    return;
-
-                Config.configured = true;
-                Configure();
+                if (Config == null)
+                    OnConfigure();
             }
+
+            if (Config == null)
+                throw new ECSException("StateMachine is not properly configured!");
         }
 
-        protected abstract void Configure();
-
-        protected internal delegate bool PredicateNative<TComponent>(ref TComponent component)
-            where TComponent : unmanaged, IEntityComponent;
-
-        protected internal delegate bool PredicateManaged<TComponent>(ref TComponent component)
-            where TComponent : struct, IEntityViewComponent;
-
-        protected internal delegate void CallbackNative<TComponent>(ref TComponent component)
-            where TComponent : unmanaged, IEntityComponent;
-
-        protected internal delegate void CallbackManaged<TComponent>(ref TComponent component)
-            where TComponent : struct, IEntityViewComponent;
+        protected abstract void OnConfigure();
 
         internal abstract class ConditionConfig
         {
@@ -189,9 +192,11 @@ namespace Svelto.ECS.Schema
                 _conditions = new FasterList<ConditionConfig>();
             }
 
-            internal void Evaluate<TEnum, TIter>(IndexedDB indexedDB, NB<Component> component, in TEnum indices, in ExclusiveGroupStruct groupID)
+            internal void Evaluate<TEnum, TIter, TR>(StateMachineConfig<TR> config,
+                    IndexedDB indexedDB, NB<Component> component, in TEnum indices, in ExclusiveGroupStruct groupID)
                 where TEnum : struct, IIndicesEnumerable<TIter>
                 where TIter : struct, IIndicesEnumerator
+                where TR : class, IRow
             {
                 // rather loop through indexes multiple times.
                 // should be better than fetching buffers per entity.
@@ -217,8 +222,8 @@ namespace Svelto.ECS.Schema
                         var currentState = new KeyWrapper<TState>(component[i].State);
                         var nextState = new KeyWrapper<TState>(_next);
 
-                        Config.States[currentState]._exitCandidates.Add(indexedDB, component[i].ID);
-                        Config.States[nextState]._enterCandidates.Add(indexedDB, component[i].ID);
+                        config._states[currentState]._exitCandidates.Add(indexedDB, ref component[i]);
+                        config._states[nextState]._enterCandidates.Add(indexedDB, ref component[i]);
                     }
                 }
             }
@@ -229,8 +234,8 @@ namespace Svelto.ECS.Schema
             internal readonly TState _state;
             internal readonly FasterList<TransitionConfig> _transitions;
 
-            internal readonly Memo<IRow> _exitCandidates;
-            internal readonly Memo<IRow> _enterCandidates;
+            internal readonly Memo _exitCandidates;
+            internal readonly Memo _enterCandidates;
 
             internal readonly FasterList<CallbackConfig> _onExit;
             internal readonly FasterList<CallbackConfig> _onEnter;
@@ -240,25 +245,27 @@ namespace Svelto.ECS.Schema
                 _state = state;
                 _transitions = new FasterList<TransitionConfig>();
 
-                _exitCandidates = new Memo<IRow>();
-                _enterCandidates = new Memo<IRow>();
+                _exitCandidates = new Memo();
+                _enterCandidates = new Memo();
 
                 _onExit = new FasterList<CallbackConfig>();
                 _onEnter = new FasterList<CallbackConfig>();
             }
 
-            internal void Evaluate(IndexedDB indexedDB, NB<Component> component, IEntityTable<IRow> table)
+            internal void Evaluate<TR>(StateMachineConfig<TR> config, IndexedDB indexedDB,
+                    NB<Component> component, IEntityTable<TR> table)
+                where TR : class, IRow
             {
                 // var indices = Config.Index.Where(_state).From(groupID).Indices(indexedDB);
 
                 var indices = indexedDB
-                    .Select<IRow>().From(table).Where(Config.Index, _state).Indices();
+                    .Select<IRow>().From(table).Where(config._index, _state).Indices();
 
                 // higher priority if added first
                 for (int i = 0; i < _transitions.count; ++i)
                 {
-                    _transitions[i].Evaluate<IndexedIndices, IndexedIndicesEnumerator>
-                        (indexedDB, component, indices, table.ExclusiveGroup);
+                    _transitions[i].Evaluate<IndexedIndices, IndexedIndicesEnumerator, TR>
+                        (config, indexedDB, component, indices, table.ExclusiveGroup);
                 }
             }
 
@@ -282,7 +289,7 @@ namespace Svelto.ECS.Schema
             internal void ProcessEnter(IndexedDB indexedDB, NB<Component> component, IEntityTable<IRow> table)
             {
                 var indices = indexedDB
-                    .Select<IMemorableRow>().From(table).Where(_enterCandidates).Indices();
+                    .Select<IRow>().From(table).Where(_enterCandidates).Indices();
 
                 if (indices.Count() == 0)
                     return;
@@ -311,34 +318,17 @@ namespace Svelto.ECS.Schema
                 _transitions = new FasterList<TransitionConfig>();
             }
 
-            internal void Evaluate(IndexedDB indexedDB, NB<Component> state, int count, IEntityTable<IRow> table)
+            internal void Evaluate<TR>(StateMachineConfig<TR> config, IndexedDB indexedDB,
+                    NB<Component> state, int count, IEntityTable<TR> table)
+                where TR : class, IRow
             {
                 var indices = new RangeIndiceEnumerable(count);
 
                 for (int i = 0; i < _transitions.count; ++i)
                 {
-                    _transitions[i].Evaluate<RangeIndiceEnumerable, RangeIndicesEnumerator>
-                        (indexedDB, state, indices, table.ExclusiveGroup);
+                    _transitions[i].Evaluate<RangeIndiceEnumerable, RangeIndicesEnumerator, TR>
+                        (config, indexedDB, state, indices, table.ExclusiveGroup);
                 }
-            }
-        }
-
-        internal sealed class StateMachineConfig
-        {
-            internal bool configured = false;
-
-            internal readonly FasterDictionary<KeyWrapper<TState>, StateConfig> States;
-            internal readonly AnyStateConfig AnyState;
-
-            // this will manage filters for state machine
-            internal readonly Index Index;
-
-            public StateMachineConfig()
-            {
-                States = new FasterDictionary<KeyWrapper<TState>, StateConfig>();
-                AnyState = new AnyStateConfig();
-
-                Index = new Index();
             }
         }
     }

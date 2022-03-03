@@ -9,119 +9,174 @@ namespace Svelto.ECS.Schema
 {
     public partial class StateMachine<TTag, TState>
     {
-        protected AnyStateBuilder AnyState => new AnyStateBuilder(Config.AnyState);
-
-        protected StateBuilder AddState(in TState state)
+        protected Builder<TRow> Configure<TRow>()
+            where TRow : class, IRow
         {
-            var wrapper = new KeyWrapper<TState>(state);
+            if (Config != null)
+                throw new ECSException("Configure should only called once!");
 
-            if (Config.States.ContainsKey(wrapper))
-            {
-                throw new ECSException($"State {state} already exsists!");
-            }
-
-            var stateConfig = new StateConfig(state);
-            Config.States[wrapper] = stateConfig;
-
-            return new StateBuilder(stateConfig);
+            var config = new StateMachineConfig<TRow>();
+            Config = config;
+            return new Builder<TRow>(config);
         }
 
-        protected readonly ref struct StateBuilder
+        public readonly ref struct Builder<TRow>
+            where TRow : class, IRow
         {
-            internal readonly StateConfig _state;
+            private readonly StateMachineConfig<TRow> _config;
 
-            internal StateBuilder(StateConfig stateConfig)
+            internal Builder(StateMachineConfig<TRow> config)
             {
-                _state = stateConfig;
+                _config = config;
             }
 
-            public TransitionBuilder AddTransition(in TState next)
+            public AnyStateBuilder AnyState => new AnyStateBuilder(_config._anyState);
+
+            public StateBuilder AddState(in TState state)
             {
-                var transition = new TransitionConfig(next);
-                _state._transitions.Add(transition);
-                return new TransitionBuilder(transition);
+                var wrapper = new KeyWrapper<TState>(state);
+
+                if (_config._states.ContainsKey(wrapper))
+                {
+                    throw new ECSException($"State {state} already exsists!");
+                }
+
+                var stateConfig = new StateConfig(state);
+                _config._states[wrapper] = stateConfig;
+
+                return new StateBuilder(stateConfig);
             }
 
-            public TransitionBuilder AddTransition(in StateBuilder next)
-                => AddTransition(next._state._state);
-
-            public StateBuilder ExecuteOnExit<TComponent>(CallbackNative<TComponent> callback)
-                where TComponent : unmanaged, IEntityComponent
+            public readonly ref struct StateBuilder
             {
-                var config = new CallbackConfigNative<TComponent>(callback);
-                _state._onExit.Add(config);
-                return this;
+                internal readonly StateConfig _state;
+
+                internal StateBuilder(StateConfig stateConfig)
+                {
+                    _state = stateConfig;
+                }
+
+                public TransitionBuilder AddTransition(in TState next)
+                {
+                    var transition = new TransitionConfig(next);
+                    _state._transitions.Add(transition);
+                    return new TransitionBuilder(transition);
+                }
+
+                public TransitionBuilder AddTransition(in StateBuilder next)
+                    => AddTransition(next._state._state);
             }
 
-            public StateBuilder ExecuteOnExit<TComponent>(CallbackManaged<TComponent> callback)
-                where TComponent : struct, IEntityViewComponent
+            public readonly ref struct TransitionBuilder
             {
-                var config = new CallbackConfigManaged<TComponent>(callback);
-                _state._onExit.Add(config);
-                return this;
+                internal readonly TransitionConfig _transition;
+
+                internal TransitionBuilder(TransitionConfig transitionConfig)
+                {
+                    _transition = transitionConfig;
+                }
             }
 
-            public StateBuilder ExecuteOnEnter<TComponent>(CallbackNative<TComponent> callback)
-                where TComponent : unmanaged, IEntityComponent
+            public readonly ref struct AnyStateBuilder
             {
-                var config = new CallbackConfigNative<TComponent>(callback);
-                _state._onEnter.Add(config);
-                return this;
-            }
+                internal readonly AnyStateConfig _state;
 
-            public StateBuilder ExecuteOnEnter<TComponent>(CallbackManaged<TComponent> callback)
-                where TComponent : struct, IEntityViewComponent
-            {
-                var config = new CallbackConfigManaged<TComponent>(callback);
-                _state._onEnter.Add(config);
-                return this;
+                internal AnyStateBuilder(AnyStateConfig stateConfig)
+                {
+                    _state = stateConfig;
+                }
+
+                public TransitionBuilder AddTransition(in TState next)
+                {
+                    var transition = new TransitionConfig(next);
+                    _state._transitions.Add(transition);
+                    return new TransitionBuilder(transition);
+                }
+
+                public TransitionBuilder AddTransition(in StateBuilder next)
+                    => AddTransition(next._state._state);
             }
         }
+    }
 
-        protected readonly ref struct TransitionBuilder
+    public static class StateMachineConfigExtensions
+    {
+        public static StateMachine<TT, TS>.Builder<TR>.TransitionBuilder AddCondition<TT, TS, TR, TC>(
+                this StateMachine<TT, TS>.Builder<TR>.TransitionBuilder builder,
+                PredicateNative<TC> preciate)
+            where TT : unmanaged, StateMachine<TT, TS>.ITag
+            where TS : unmanaged
+            where TR : class, StateMachine<TT, TS>.IRow, IEntityRow<TC>
+            where TC : unmanaged, IEntityComponent
         {
-            internal readonly TransitionConfig _transition;
-
-            internal TransitionBuilder(TransitionConfig transitionConfig)
-            {
-                _transition = transitionConfig;
-            }
-
-            public TransitionBuilder AddCondition<TComponent>(PredicateNative<TComponent> preciate)
-                where TComponent : unmanaged, IEntityComponent
-            {
-                var condition = new ConditionConfigNative<TComponent>(preciate);
-                _transition._conditions.Add(condition);
-                return this;
-            }
-
-            public TransitionBuilder AddCondition<TComponent>(PredicateManaged<TComponent> preciate)
-                where TComponent : struct, IEntityViewComponent
-            {
-                var condition = new ConditionConfigManaged<TComponent>(preciate);
-                _transition._conditions.Add(condition);
-                return this;
-            }
+            var condition = new StateMachine<TT, TS>.ConditionConfigNative<TC>(preciate);
+            builder._transition._conditions.Add(condition);
+            return builder;
         }
 
-        protected readonly ref struct AnyStateBuilder
+        public static StateMachine<TT, TS>.Builder<TR>.TransitionBuilder AddCondition<TT, TS, TR, TC>(
+                this StateMachine<TT, TS>.Builder<TR>.TransitionBuilder builder,
+                PredicateManaged<TC> preciate)
+            where TT : unmanaged, StateMachine<TT, TS>.ITag
+            where TS : unmanaged
+            where TR : class, StateMachine<TT, TS>.IRow, IEntityRow<TC>
+            where TC : struct, IEntityViewComponent
         {
-            internal readonly AnyStateConfig _state;
+            var condition = new StateMachine<TT, TS>.ConditionConfigManaged<TC>(preciate);
+            builder._transition._conditions.Add(condition);
+            return builder;
+        }
 
-            internal AnyStateBuilder(AnyStateConfig stateConfig)
-            {
-                _state = stateConfig;
-            }
+        public static StateMachine<TT, TS>.Builder<TR>.StateBuilder ExecuteOnExit<TT, TS, TR, TC>(
+                this StateMachine<TT, TS>.Builder<TR>.StateBuilder builder,
+                CallbackNative<TC> callback)
+            where TT : unmanaged, StateMachine<TT, TS>.ITag
+            where TS : unmanaged
+            where TR : class, StateMachine<TT, TS>.IRow, IEntityRow<TC>
+            where TC : unmanaged, IEntityComponent
+        {
+            var config = new StateMachine<TT, TS>.CallbackConfigNative<TC>(callback);
+            builder._state._onExit.Add(config);
+            return builder;
+        }
 
-            public TransitionBuilder AddTransition(in TState next)
-            {
-                var transition = new TransitionConfig(next);
-                _state._transitions.Add(transition);
-                return new TransitionBuilder(transition);
-            }
+        public static StateMachine<TT, TS>.Builder<TR>.StateBuilder ExecuteOnExit<TT, TS, TR, TC>(
+                this StateMachine<TT, TS>.Builder<TR>.StateBuilder builder,
+                CallbackManaged<TC> callback)
+            where TT : unmanaged, StateMachine<TT, TS>.ITag
+            where TS : unmanaged
+            where TR : class, StateMachine<TT, TS>.IRow, IEntityRow<TC>
+            where TC : struct, IEntityViewComponent
+        {
+            var config = new StateMachine<TT, TS>.CallbackConfigManaged<TC>(callback);
+            builder._state._onExit.Add(config);
+            return builder;
+        }
 
-            public TransitionBuilder AddTransition(in StateBuilder next)
-                => AddTransition(next._state._state);
+        public static StateMachine<TT, TS>.Builder<TR>.StateBuilder ExecuteOnEnter<TT, TS, TR, TC>(
+                this StateMachine<TT, TS>.Builder<TR>.StateBuilder builder,
+                CallbackNative<TC> callback)
+            where TT : unmanaged, StateMachine<TT, TS>.ITag
+            where TS : unmanaged
+            where TR : class, StateMachine<TT, TS>.IRow, IEntityRow<TC>
+            where TC : unmanaged, IEntityComponent
+        {
+            var config = new StateMachine<TT, TS>.CallbackConfigNative<TC>(callback);
+            builder._state._onEnter.Add(config);
+            return builder;
+        }
+
+        public static StateMachine<TT, TS>.Builder<TR>.StateBuilder ExecuteOnEnter<TT, TS, TR, TC>(
+                this StateMachine<TT, TS>.Builder<TR>.StateBuilder builder,
+                CallbackManaged<TC> callback)
+            where TT : unmanaged, StateMachine<TT, TS>.ITag
+            where TS : unmanaged
+            where TR : class, StateMachine<TT, TS>.IRow, IEntityRow<TC>
+            where TC : struct, IEntityViewComponent
+        {
+            var config = new StateMachine<TT, TS>.CallbackConfigManaged<TC>(callback);
+            builder._state._onEnter.Add(config);
+            return builder;
         }
     }
 }

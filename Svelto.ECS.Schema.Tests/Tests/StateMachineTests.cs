@@ -11,24 +11,29 @@ namespace Svelto.ECS.Schema.Tests
     {
         public struct RageComponent : IEntityComponent
         {
-            public int value = 0;
+            public int value;
         }
 
         public struct TriggerComponent : IEntityComponent
         {
-            public bool value = false;
+            public bool value;
         }
 
         public struct SpecialTimerComponent : IEntityComponent
         {
-            public float value = 0;
+            public float value;
         }
+
+        public interface ICharacterRow :
+            IEntityRow<RageComponent, TriggerComponent, SpecialTimerComponent>,
+            CharacterFSM.IRow
+        { }
 
         public enum CharacterState { Normal, Upset, Angry, Special, MAX }
 
-        public class CharacterFSM : StateMachine<CharacterState, CharacterFSM.Unique>
+        public class CharacterFSM : StateMachine<ICharacterRow, CharacterFSM.Tag, CharacterState>
         {
-            public struct Unique : ITag {}
+            public struct Tag : ITag {}
 
             protected override void Configure()
             {
@@ -62,12 +67,11 @@ namespace Svelto.ECS.Schema.Tests
             }
         }
 
-        public class CharacterDescriptor : GenericEntityDescriptor<
-            RageComponent, TriggerComponent, SpecialTimerComponent, CharacterFSM.Component> { }
+        public class CharacterRow : DescriptorRow<CharacterRow>, ICharacterRow { }
 
         public class TestSchema : IEntitySchema
         {
-            public readonly Table<CharacterDescriptor> Character = new Table<CharacterDescriptor>();
+            public readonly CharacterRow.Table Character = new CharacterRow.Table();
         }
 
         private readonly CharacterFSM _characterFSM;
@@ -79,7 +83,7 @@ namespace Svelto.ECS.Schema.Tests
 
         private void AssertIndexer()
         {
-            var (component, count) = _schema.Character.Entities<CharacterFSM.Component>(_entitiesDB);
+            var (component, count) = _indexedDB.Select<CharacterFSM.IRow>().From(_schema.Character).Entities();
 
             int totalCheckedCount = 0;
 

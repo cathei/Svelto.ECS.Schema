@@ -31,8 +31,8 @@ namespace Svelto.ECS.Schema
                 _groupToTable[groupID] = table;
             }
 
-            // Type must match!
-            return (IEntityTable<TR>)table;
+            // return null if type does not match
+            return table as IEntityTable<TR>;
         }
 
         internal IEntityTables<TR> FindTables<TR>()
@@ -57,7 +57,6 @@ namespace Svelto.ECS.Schema
                 _rowToTables[TypeRefWrapper<TR>.wrapper] = tables;
             }
 
-            // Type must match!
             return (IEntityTables<TR>)tables;
         }
     }

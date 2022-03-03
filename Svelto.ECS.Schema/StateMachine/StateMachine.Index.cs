@@ -15,7 +15,7 @@ namespace Svelto.ECS.Schema
         }
 
         // user should implement this Row Interface
-        public interface IRow : Component.IRow, IMemorableRow { }
+        public interface IRow : IIndexableRow<TState, Component>, IReactiveRow<IRow, Component> { }
 
         public struct Component : IIndexableComponent<TState>
         {
@@ -40,16 +40,15 @@ namespace Svelto.ECS.Schema
                 _state = state;
 
                 // propagate to fsm index and others indexers in schema
-                indexedDB.NotifyKeyUpdate(ref this, oldState, _state);
+                indexedDB.NotifyKeyUpdate<IRow, TState, Component>(ref this, oldState, _state);
             }
-
-            // this should not directly used by user
-            public interface IRow : IIndexableRow<TState, Component> { }
         }
 
         public sealed class Index : IndexBase<IRow, TState, Component> { }
 
-        IndexQuery<TState, Component> IIndexQueryable<IRow, TState, Component>.Query(in TState key)
+        public sealed class Memo : MemoBase<IRow, Component> { }
+
+        IndexQuery<IRow, TState, Component> IIndexQueryable<IRow, TState, Component>.Query(in TState key)
             => Config.Index.Query(key);
 
         ISchemaDefinitionIndex IEntityStateMachine.Index => Config.Index;

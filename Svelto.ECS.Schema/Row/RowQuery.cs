@@ -111,27 +111,27 @@ namespace Svelto.ECS.Schema
 
         // Select -> From Table -> Where
         // Table Row must implement both Selector Row and Index Row
-        // public static (IndexedDB, TR, IEntityTable<TTR>, MemoBase<TMR, TMC>)
-        //         Where<TR, TTR, TMR, TMC>(this (IndexedDB, TR, IEntityTable<TTR>) query, MemoBase<TMR, TMC> memo)
-        //     where TR : IEntityRow
-        //     where TTR : TR, TMR
-        //     where TMR : IEntityRow<TMC>
-        //     where TMC : unmanaged, IEntityComponent
-        // {
-        //     return (query.Item1, query.Item2, query.Item3, memo);
-        // }
+        public static (IndexedDB, TR, IEntityTable<TTR>, MemoBase<TMR, TMC>, TMR)
+                Where<TR, TTR, TMR, TMC>(this (IndexedDB, TR, IEntityTable<TTR>) query, MemoBase<TMR, TMC> memo)
+            where TR : IEntityRow
+            where TTR : TR, TMR
+            where TMR : IEntityRow<TMC>
+            where TMC : unmanaged, IEntityComponent, INeedEGID
+        {
+            return (query.Item1, query.Item2, query.Item3, memo, default);
+        }
 
         // Select -> From Tables -> Where
         // Tables Row must implement both Selector Row and Index Row
-        // public static (IndexedDB, TR, IEntityTables<TTR>, MemoBase<TMR, TMC>)
-        //         Where<TR, TTR, TMR, TMC>(this (IndexedDB, TR, IEntityTables<TTR>) query, MemoBase<TMR, TMC> memo)
-        //     where TR : IEntityRow
-        //     where TTR : TR, TMR
-        //     where TMR : IEntityRow<TMC>
-        //     where TMC : unmanaged, IEntityComponent
-        // {
-        //     return (query.Item1, query.Item2, query.Item3, memo);
-        // }
+        public static (IndexedDB, TR, IEntityTables<TTR>, MemoBase<TMR, TMC>, TMR)
+                Where<TR, TTR, TMR, TMC>(this (IndexedDB, TR, IEntityTables<TTR>) query, MemoBase<TMR, TMC> memo)
+            where TR : IEntityRow
+            where TTR : TR, TMR
+            where TMR : IEntityRow<TMC>
+            where TMC : unmanaged, IEntityComponent, INeedEGID
+        {
+            return (query.Item1, query.Item2, query.Item3, memo, default);
+        }
 
         // Select -> From Table -> Where -> Indices
         internal static IndexedIndices Indices<TR, TI, TIR>(

@@ -8,32 +8,35 @@ namespace Svelto.ECS.Schema
 {
     public partial class IndexedDB
     {
-        internal void AddMemo(MemoBase memo, uint entityID, in ExclusiveGroupStruct groupID)
+        internal void AddMemo<TR, TC>(MemoBase<TR, TC> memo, uint entityID, IEntityTable<TR> table)
+            where TR : IEntityRow<TC>
+            where TC : unmanaged, IEntityComponent, INeedEGID
         {
-            var mapper = entitiesDB.QueryMappedEntities<EGIDComponent>(groupID);
+            var mapper = entitiesDB.QueryMappedEntities<TC>(table.ExclusiveGroup);
 
-            ref var groupData = ref CreateOrGetMemoGroup<EGIDComponent>(memo._memoID, groupID);
+            ref var groupData = ref CreateOrGetMemoGroup<TR, TC>(memo._memoID, table);
 
             groupData.filter.Add(entityID, mapper);
         }
 
-        internal void RemoveMemo(MemoBase memo, uint entityID, in ExclusiveGroupStruct groupID)
+        internal void RemoveMemo<TR, TC>(MemoBase<TR, TC> memo, uint entityID, IEntityTable<TR> table)
+            where TR : IEntityRow<TC>
+            where TC : unmanaged, IEntityComponent, INeedEGID
         {
-            ref var groupData = ref CreateOrGetMemoGroup<EGIDComponent>(memo._memoID, groupID);
+            ref var groupData = ref CreateOrGetMemoGroup<TR, TC>(memo._memoID, table);
 
             groupData.filter.TryRemove(entityID);
         }
 
         internal void ClearMemo(MemoBase memo)
         {
-            if (memos.ContainsKey(memo._memoID))
-                memos[memo._memoID].Clear();
+            if (memos.TryGetValue(memo._memoID, out var memoData))
+                memoData.Clear();
         }
 
         internal void ClearMemos()
         {
             var values = memos.GetValues(out var count);
-
             for (int i = 0; i < count; ++i)
                 values[i].Clear();
         }
@@ -42,21 +45,18 @@ namespace Svelto.ECS.Schema
             where TR : IEntityRow<TC>
             where TC : struct, IEntityComponent
         {
-            ref var setData = ref memos.GetOrCreate(memoID, () => new IndexedKeyData<TR>
-            {
-                groups = new FasterDictionary<ExclusiveGroupStruct, IndexedGroupData<TR>>()
-            });
+            var memoData = (MemoData<TR>)memos.GetOrCreate(memoID, () => new MemoData<TR>());
 
-            if (!setData.groups.ContainsKey(table.ExclusiveGroup))
+            if (!memoData.keyData.groups.ContainsKey(table.ExclusiveGroup))
             {
-                setData.groups[table.ExclusiveGroup] = new IndexedGroupData<TR>
+                memoData.keyData.groups[table.ExclusiveGroup] = new IndexedGroupData<TR>
                 {
                     table = table,
                     filter = entitiesDB.GetFilters().CreateOrGetFilterForGroup<TC>(GenerateFilterId(), table.ExclusiveGroup)
                 };
             }
 
-            return ref setData.groups.GetValueByRef(table.ExclusiveGroup);
+            return ref memoData.keyData.groups.GetValueByRef(table.ExclusiveGroup);
         }
     }
 }

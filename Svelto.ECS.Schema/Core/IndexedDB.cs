@@ -16,8 +16,8 @@ namespace Svelto.ECS.Schema
         // indexer will be created per TComponent
         internal readonly HashSet<RefWrapperType> createdIndexerEngines = new HashSet<RefWrapperType>();
 
-        internal readonly FasterDictionary<int, IndexedData> indexers = new FasterDictionary<int, IndexedData>();
-        internal readonly FasterDictionary<int, IndexedKeyData> memos = new FasterDictionary<int, IndexedKeyData>();
+        internal readonly FasterDictionary<int, IIndexedData> indexers = new FasterDictionary<int, IIndexedData>();
+        internal readonly FasterDictionary<int, IMemoData> memos = new FasterDictionary<int, IMemoData>();
 
         // well... let's have some space for user defined filter
         private int filterIdCounter = 10000;
@@ -55,7 +55,8 @@ namespace Svelto.ECS.Schema
             }
         }
 
-        internal void NotifyKeyUpdate<TK, TC>(ref TC keyComponent, in TK oldKey, in TK newKey)
+        internal void NotifyKeyUpdate<TR, TK, TC>(ref TC keyComponent, in TK oldKey, in TK newKey)
+            where TR : IIndexableRow<TK, TC>
             where TK : unmanaged
             where TC : unmanaged, IIndexableComponent<TK>
         {
@@ -67,7 +68,7 @@ namespace Svelto.ECS.Schema
 
             foreach (var indexer in indexers)
             {
-                UpdateFilters(indexer.IndexerID, ref keyComponent, oldKey, newKey);
+                UpdateFilters<TR, TK, TC>(indexer.IndexerID, ref keyComponent, oldKey, newKey);
             }
         }
 

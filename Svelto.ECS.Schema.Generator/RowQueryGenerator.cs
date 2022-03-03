@@ -36,8 +36,9 @@ namespace Svelto.ECS.Schema.Generator
         }}
 
         // Select -> From Table -> Where -> Entities
-        public static IndexQueryTuple<{1}> Entities<TI, TIR, {1}>(
-                this (IndexedDB, IEntityRow<{1}>, IEntityTable, TI, TIR) query)
+        public static IndexQueryTuple<{1}> Entities<TR, TI, TIR, {1}>(
+                this (IndexedDB, IEntityRow<{1}>, IEntityTable<TR>, TI, TIR) query)
+            where TR : IEntityRow<{1}>
             where TI : IIndexQuery<TIR>
             where TIR : IEntityRow
 {2}
@@ -49,12 +50,12 @@ namespace Svelto.ECS.Schema.Generator
         // Select -> From Tables -> Where -> Entities
         public static IndexQueryEnumerable<TR, TIR, {1}> Entities<TR, TI, TIR, {1}>(
                 this (IndexedDB, IEntityRow<{1}>, IEntityTables<TR>, TI, TIR) query)
-            where TR : TIR
+            where TR : IEntityRow<{1}>, TIR
             where TI : IIndexQuery<TIR>
             where TIR : IEntityRow
 {2}
         {{
-            return new IndexQueryEnumerable<{1}>(
+            return new IndexQueryEnumerable<TR, TIR, {1}>(
                 query.Item1, query.Item3, query.Item4.GetIndexedKeyData(query.Item1).groups);
         }}
 ";

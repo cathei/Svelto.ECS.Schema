@@ -9,19 +9,21 @@ namespace Svelto.ECS.Schema.Tests
 {
     public class RangedTableTests : SchemaTestsBase<RangedTableTests.TestSchema>
     {
-        public class CharacterDescriptor : GenericEntityDescriptor<EGIDComponent> { }
-        public class EquipmentDescriptor : GenericEntityDescriptor<EGIDComponent> { }
-        public class ItemDescriptor : GenericEntityDescriptor<EGIDComponent> { }
+        public interface ISimpleRow : IEntityRow<EGIDComponent> {}
+
+        public class CharacterRow : DescriptorRow<CharacterRow>, ISimpleRow {}
+        public class EquipmentRow : DescriptorRow<EquipmentRow>, ISimpleRow {}
+        public class ItemRow : DescriptorRow<ItemRow>, ISimpleRow {}
 
         public class MerchantSchema : IEntitySchema
         {
-            public readonly Tables<ItemDescriptor> Items = new Tables<ItemDescriptor>(100);
+            public readonly ItemRow.Tables Items = new ItemRow.Tables(100);
         }
 
         public class TestSchema : IEntitySchema
         {
-            public readonly Tables<CharacterDescriptor> Characters = new Tables<CharacterDescriptor>(100);
-            public readonly Tables<EquipmentDescriptor> Equipments = new Tables<EquipmentDescriptor>(30);
+            public readonly CharacterRow.Tables Characters = new CharacterRow.Tables(100);
+            public readonly CharacterRow.Tables Equipments = new CharacterRow.Tables(30);
 
             public readonly Ranged<MerchantSchema> Merchants = new Ranged<MerchantSchema>(50);
         }
@@ -31,12 +33,12 @@ namespace Svelto.ECS.Schema.Tests
         {
             var schemaName = typeof(TestSchema).FullName;
 
-            Assert.Equal(ExclusiveGroup.Search($"{schemaName}.Characters.0"), _schema.Characters[0]);
-            Assert.Equal(ExclusiveGroup.Search($"{schemaName}.Characters.10"), _schema.Characters[10]);
-            Assert.Equal(ExclusiveGroup.Search($"{schemaName}.Equipments.29"), _schema.Equipments[29]);
+            Assert.Equal(ExclusiveGroup.Search($"{schemaName}.Characters.0"), _schema.Characters[0].ExclusiveGroup);
+            Assert.Equal(ExclusiveGroup.Search($"{schemaName}.Characters.10"), _schema.Characters[10].ExclusiveGroup);
+            Assert.Equal(ExclusiveGroup.Search($"{schemaName}.Equipments.29"), _schema.Equipments[29].ExclusiveGroup);
 
-            Assert.Equal(ExclusiveGroup.Search($"{schemaName}.Merchants.4.Items.3"), _schema.Merchants[4].Items[3]);
-            Assert.Equal(ExclusiveGroup.Search($"{schemaName}.Merchants.31.Items.10"), _schema.Merchants[31].Items[10]);
+            Assert.Equal(ExclusiveGroup.Search($"{schemaName}.Merchants.4.Items.3"), _schema.Merchants[4].Items[3].ExclusiveGroup);
+            Assert.Equal(ExclusiveGroup.Search($"{schemaName}.Merchants.31.Items.10"), _schema.Merchants[31].Items[10].ExclusiveGroup);
         }
     }
 }

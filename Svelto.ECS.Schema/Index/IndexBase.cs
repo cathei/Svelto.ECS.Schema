@@ -24,7 +24,7 @@ namespace Svelto.ECS.Schema.Internal
     { }
 
     public abstract class IndexBase<TR, TK, TC> : ISchemaDefinitionIndex, IIndexQueryable<TR, TK, TC>
-        where TR : IIndexableRow<TK, TC>
+        where TR : IIndexableRow<TK, TC>, IReactiveRow<TR, TC>
         where TK : unmanaged
         where TC : unmanaged, IIndexableComponent<TK>
     {
@@ -39,7 +39,7 @@ namespace Svelto.ECS.Schema.Internal
 
         void ISchemaDefinitionIndex.AddEngines(EnginesRoot enginesRoot, IndexedDB indexedDB)
         {
-            enginesRoot.AddEngine(new TableIndexingEngine<TK, TC>(indexedDB));
+            enginesRoot.AddEngine(new TableIndexingEngine<TR, TK, TC>(indexedDB));
         }
 
         public IndexQuery<TR, TK, TC> Query(in TK key)
