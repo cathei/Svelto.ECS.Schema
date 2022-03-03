@@ -6,13 +6,13 @@ namespace Svelto.ECS.Schema.Tests
 {
     public class IndexingTests : SchemaTestsBase<IndexingTests.TestSchema>
     {
-        public class ItemOwner : IIndexedRow<int, ItemOwner.Unique>
+        public interface IItemOwnerRow : IIndexedRow<IItemOwnerRow.Tag, int>
         {
-            public struct Unique : IUnique {}
+            public struct Tag : ITag {}
         }
 
         // rows
-        public class CharacterRow : IEntityRow<EGIDComponent> {}
+        public class CharacterRow : DescriptorRow<CharacterRow>, IEntityRow<EGIDComponent> {}
 
         public class ItemRow : IEntityRow<ItemOwner.Component> {}
 

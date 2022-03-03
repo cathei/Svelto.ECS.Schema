@@ -4,7 +4,7 @@ using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema
 {
-    public partial class StateMachine<TTag, TState>
+    public partial class StateMachine<TState, TTag>
     {
         void IEntityStateMachine.AddEngines(EnginesRoot enginesRoot, IndexedDB indexedDB)
         {
@@ -20,6 +20,7 @@ namespace Svelto.ECS.Schema
 
         internal interface IStateMachineConfig
         {
+            Index Index { get; }
             void Process(IndexedDB indexedDB);
         }
 
@@ -31,6 +32,8 @@ namespace Svelto.ECS.Schema
 
             // this will manage filters for state machine
             internal readonly Index _index;
+
+            public Index Index => _index;
 
             public StateMachineConfig()
             {

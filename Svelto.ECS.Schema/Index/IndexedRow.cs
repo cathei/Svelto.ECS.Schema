@@ -5,13 +5,13 @@ namespace Svelto.ECS.Schema.Definition
     /// <summary>
     /// IndexTag generates Index and Component pair.
     /// </summary>
-    /// <typeparam name="TTag">Type to ensure uniqueness. It can be done with TSelf, but IsUnmanagedEx is on the way</typeparam>
     /// <typeparam name="TKey">The key type you'd like component to hold</typeparam>
-    public interface IIndexedRow<TTag, TKey> :
-            IIndexableRow<TKey, IIndexedRow<TTag, TKey>.Component>,
-            IReactiveRow<IIndexedRow<TTag, TKey>, IIndexedRow<TTag, TKey>.Component>
-        where TTag : unmanaged, IIndexedRow<TTag, TKey>.ITag
+    /// <typeparam name="TTag">Type to ensure uniqueness. It can be done with TSelf, but IsUnmanagedEx is on the way</typeparam>
+    public interface IIndexedRow<TKey, TTag> :
+            IIndexableRow<TKey, IIndexedRow<TKey, TTag>.Component>,
+            IReactiveRow<IIndexedRow<TKey, TTag>, IIndexedRow<TKey, TTag>.Component>
         where TKey : unmanaged
+        where TTag : unmanaged, IIndexedRow<TKey, TTag>.ITag
     {
         public interface ITag {}
 
@@ -36,12 +36,12 @@ namespace Svelto.ECS.Schema.Definition
                 _value = value;
 
                 // propagate to indexes
-                indexedDB.NotifyKeyUpdate<IIndexedRow<TTag, TKey>, TKey, Component>(ref this, oldValue, value);
+                indexedDB.NotifyKeyUpdate<IIndexedRow<TKey, TTag>, TKey, Component>(ref this, oldValue, value);
             }
         }
 
-        public sealed class Index : IndexBase<IIndexedRow<TTag, TKey>, TKey, Component> { }
+        public sealed class Index : IndexBase<IIndexedRow<TKey, TTag>, TKey, Component> { }
 
-        public sealed class Memo : MemoBase<IIndexedRow<TTag, TKey>, Component> { }
+        public sealed class Memo : MemoBase<IIndexedRow<TKey, TTag>, Component> { }
     }
 }

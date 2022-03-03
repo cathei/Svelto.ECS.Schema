@@ -4,7 +4,7 @@ using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema
 {
-    public partial class StateMachine<TTag, TState>
+    public partial class StateMachine<TState, TTag>
     {
         // 'available' has to be default (0)
         internal enum TransitionState

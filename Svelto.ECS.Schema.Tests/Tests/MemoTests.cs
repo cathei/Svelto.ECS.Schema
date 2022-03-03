@@ -9,29 +9,33 @@ namespace Svelto.ECS.Schema.Tests
 {
     public class MemoTests : SchemaTestsBase<MemoTests.TestSchema>
     {
-        public class CharacterController : IIndexedRow<int, CharacterController.Unique>
-        {
-            public struct Unique : IUnique {}
-        }
+        public enum CharacterState { Happy, Sad, Angry, MAX };
 
-        public class CharacterState : IIndexedRow<CharacterState.Type, CharacterState.Unique>
-        {
-            public enum Type { Happy, Sad, Angry, MAX }
+        public interface IIndexedController : IIndexedRow<int, IIndexedController.Tag>
+        { public struct Tag : ITag {} }
 
-            public struct Unique : IUnique {}
-        }
+        public interface IIndexedState : IIndexedRow<CharacterState, IIndexedState.Tag>
+        { public struct Tag : ITag {} }
 
-        public class CharacterDescriptor : GenericEntityDescriptor<
-            EGIDComponent, CharacterController.Component, CharacterState.Component> { }
+        public interface IControllerStateRow : IEntityRow<
+            IIndexedController.Component, IIndexedState.Component>
+        { }
+
+        public class CharacterRow : DescriptorRow<CharacterRow>,
+            IMemorableRow,
+            IIndexedController,
+            IIndexedState,
+            IControllerStateRow
+        { }
 
         public class TestSchema : IEntitySchema
         {
-            public readonly Tables<CharacterDescriptor> Characters = new Tables<CharacterDescriptor>(5);
+            public readonly CharacterRow.Tables Characters = new CharacterRow.Tables(5);
 
-            public readonly CharacterController.Index CharacterByController = new CharacterController.Index();
-            public readonly CharacterState.Index CharacterByState = new CharacterState.Index();
+            public readonly IIndexedController.Index Controller = new IIndexedController.Index();
+            public readonly IIndexedState.Index State = new IIndexedState.Index();
 
-            public readonly Memo<EGIDComponent> Memo = new Memo<EGIDComponent>();
+            public readonly Memo<CharacterRow> Memo = new Memo<CharacterRow>();
         }
 
         [Fact]
@@ -41,26 +45,26 @@ namespace Svelto.ECS.Schema.Tests
             {
                 var builder = _schema.Characters[i % _schema.Characters.Range].Build(_factory, (uint)i);
 
-                builder.Init(new CharacterController.Component(i / 10));
-                builder.Init(new CharacterState.Component((CharacterState.Type)(i % (int)CharacterState.Type.MAX)));
+                builder.Init(new IIndexedController.Component(i / 10));
+                builder.Init(new IIndexedState.Component((CharacterState)(i % (int)CharacterState.MAX)));
             }
 
             _submissionScheduler.SubmitEntities();
 
-            _schema.Memo.Clear(_indexedDB);
+            _indexedDB.Memo(_schema.Memo).Clear();
 
             // 30 entities
-            _schema.CharacterByController.Where(0).Union(_indexedDB, _schema.Memo);
-            _schema.CharacterByController.Where(3).Union(_indexedDB, _schema.Memo);
-            _schema.CharacterByController.Where(6).Union(_indexedDB, _schema.Memo);
+            _indexedDB.Memo(_schema.Memo).Union(_schema.Controller, 0);
+            _indexedDB.Memo(_schema.Memo).Union(_schema.Controller, 3);
+            _indexedDB.Memo(_schema.Memo).Union(_schema.Controller, 6);
 
             // 33 entities
-            _schema.CharacterByState.Where(CharacterState.Type.Happy).Union(_indexedDB, _schema.Memo);
+            _indexedDB.Memo(_schema.Memo).Union(_schema.State, CharacterState.Happy);
 
             int entityCount = 0;
 
-            foreach (var ((controller, state, count), indices, group) in
-                _schema.Memo.Entities<CharacterController.Component, CharacterState.Component>(_indexedDB))
+            foreach (var ((controller, state, _), indices, _) in _indexedDB
+                .Select<IControllerStateRow>().From(_schema.Characters).Where(_schema.Memo).Entities())
             {
                 foreach (int i in indices)
                 {
@@ -69,8 +73,7 @@ namespace Svelto.ECS.Schema.Tests
                         controller[i].Value == 3 ||
                         controller[i].Value == 6;
 
-                    bool stateMatch =
-                        state[i].Value == CharacterState.Type.Happy;
+                    bool stateMatch = state[i].Value == CharacterState.Happy;
 
                     Assert.True(controllerMatch || stateMatch);
 
@@ -89,26 +92,26 @@ namespace Svelto.ECS.Schema.Tests
             {
                 var builder = _schema.Characters[i % _schema.Characters.Range].Build(_factory, (uint)i);
 
-                builder.Init(new CharacterController.Component(i / 10));
-                builder.Init(new CharacterState.Component((CharacterState.Type)(i % (int)CharacterState.Type.MAX)));
+                builder.Init(new IIndexedController.Component(i / 10));
+                builder.Init(new IIndexedState.Component((CharacterState)(i % (int)CharacterState.MAX)));
             }
 
             _submissionScheduler.SubmitEntities();
 
-            _schema.Memo.Clear(_indexedDB);
+            _indexedDB.Memo(_schema.Memo).Clear();
 
             // 30 entities
-            _schema.CharacterByController.Where(0).Union(_indexedDB, _schema.Memo);
-            _schema.CharacterByController.Where(3).Union(_indexedDB, _schema.Memo);
-            _schema.CharacterByController.Where(6).Union(_indexedDB, _schema.Memo);
+            _indexedDB.Memo(_schema.Memo).Union(_schema.Controller, 0);
+            _indexedDB.Memo(_schema.Memo).Union(_schema.Controller, 3);
+            _indexedDB.Memo(_schema.Memo).Union(_schema.Controller, 6);
 
             // 33 entities
-            _schema.CharacterByState.Where(CharacterState.Type.Happy).Intersect(_indexedDB, _schema.Memo);
+            _indexedDB.Memo(_schema.Memo).Intersect(_schema.State, CharacterState.Happy);
 
             int entityCount = 0;
 
-            foreach (var ((controller, state, _), indices, _) in
-                _schema.Memo.Entities<CharacterController.Component, CharacterState.Component>(_indexedDB))
+            foreach (var ((controller, state, _), indices, _) in _indexedDB
+                .Select<IControllerStateRow>().From(_schema.Characters).Where(_schema.Memo).Entities())
             {
                 foreach (int i in indices)
                 {
@@ -117,8 +120,7 @@ namespace Svelto.ECS.Schema.Tests
                         controller[i].Value == 3 ||
                         controller[i].Value == 6;
 
-                    bool stateMatch =
-                        state[i].Value == CharacterState.Type.Happy;
+                    bool stateMatch = state[i].Value == CharacterState.Happy;
 
                     Assert.True(controllerMatch && stateMatch);
 

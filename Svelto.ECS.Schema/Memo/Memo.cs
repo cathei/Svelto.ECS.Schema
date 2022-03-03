@@ -23,51 +23,51 @@ namespace Svelto.ECS.Schema.Internal
         internal MemoBase() { }
     }
 
-    public class MemoBase<TR, TC> : MemoBase, IIndexQuery<TR>
-        where TR : IEntityRow<TC>
-        where TC : unmanaged, IEntityComponent, INeedEGID
+    public class MemoBase<TRow, TComponent> : MemoBase, IIndexQuery<TRow>
+        where TRow : IEntityRow<TComponent>
+        where TComponent : unmanaged, IEntityComponent, INeedEGID
     {
         internal MemoBase() { }
 
-        public void Set<TQR, TQK, TQC>(IndexedDB indexedDB, IIndexQueryable<TQR, TQK, TQC> index, in TQK key)
-            where TQR : class, IIndexableRow<TQK, TQC>, TR
-            where TQK : unmanaged
-            where TQC : unmanaged, IIndexableComponent<TQK>
-        {
-            Set<IndexQuery<TQR, TQK, TQC>, TQR>(indexedDB, index.Query(key));
-        }
+        // public void Set<TQR, TQK, TQC>(IndexedDB indexedDB, IIndexQueryable<TQR, TQK, TQC> index, in TQK key)
+        //     where TQR : class, IIndexableRow<TQK, TQC>, TRow
+        //     where TQK : unmanaged
+        //     where TQC : unmanaged, IIndexableComponent<TQK>
+        // {
+        //     Set<IndexQuery<TQR, TQK, TQC>, TQR>(indexedDB, index.Query(key));
+        // }
 
-        public void Add(IndexedDB indexedDB, ref TC component)
-        {
-            indexedDB.AddMemo(this, component.ID.entityID, indexedDB.FindTable<TR>(component.ID.groupID));
-        }
+        // public void Add(IndexedDB indexedDB, ref TC component)
+        // {
+        //     indexedDB.AddMemo(this, component.ID.entityID, indexedDB.FindTable<TR>(component.ID.groupID));
+        // }
 
-        public void Remove(IndexedDB indexedDB, ref TC component)
-        {
-            indexedDB.RemoveMemo(this, component.ID.entityID, indexedDB.FindTable<TR>(component.ID.groupID));
-        }
+        // public void Remove(IndexedDB indexedDB, ref TC component)
+        // {
+        //     indexedDB.RemoveMemo(this, component.ID.entityID, indexedDB.FindTable<TR>(component.ID.groupID));
+        // }
 
-        public void Clear(IndexedDB indexedDB)
-        {
-            indexedDB.ClearMemo(this);
-        }
+        // public void Clear(IndexedDB indexedDB)
+        // {
+        //     indexedDB.ClearMemo(this);
+        // }
 
-        public void Set(IndexedDB indexedDB, MemoBase other)
-        {
-            Set(indexedDB, other);
-        }
+        // public void Set(IndexedDB indexedDB, MemoBase other)
+        // {
+        //     Set(indexedDB, other);
+        // }
 
         internal void Set<TQ, TQR>(IndexedDB indexedDB, TQ query)
             where TQ : IIndexQuery<TQR>
-            where TQR : class, TR
+            where TQR : IEntityRow
         {
-            Clear(indexedDB);
+            indexedDB.ClearMemo(this);
             Union<TQ, TQR>(indexedDB, query);
         }
 
         internal void Union<TQ, TQR>(IndexedDB indexedDB, TQ query)
             where TQ : IIndexQuery<TQR>
-            where TQR : class, TR
+            where TQR : IEntityRow
         {
             var queryData = query.GetIndexedKeyData(indexedDB).groups;
 
@@ -85,12 +85,18 @@ namespace Svelto.ECS.Schema.Internal
                 if (queryGroupData.filter.filteredIndices.Count() == 0)
                     continue;
 
-                var mapper = indexedDB.entitiesDB.QueryMappedEntities<TC>(queryGroupData.table.ExclusiveGroup);
+                var table = queryGroupData.table as IEntityTable<TRow>;
+
+                // type mismatch - noathing to add
+                if (table == null)
+                    continue;
+
+                var mapper = indexedDB.entitiesDB.QueryMappedEntities<TComponent>(table.ExclusiveGroup);
 
                 // TODO: change group to table!
-                var (components, _) = indexedDB.Select<TQR>().From(queryGroupData.table).Entities();
+                var (components, _) = indexedDB.Select<TRow>().From(table).Entities();
 
-                ref var originalGroupData = ref indexedDB.CreateOrGetMemoGroup<TR, TC>(_memoID, queryGroupData.table);
+                ref var originalGroupData = ref indexedDB.CreateOrGetMemoGroup<TRow, TComponent>(_memoID, table);
 
                 foreach (var i in new IndexedIndices(queryGroupData.filter.filteredIndices))
                     originalGroupData.filter.Add(components[i].ID.entityID, mapper);
@@ -99,7 +105,7 @@ namespace Svelto.ECS.Schema.Internal
 
         internal void Intersect<TQ, TQR>(IndexedDB indexedDB, TQ query)
             where TQ : IIndexQuery<TQR>
-            where TQR : TR
+            where TQR : IEntityRow
         {
             var originalData = GetIndexedKeyData(indexedDB).groups;
 
@@ -112,7 +118,7 @@ namespace Svelto.ECS.Schema.Internal
             // if empty nothing to intersect
             if (queryData == null)
             {
-                Clear(indexedDB);
+                indexedDB.ClearMemo(this);
                 return;
             }
 
@@ -134,8 +140,10 @@ namespace Svelto.ECS.Schema.Internal
                     continue;
                 }
 
+                var table = originalGroupData.table;
+
                 // TODO: change group to table!
-                var (components, _) = indexedDB.Select<TQR>().From(queryGroupData.table).Entities();
+                var (components, _) = indexedDB.Select<TRow>().From(table).Entities();
 
                 // ugh I have to check what to delete
                 // since I cannot change filter while iteration
@@ -155,14 +163,14 @@ namespace Svelto.ECS.Schema.Internal
             }
         }
 
-        private IndexedKeyData<TR> GetIndexedKeyData(IndexedDB indexedDB)
+        private IndexedKeyData<TRow> GetIndexedKeyData(IndexedDB indexedDB)
         {
             if (indexedDB.memos.TryGetValue(_memoID, out var result))
-                return ((MemoData<TR>)result).keyData;
+                return ((MemoData<TRow>)result).keyData;
             return default;
         }
 
-        IndexedKeyData<TR> IIndexQuery<TR>.GetIndexedKeyData(IndexedDB indexedDB)
+        IndexedKeyData<TRow> IIndexQuery<TRow>.GetIndexedKeyData(IndexedDB indexedDB)
             => GetIndexedKeyData(indexedDB);
     }
 }
