@@ -9,7 +9,7 @@ namespace Svelto.ECS.Schema
         void IEntityStateMachine.AddEngines(EnginesRoot enginesRoot, IndexedDB indexedDB)
         {
             // this is required to handle added or removed entities
-            enginesRoot.AddEngine(new TableIndexingEngine<IRow, TState, Component>(indexedDB));
+            enginesRoot.AddEngine(new TableIndexingEngine<IIndexedRow, TState, Component>(indexedDB));
 
             // this is required to validate and change state
             Engine = new TransitionEngine(indexedDB);
@@ -25,7 +25,7 @@ namespace Svelto.ECS.Schema
         }
 
         internal sealed class StateMachineConfig<TRow> : IStateMachineConfig
-            where TRow : class, IRow
+            where TRow : class, IIndexedRow
         {
             internal readonly FasterDictionary<KeyWrapper<TState>, StateConfig> _states;
             internal readonly AnyStateConfig _anyState;
@@ -54,8 +54,8 @@ namespace Svelto.ECS.Schema
                 // maybe not needed with new filter system
                 for (int i = 0; i < stateCount; ++i)
                 {
-                    states[i]._exitCandidates.Clear(indexedDB);
-                    states[i]._enterCandidates.Clear(indexedDB);
+                    indexedDB.Memo(states[i]._exitCandidates).Clear();
+                    indexedDB.Memo(states[i]._enterCandidates).Clear();
                 }
 
                 foreach (var ((component, count), table) in

@@ -39,7 +39,7 @@ namespace Svelto.ECS.Schema.Tests
         {
             for (int i = 0; i < 99; ++i)
             {
-                var builder = _schema.Characters[i % _schema.Characters.Range].Build(_factory, (uint)i);
+                var builder = _factory.Build(_schema.Characters[i % _schema.Characters.Range], (uint)i);
 
                 builder.Init(new IIndexedController.Component(i / 10));
                 builder.Init(new IIndexedState.Component((CharacterState)(i % (int)CharacterState.MAX)));
@@ -86,7 +86,7 @@ namespace Svelto.ECS.Schema.Tests
         {
             for (int i = 0; i < 99; ++i)
             {
-                var builder = _schema.Characters[i % _schema.Characters.Range].Build(_factory, (uint)i);
+                var builder = _factory.Build(_schema.Characters[i % _schema.Characters.Range], (uint)i);
 
                 builder.Init(new IIndexedController.Component(i / 10));
                 builder.Init(new IIndexedState.Component((CharacterState)(i % (int)CharacterState.MAX)));

@@ -69,19 +69,5 @@ namespace Svelto.ECS.Schema
 
             return indexedDB;
         }
-
-        public static void Remove<T>(this T schema, IEntityFunctions functions, EGID egid)
-            where T : class, IEntitySchema, new()
-        {
-            var metadata = EntitySchemaTemplate<T>.Metadata;
-
-            if (metadata == null)
-                throw new ECSException($"Schema {typeof(T).Name} is not root schema!");
-
-            if (!metadata.groupToTable.TryGetValue(egid.groupID, out var tableNode))
-                throw new ECSException("Group ID is not found on this schema!");
-
-            tableNode.table.Remove(functions, egid.entityID);
-        }
     }
 }

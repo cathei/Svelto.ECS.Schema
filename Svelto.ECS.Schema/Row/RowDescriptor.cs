@@ -83,6 +83,11 @@ namespace Svelto.ECS.Schema
                 _mapper = mapper;
             }
 
+            internal Tables(TIndex range, Func<TIndex, int> mapper) : base(mapper(range))
+            {
+                _mapper = mapper;
+            }
+
             public IEntityTable<TSelf> this[TIndex index] => _tables[_mapper(index)];
             public IEntityTable<TSelf> Get(TIndex index) => _tables[_mapper(index)];
         }

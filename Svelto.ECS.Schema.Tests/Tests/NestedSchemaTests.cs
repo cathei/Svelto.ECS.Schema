@@ -9,8 +9,10 @@ namespace Svelto.ECS.Schema.Tests
 {
     public class NestedSchemaTests : SchemaTestsBase<NestedSchemaTests.TestSchema>
     {
-        public class DoofusEntityDescriptor : GenericEntityDescriptor<EGIDComponent> { }
-        public class FoodEntityDescriptor : GenericEntityDescriptor<EGIDComponent> { }
+        public interface IHaveEGID : IEntityRow<EGIDComponent> { }
+
+        public class DoofusRow : DescriptorRow<DoofusRow>, IHaveEGID { }
+        public class FoodRow : DescriptorRow<FoodRow>, IHaveEGID { }
 
         public enum TeamColor { Red, Blue, Yellow, Green, MAX }
         public enum FoodType { Rotten, Good, MAX }
@@ -18,26 +20,26 @@ namespace Svelto.ECS.Schema.Tests
 
         public class StateSchema : IEntitySchema
         {
-            public readonly Table<DoofusEntityDescriptor> Doofus = new Table<DoofusEntityDescriptor>();
+            public readonly DoofusRow.Table Doofus = new DoofusRow.Table();
 
-            public readonly Tables<FoodEntityDescriptor, FoodType> Food =
-                new Tables<FoodEntityDescriptor, FoodType>((int)FoodType.MAX, x => (int)x);
+            public readonly FoodRow.Tables<FoodType> Food =
+                new FoodRow.Tables<FoodType>(FoodType.MAX, x => (int)x);
         }
 
         public class TeamSchema : IEntitySchema
         {
             public readonly Ranged<StateSchema, StateType> State =
-                new Ranged<StateSchema, StateType>((int)StateType.MAX, x => (int)x);
+                new Ranged<StateSchema, StateType>(StateType.MAX, x => (int)x);
         }
 
         public class TestSchema : IEntitySchema
         {
             public readonly Ranged<TeamSchema, TeamColor> Team =
-                new Ranged<TeamSchema, TeamColor>((int)TeamColor.MAX, x => (int)x);
+                new Ranged<TeamSchema, TeamColor>(TeamColor.MAX, x => (int)x);
 
             public readonly StateSchema Dead = new StateSchema();
 
-            public readonly Tables<DoofusEntityDescriptor> EatingDoofuses;
+            public readonly EntityTables<DoofusRow> EatingDoofuses;
 
             public TestSchema()
             {
@@ -64,10 +66,10 @@ namespace Svelto.ECS.Schema.Tests
             Assert.Equal(metadata.root, metadata.groupToTable[_schema.Team[TeamColor.Red].State[StateType.Eating].Doofus].parent.parent.parent);
 
             Assert.Equal(metadata.groupToTable[_schema.Team[TeamColor.Red].State[StateType.Eating].Doofus].parent,
-                metadata.groupToTable[_schema.Team[TeamColor.Red].State[StateType.Eating].Food[FoodType.Good]].parent);
+                metadata.groupToTable[_schema.Team[TeamColor.Red].State[StateType.Eating].Food[FoodType.Good].ExclusiveGroup].parent);
 
             Assert.NotEqual(metadata.groupToTable[_schema.Team[TeamColor.Red].State[StateType.Eating].Doofus].parent,
-                metadata.groupToTable[_schema.Team[TeamColor.Blue].State[StateType.Eating].Food[FoodType.Good]].parent);
+                metadata.groupToTable[_schema.Team[TeamColor.Blue].State[StateType.Eating].Food[FoodType.Good].ExclusiveGroup].parent);
 
             Assert.Null(metadata.root.indexers);
             Assert.Equal(0, metadata.indexersToGenerateEngine.count);
@@ -79,11 +81,11 @@ namespace Svelto.ECS.Schema.Tests
             var schemaName = typeof(TestSchema).FullName;
 
             Assert.Equal(ExclusiveGroup.Search($"{schemaName}.Dead.Doofus"), _schema.Dead.Doofus);
-            Assert.Equal(ExclusiveGroup.Search($"{schemaName}.Dead.Food.0"), _schema.Dead.Food[FoodType.Rotten]);
-            Assert.Equal(ExclusiveGroup.Search($"{schemaName}.Dead.Food.1"), _schema.Dead.Food[FoodType.Good]);
+            Assert.Equal(ExclusiveGroup.Search($"{schemaName}.Dead.Food.0"), _schema.Dead.Food[FoodType.Rotten].ExclusiveGroup);
+            Assert.Equal(ExclusiveGroup.Search($"{schemaName}.Dead.Food.1"), _schema.Dead.Food[FoodType.Good].ExclusiveGroup);
 
-            Assert.Equal(ExclusiveGroup.Search($"{schemaName}.Team.0.State.0.Food.0"), _schema.Team[TeamColor.Red].State[StateType.Eating].Food[FoodType.Rotten]);
-            Assert.Equal(ExclusiveGroup.Search($"{schemaName}.Team.2.State.1.Food.1"), _schema.Team[TeamColor.Yellow].State[StateType.NonEating].Food[FoodType.Good]);
+            Assert.Equal(ExclusiveGroup.Search($"{schemaName}.Team.0.State.0.Food.0"), _schema.Team[TeamColor.Red].State[StateType.Eating].Food[FoodType.Rotten].ExclusiveGroup);
+            Assert.Equal(ExclusiveGroup.Search($"{schemaName}.Team.2.State.1.Food.1"), _schema.Team[TeamColor.Yellow].State[StateType.NonEating].Food[FoodType.Good].ExclusiveGroup);
         }
     }
 }

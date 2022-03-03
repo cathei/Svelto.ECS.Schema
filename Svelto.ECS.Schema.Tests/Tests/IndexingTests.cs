@@ -55,13 +55,13 @@ namespace Svelto.ECS.Schema.Tests
 
             for (int i = 0; i < 10; ++i)
             {
-                var itemBuilder = _schema.Players[0].Item.Build(_factory, itemIdCounter++);
+                var itemBuilder = _factory.Build(_schema.Players[0].Item, itemIdCounter++);
                 itemBuilder.Init(new IIndexedItemOwner.Component(0));
             }
 
             for (int i = 0; i < 10; ++i)
             {
-                var itemBuilder = _schema.Players[1].Item.Build(_factory, itemIdCounter++);
+                var itemBuilder = _factory.Build(_schema.Players[1].Item, itemIdCounter++);
                 itemBuilder.Init(new IIndexedItemOwner.Component(0));
             }
 

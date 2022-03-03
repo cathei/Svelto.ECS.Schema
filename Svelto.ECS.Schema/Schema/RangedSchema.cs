@@ -59,6 +59,11 @@ namespace Svelto.ECS.Schema
                 _mapper = mapper;
             }
 
+            internal Ranged(TIndex range, Func<TIndex, int> mapper) : base(mapper(range))
+            {
+                _mapper = mapper;
+            }
+
             public TablesBuilder<TRow> Combine<TRow>(
                     IEnumerable<TIndex> indexes, Func<TSchema, IEntityTablesBuilder<TRow>> selector)
                 where TRow : IEntityRow

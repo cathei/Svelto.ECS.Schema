@@ -30,7 +30,7 @@ namespace Svelto.ECS.Schema
     /// <typeparam name="TState">Value type representing a state. Usually enum type.</typeparam>
     /// <typeparam name="TTag">Type to ensure uniqueness. It can be done with TSelf, but IsUnmanagedEx is on the way</typeparam>
     public abstract partial class StateMachine<TState, TTag> : IEntityStateMachine,
-            IIndexQueryable<StateMachine<TState, TTag>.IRow, TState, StateMachine<TState, TTag>.Component>
+            IIndexQueryable<StateMachine<TState, TTag>.IIndexedRow, TState, StateMachine<TState, TTag>.Component>
         where TState : unmanaged
         where TTag : unmanaged, StateMachine<TState, TTag>.ITag
     {
@@ -196,7 +196,7 @@ namespace Svelto.ECS.Schema
                     IndexedDB indexedDB, NB<Component> component, in TEnum indices, in ExclusiveGroupStruct groupID)
                 where TEnum : struct, IIndicesEnumerable<TIter>
                 where TIter : struct, IIndicesEnumerator
-                where TR : class, IRow
+                where TR : class, IIndexedRow
             {
                 // rather loop through indexes multiple times.
                 // should be better than fetching buffers per entity.
@@ -254,12 +254,12 @@ namespace Svelto.ECS.Schema
 
             internal void Evaluate<TR>(StateMachineConfig<TR> config, IndexedDB indexedDB,
                     NB<Component> component, IEntityTable<TR> table)
-                where TR : class, IRow
+                where TR : class, IIndexedRow
             {
                 // var indices = Config.Index.Where(_state).From(groupID).Indices(indexedDB);
 
                 var indices = indexedDB
-                    .Select<IRow>().From(table).Where(config._index, _state).Indices();
+                    .Select<IIndexedRow>().From(table).Where(config._index, _state).Indices();
 
                 // higher priority if added first
                 for (int i = 0; i < _transitions.count; ++i)
@@ -269,13 +269,13 @@ namespace Svelto.ECS.Schema
                 }
             }
 
-            internal void ProcessExit(IndexedDB indexedDB, IEntityTable<IRow> table)
+            internal void ProcessExit(IndexedDB indexedDB, IEntityTable<IIndexedRow> table)
             {
                 if (_onExit.count == 0)
                     return;
 
                 var indices = indexedDB
-                    .Select<IRow>().From(table).Where(_exitCandidates).Indices();
+                    .Select<IIndexedRow>().From(table).Where(_exitCandidates).Indices();
 
                 if (indices.Count() == 0)
                     return;
@@ -286,10 +286,10 @@ namespace Svelto.ECS.Schema
                 }
             }
 
-            internal void ProcessEnter(IndexedDB indexedDB, NB<Component> component, IEntityTable<IRow> table)
+            internal void ProcessEnter(IndexedDB indexedDB, NB<Component> component, IEntityTable<IIndexedRow> table)
             {
                 var indices = indexedDB
-                    .Select<IRow>().From(table).Where(_enterCandidates).Indices();
+                    .Select<IIndexedRow>().From(table).Where(_enterCandidates).Indices();
 
                 if (indices.Count() == 0)
                     return;
@@ -320,7 +320,7 @@ namespace Svelto.ECS.Schema
 
             internal void Evaluate<TR>(StateMachineConfig<TR> config, IndexedDB indexedDB,
                     NB<Component> state, int count, IEntityTable<TR> table)
-                where TR : class, IRow
+                where TR : class, IIndexedRow
             {
                 var indices = new RangeIndiceEnumerable(count);
 
