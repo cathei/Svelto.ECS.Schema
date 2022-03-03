@@ -9,20 +9,20 @@ namespace Svelto.ECS.Schema.Tests
     // just to make sure it does not take excessive memory
     public class MemoryTests : SchemaTestsBase<MemoryTests.TestSchema>
     {
-        public class ItemOwner : IIndexedRow<int, ItemOwner.Unique>
-        {
-            public struct Unique : IUnique {}
-        }
+        public interface IHaveEGID : IEntityRow<EGIDComponent> { }
 
-        public class CharacterDescriptor : GenericEntityDescriptor<EGIDComponent> { }
-        public class ItemDescriptor : GenericEntityDescriptor<ItemOwner.Component> { }
+        public interface IIndexdItemOwner : IIndexedRow<int, IIndexdItemOwner.Tag>
+        { public struct Tag : ITag { } }
+
+        public class CharacterRow : DescriptorRow<CharacterRow>, IHaveEGID { }
+        public class ItemRow : DescriptorRow<ItemRow>, IIndexdItemOwner { }
 
         public class TestSchema : IEntitySchema
         {
-            public readonly Table<CharacterDescriptor> Character = new Table<CharacterDescriptor>();
-            public readonly Tables<ItemDescriptor> Items = new Tables<ItemDescriptor>(10);
+            public readonly CharacterRow.Table Character = new CharacterRow.Table();
+            public readonly ItemRow.Tables Items = new ItemRow.Tables(10);
 
-            public readonly ItemOwner.Index ItemsByOwner = new ItemOwner.Index();
+            public readonly IIndexdItemOwner.Index ItemOwner = new IIndexdItemOwner.Index();
         }
 
         public MemoryTests() : base()

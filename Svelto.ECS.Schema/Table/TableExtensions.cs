@@ -18,84 +18,89 @@ namespace Svelto.ECS.Schema
         {
             return new FasterList<T>(enumerable.ToArray());
         }
+
+        public static void Build<TRow>(this IEntityFactory factory, IEntityTable<TRow> table,
+                uint entityID, IEnumerable<object> implementors = null)
+            where TRow : DescriptorRow<TRow>
+        {
+            factory.BuildEntity<DescriptorRow<TRow>.Descriptor>(entityID, table.ExclusiveGroup, implementors);
+        }
+
+        /// <summary>
+        /// Query entrypoint Move -> To
+        /// </summary>
+        public static (IEntityFunctions, IEntityTable<TRow>, uint) Move<TRow>(
+                this IEntityFunctions functions, IEntityTable<TRow> table, uint entityID)
+            where TRow : DescriptorRow<TRow>
+        {
+            return (functions, table, entityID);
+        }
+
+        /// <summary>
+        /// Move(fromGroup, fromID).To(toGroup, toID)
+        /// </summary>
+        public static void To<TRow>(this (IEntityFunctions, IEntityTable<TRow>, uint) query,
+                IEntityTable<TRow> table, uint entityID)
+            where TRow : DescriptorRow<TRow>
+        {
+            query.Item1.SwapEntityGroup<DescriptorRow<TRow>.Descriptor>(
+                new EGID(query.Item3, query.Item2.ExclusiveGroup),
+                new EGID(entityID, table.ExclusiveGroup));
+        }
+
+        /// <summary>
+        /// Move(fromGroup, fromID).To(toGroup)
+        /// no entity ID means it will use previous entity ID
+        /// </summary>
+        public static void To<TRow>(this (IEntityFunctions, IEntityTable<TRow>, uint) query,
+                IEntityTable<TRow> table)
+            where TRow : DescriptorRow<TRow>
+        {
+            query.Item1.SwapEntityGroup<DescriptorRow<TRow>.Descriptor>(
+                query.Item3, query.Item2.ExclusiveGroup, table.ExclusiveGroup);
+        }
+
+        /// <summary>
+        /// Query entrypoint Move -> To
+        /// No entity id means it will move whole group
+        /// </summary>
+        public static (IEntityFunctions, IEntityTable<TRow>) MoveAll<TRow>(
+                this IEntityFunctions functions, IEntityTable<TRow> table)
+            where TRow : DescriptorRow<TRow>
+        {
+            return (functions, table);
+        }
+
+        /// <summary>
+        /// MoveAll(fromGroup).To(toGroup)
+        /// no entity ID means it will use previous entity ID
+        /// </summary>
+        public static void To<TRow>(this (IEntityFunctions, IEntityTable<TRow>) query,
+                IEntityTable<TRow> table)
+            where TRow : DescriptorRow<TRow>
+        {
+            query.Item1.SwapEntitiesInGroup<DescriptorRow<TRow>.Descriptor>(
+                query.Item2.ExclusiveGroup, table.ExclusiveGroup);
+        }
+
+        /// <summary>
+        /// Remove entity from table
+        /// </summary>
+        public static void Remove<TRow>(
+                this IEntityFunctions functions, IEntityTable<TRow> table, uint entityID)
+            where TRow : DescriptorRow<TRow>
+        {
+            functions.RemoveEntity<DescriptorRow<TRow>.Descriptor>(entityID, table.ExclusiveGroup);
+        }
+
+        /// <summary>
+        /// Remove all entity from table
+        /// </summary>
+        public static void RemoveAll<TRow>(
+                this IEntityFunctions functions, IEntityTable<TRow> table)
+            where TRow : DescriptorRow<TRow>
+        {
+            functions.RemoveEntitiesFromGroup(table.ExclusiveGroup);
+        }
     }
-
-        // this basically prevent putting wrong descriptor to a group
-    //     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    //     public static EntityInitializer BuildEntity<T>(this IEntityFactory factory,
-    //             uint entityID, Table<T> group, IEnumerable<object> implementors = null)
-    //         where T : IEntityRow
-    //     {
-    //         return factory.BuildEntity<RowDescriptor<T>>(entityID, group.ExclusiveGroup, implementors);
-    //     }
-
-    //     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    //     public static void RemoveEntity<T>(this IEntityFunctions functions, uint entityID, in Table<T> group)
-    //         where T : IEntityRow
-    //     {
-    //         functions.RemoveEntity<RowDescriptor<T>>(entityID, group.ExclusiveGroup);
-    //     }
-
-    //     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    //     public static void RemoveEntitiesFromGroup<T>(this IEntityFunctions functions, in Table<T> group)
-    //         where T : IEntityRow
-    //     {
-    //         functions.RemoveEntitiesFromGroup(group.ExclusiveGroup);
-    //     }
-
-    //     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    //     public static void SwapEntitiesInGroup<T>(this IEntityFunctions functions, in Table<T> fromGroup, in Table<T> toGroup)
-    //         where T : IEntityRow
-    //     {
-    //         functions.SwapEntitiesInGroup<RowDescriptor<T>>(fromGroup.ExclusiveGroup, toGroup.ExclusiveGroup);
-    //     }
-
-    //     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    //     public static void SwapEntityGroup<T>(this IEntityFunctions functions, uint entityID, in Table<T> fromGroup, in Table<T> toGroup)
-    //         where T : IEntityRow
-    //     {
-    //         functions.SwapEntityGroup<RowDescriptor<T>>(entityID, fromGroup.ExclusiveGroup, toGroup.ExclusiveGroup);
-    //     }
-
-    //     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    //     public static void SwapEntityGroup<T>(this IEntityFunctions functions, EGID fromID, in Table<T> toGroup)
-    //         where T : IEntityRow
-    //     {
-    //         functions.SwapEntityGroup<RowDescriptor<T>>(fromID, toGroup.ExclusiveGroup);
-    //     }
-
-    //     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    //     public static void SwapEntityGroup<T>(this IEntityFunctions functions, EGID fromID, in Table<T> fromGroup, in Table<T> toGroup)
-    //         where T : IEntityRow
-    //     {
-    //         functions.SwapEntityGroup<RowDescriptor<T>>(fromID, fromGroup.ExclusiveGroup, toGroup.ExclusiveGroup);
-    //     }
-
-    //     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    //     public static void SwapEntityGroup<T>(this IEntityFunctions functions, EGID fromID, EGID toID, in Table<T> mustBeFromGroup)
-    //         where T : IEntityRow
-    //     {
-    //         functions.SwapEntityGroup<RowDescriptor<T>>(fromID, toID, mustBeFromGroup.ExclusiveGroup);
-    //     }
-    // }
-
-    // public static class TableNativeExtensions
-    // {
-    //     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    //     public static ref T Entity<T>(this IEntityTable table, EntitiesDB entitiesDB, uint entityID)
-    //         where T : unmanaged, IEntityComponent
-    //     {
-    //         return ref entitiesDB.QueryEntity<T>(entityID, table.ExclusiveGroup);
-    //     }
-    // }
-
-    // public static class TableManagedExtensions
-    // {
-    //     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    //     public static ref T Entity<T>(this IEntityTable table, EntitiesDB entitiesDB, uint entityID)
-    //         where T : struct, IEntityViewComponent
-    //     {
-    //         return ref entitiesDB.QueryEntity<T>(entityID, table.ExclusiveGroup);
-    //     }
-    // }
 }

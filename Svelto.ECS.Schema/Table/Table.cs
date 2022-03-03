@@ -28,12 +28,6 @@ namespace Svelto.ECS.Schema.Internal
         public static implicit operator ExclusiveGroupStruct(in TableBase group) => group._exclusiveGroup;
     }
 
-    public interface IEntityTable<out TRow> : IEntityTable where TRow : IEntityRow
-    {
-        EntityInitializer Build(IEntityFactory factory, uint entityID);
-        void Insert(IEntityFunctions functions, EGID fromID);
-    }
-
     public abstract class TableBase<TRow> : TableBase, IEntityTable<TRow>, IEntityTablesBuilder<TRow>
         where TRow : DescriptorRow<TRow>
     {

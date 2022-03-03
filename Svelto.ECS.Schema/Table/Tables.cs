@@ -8,11 +8,6 @@ using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema.Internal
 {
-    public interface IEntityTables<out TRow> : IEntityTables where TRow : IEntityRow
-    {
-        new IEntityTable<TRow> GetTable(int index);
-    }
-
     public abstract partial class TablesBase
     {
         internal FasterReadOnlyList<ExclusiveGroupStruct> _groups;

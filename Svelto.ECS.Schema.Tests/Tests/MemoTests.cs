@@ -1,7 +1,3 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using Svelto.ECS.Schedulers;
 using Svelto.ECS.Schema.Definition;
 using Xunit;
 
