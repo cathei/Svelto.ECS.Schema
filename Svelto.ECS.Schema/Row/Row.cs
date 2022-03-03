@@ -1,20 +1,14 @@
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using Svelto.ECS.Hybrid;
 using Svelto.ECS.Schema.Internal;
 
-namespace Svelto.ECS.Schema.Internal
+namespace Svelto.ECS.Schema
 {
     public interface IEntityRow {}
 
     // okay for technical reason we only have 1 type variant for this
     // Usage: IEntityRowWith<INeedEGID>
+    // Also only used for constraints, probably
     public interface IEntityRowWith<out T> { }
-}
 
-namespace Svelto.ECS.Schema
-{
     // We only have 4 variant of IEntityRow becase that is the most we can query
     // I might write code to fetch more from EntitiesDB
     public interface IEntityRow<T1> : IEntityRow, IEntityRowWith<T1>

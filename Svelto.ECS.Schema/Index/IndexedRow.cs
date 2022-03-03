@@ -20,7 +20,7 @@ namespace Svelto.ECS.Schema.Definition
         {
             public EGID ID { get; set; }
 
-            private TKey _value;
+            internal TKey _value;
 
             public TKey Value => _value;
 
@@ -28,15 +28,6 @@ namespace Svelto.ECS.Schema.Definition
             public Component(in TKey value) : this()
             {
                 _value = value;
-            }
-
-            public void Update(IndexedDB indexedDB, in TKey value)
-            {
-                var oldValue = _value;
-                _value = value;
-
-                // propagate to indexes
-                indexedDB.NotifyKeyUpdate<IIndexedRow<TKey, TTag>, TKey, Component>(ref this, oldValue, value);
             }
         }
 

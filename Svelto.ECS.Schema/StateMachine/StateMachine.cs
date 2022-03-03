@@ -27,12 +27,12 @@ namespace Svelto.ECS.Schema
     /// <summary>
     /// State machine on Svelto ECS
     /// </summary>
-    /// <typeparam name="TTag">Type to ensure uniqueness. It can be done with TSelf, but IsUnmanagedEx is on the way</typeparam>
     /// <typeparam name="TState">Value type representing a state. Usually enum type.</typeparam>
+    /// <typeparam name="TTag">Type to ensure uniqueness. It can be done with TSelf, but IsUnmanagedEx is on the way</typeparam>
     public abstract partial class StateMachine<TState, TTag> : IEntityStateMachine,
             IIndexQueryable<StateMachine<TState, TTag>.IRow, TState, StateMachine<TState, TTag>.Component>
-        where TTag : unmanaged, StateMachine<TState, TTag>.ITag
         where TState : unmanaged
+        where TTag : unmanaged, StateMachine<TState, TTag>.ITag
     {
         public interface ITag {}
 
@@ -222,8 +222,8 @@ namespace Svelto.ECS.Schema
                         var currentState = new KeyWrapper<TState>(component[i].State);
                         var nextState = new KeyWrapper<TState>(_next);
 
-                        config._states[currentState]._exitCandidates.Add(indexedDB, ref component[i]);
-                        config._states[nextState]._enterCandidates.Add(indexedDB, ref component[i]);
+                        indexedDB.Memo(config._states[currentState]._exitCandidates).Add(component[i]);
+                        indexedDB.Memo(config._states[nextState]._enterCandidates).Add(component[i]);
                     }
                 }
             }

@@ -19,11 +19,12 @@ namespace Svelto.ECS.Schema
             return new FasterList<T>(enumerable.ToArray());
         }
 
-        public static void Build<TRow>(this IEntityFactory factory, IEntityTable<TRow> table,
+        public static EntityInitializer Build<TRow>(this IEntityFactory factory, IEntityTable<TRow> table,
                 uint entityID, IEnumerable<object> implementors = null)
             where TRow : DescriptorRow<TRow>
         {
-            factory.BuildEntity<DescriptorRow<TRow>.Descriptor>(entityID, table.ExclusiveGroup, implementors);
+            return factory.BuildEntity<DescriptorRow<TRow>.Descriptor>(
+                entityID, table.ExclusiveGroup, implementors);
         }
 
         /// <summary>

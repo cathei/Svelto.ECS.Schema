@@ -1,12 +1,6 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using Svelto.DataStructures;
-using Svelto.ECS.Schema.Definition;
 using Svelto.ECS.Schema.Internal;
 
-namespace Svelto.ECS.Schema.Internal
+namespace Svelto.ECS.Schema
 {
     // supports Covariance
     public interface IEntityTable<out TRow> : IEntityTable where TRow : IEntityRow { }

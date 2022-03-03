@@ -17,14 +17,6 @@ namespace Svelto.ECS.Schema.Internal
             _exclusiveGroup = new ExclusiveGroup();
         }
 
-        // [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        // public bool Exists<T>(EntitiesDB entitiesDB, uint entityID) where T : struct, IEntityComponent
-        //     => entitiesDB.Exists<T>(entityID, _exclusiveGroup);
-
-        // [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        // public int Count<T>(EntitiesDB entitiesDB) where T : struct, IEntityComponent
-        //     => entitiesDB.Count<T>(_exclusiveGroup);
-
         public static implicit operator ExclusiveGroupStruct(in TableBase group) => group._exclusiveGroup;
     }
 
@@ -32,18 +24,6 @@ namespace Svelto.ECS.Schema.Internal
         where TRow : DescriptorRow<TRow>
     {
         internal TableBase() : base() { }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public EntityInitializer Build(IEntityFactory factory, uint entityID)
-            => factory.BuildEntity<DescriptorRow<TRow>.Descriptor>(entityID, _exclusiveGroup);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Insert(IEntityFunctions functions, EGID fromID)
-            => functions.SwapEntityGroup<DescriptorRow<TRow>.Descriptor>(fromID, _exclusiveGroup);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Remove(IEntityFunctions functions, uint entityID)
-            => functions.RemoveEntity<DescriptorRow<TRow>.Descriptor>(entityID, _exclusiveGroup);
 
         IEnumerable<IEntityTable<TRow>> IEntityTablesBuilder<TRow>.Tables
         {
