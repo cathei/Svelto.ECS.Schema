@@ -1,3 +1,8 @@
-## Concept and Terms
-If you're familiar with ECS, 
+## Defining Rows
+
+
+### Selector Rows
+
+
+### Descriptor Rows
 

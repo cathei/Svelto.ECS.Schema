@@ -24,7 +24,7 @@ namespace Svelto.ECS.Schema
 
             internal TransitionState transitionState;
 
-            private TState _state;
+            internal TState _state;
             public TState State => _state;
 
             TState IIndexableComponent<TState>.Value => _state;
@@ -33,15 +33,6 @@ namespace Svelto.ECS.Schema
             public Component(in TState state) : this()
             {
                 _state = state;
-            }
-
-            internal void Update(IndexedDB indexedDB, in TState state)
-            {
-                var oldState = _state;
-                _state = state;
-
-                // propagate to fsm index and others indexers in schema
-                indexedDB.NotifyKeyUpdate<IIndexedRow, TState, Component>(ref this, oldState, _state);
             }
         }
 

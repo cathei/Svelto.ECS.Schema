@@ -1,4 +1,17 @@
 ## Advanced Schema Usages
+### Using Interfaces
+Schema extensions defines few convariant interfaces so users can easily access to abstracted Tables. For example, if `HeroRow` and `EnemyRow` both implements `ICharacterRow`, you can do this.
+```csharp
+// this should be in schema, actually
+HeroRow.Table heroTable = new Hero.Table();
+EnemyRow.Table enemyTable = new EnemyRow.Table();
+
+// you have common interface, you can treat it as same type of table!
+IEntityTable<ICharacterRow> charcterTable1 = heroTable;
+IEntityTable<ICharacterRow> charcterTable2 = enemyTable;
+```
+And it is still type safe when you do queries! In other words with `IEntityTable<ICharacterRow>` you can only query with Selector Rows that ICharacterRow implements.
+
 ### Extending Schema
 In advance, you can extend your Schema with inheritance, or having multiple Schemas within same `EnginesRoot`. You can still share `IndexedDB` between schemas. Good thing is, underlying groups will remain static and unique per added Schema type.
 
@@ -28,13 +41,34 @@ public class CoOpGameModeSchema : GameModeSchemaBase
 }
 ```
 
-### Calculate Union and Intersection of Indexes
-To calculate Union and Intersection of Indexes, you can use temporary filters called `Memo<T>`. It can be included anywhere in Schema. Use it like this:
-```csharp
-_schema.CharacterByController.Query(0).Union(_indexedDB, _schema.Memo);
-_schema.CharacterByController.Query(3).Union(_indexedDB, _schema.Memo);
-_schema.CharacterByController.Query(6).Union(_indexedDB, _schema.Memo);
+### Multiple Root Schemas
+You can add more than one Root Schemas in a `IndexedDB`. You can consider spliting Schemas, if Entities in two Schemas does not interact at all.
 
-_schema.CharacterByState.Query(CharacterState.Happy).Intersect(_indexedDB, _schema.Memo);
+### Calculate Union and Intersection of Indexes
+To calculate Union and Intersection of Indexes, you can use temporary filters called `Memo<TRow>`. It can be included anywhere in Schema. Define it like this:
+```csharp
+public class MemoSchema : IEntitySchema
+{
+    public readonly CharacterRow.Table Character = new CharacterRow.Table();
+
+    public readonly IIndexedCharacterController.Index CharacterController = new IIndexedCharacterController.Index();
+
+    public readonly IIndexedCharacterState.Index CharacterState = new IIndexedCharacterState.Index();
+
+    public readonly Memo<ICharacterRow> Memo = new Memo<ICharacterRow>();
+}
+```
+Use it like this:
+```csharp
+_indexedDB.Memo(_schema.Memo).Clear();
+
+_indexedDB.Memo(_schema.Memo).Union(_schema.CharaterController, 0);
+_indexedDB.Memo(_schema.Memo).Union(_schema.CharaterController, 3);
+_indexedDB.Memo(_schema.Memo).Union(_schema.CharaterController, 6);
+
+_indexedDB.Memo(_schema.Memo).Intersect(_schema.CharacterState, CharacterState.Happy);
+
+var ((controller, count), indices) =
+    _indexedDB.Select<IIndexedCharacterController>().All().Where(_schema.Memo).Entities();
 ```
 Note that you have to clear `Memo<T>` before you reuse it! `Memo<T>` does not have any guarantee to have valid indices after entity submission.

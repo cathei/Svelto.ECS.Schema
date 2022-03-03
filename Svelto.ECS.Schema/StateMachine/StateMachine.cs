@@ -294,7 +294,13 @@ namespace Svelto.ECS.Schema
                     // this group will not be visited again in this step
                     // see you next step
                     component[i].transitionState = TransitionState.Available;
-                    component[i].Update(indexedDB, _state);
+
+                    // updating indexes
+                    var oldState = component[i]._state;
+                    component[i]._state = _state;
+
+                    indexedDB.NotifyKeyUpdate<IIndexedRow, TState, Component>(
+                        ref component[i], oldState, _state);
                 }
 
                 for (int i = 0; i < _onEnter.count; ++i)
