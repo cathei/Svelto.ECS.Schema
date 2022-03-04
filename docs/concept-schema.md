@@ -56,13 +56,14 @@ As you can see, DescriptorRow doesn't even need to know what Component it has. I
 ```csharp
 // common traits Descriptor Rows implementing
 public interface ICharacterRow : IMovableRow, IDamagableRow {}
-
 // all enemies are characters
 public interface IEnemyRow : ICharacterRow, ISpawnableRow {}
 
-// Descriptor rows
-public sealed class HeroRow : DescriptorRow<HeroRow>, ICharacterRow, ISpecialSkillRow {}
+// 'hero' is character with special ability
+public sealed class HeroRow : DescriptorRow<HeroRow>, ICharacterRow, ISpecialAbilityRow {}
+// ground enemy doens't have trait besides common enemy traits
 public sealed class GroundEnemyRow : DescriptorRow<GroundEnemyRow>, IEnemyRow {}
+// flying enemy is enemy with flying trait
 public sealed class FlyingEnemyRow : DescriptorRow<FlyingEnemyRow>, IEnemyRow, IFlyingRow {}
 ```
 By making layers with Interface Rows, you'll have flexiblity to define and modify traits used over multiple Descriptor Rows.

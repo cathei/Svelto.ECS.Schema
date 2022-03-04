@@ -44,4 +44,4 @@ There is also concept of `GroupCompund` to generate combination of groups, which
 Filters are another tool to define set of entities. It stores subset of indices in a Group. But it won't be easy to use and manage it in current Svelto without Schema extensions. In Schema extensions they are wrapped by concept of `Index`.
 
 ### Summarize
-We looked into very basic Svelto features and how it will change in Schema extensions. Next document will explain further about Schema extensions speicifc concepts.
+We looked into very basic Svelto features and how it will change in Schema extensions. [Next document](concept-schema.md) will explain further about Schema extensions speicifc concepts.
