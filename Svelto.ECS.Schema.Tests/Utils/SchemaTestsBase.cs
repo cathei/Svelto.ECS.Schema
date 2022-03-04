@@ -16,7 +16,6 @@ namespace Svelto.ECS.Schema.Tests
 
         protected IEntityFactory _factory;
         protected IEntityFunctions _functions;
-        protected EntitiesDB _entitiesDB;
 
         protected IndexedDB _indexedDB;
         protected T _schema;

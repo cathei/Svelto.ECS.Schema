@@ -92,7 +92,7 @@ namespace Svelto.ECS.Schema
                 Where<TR, TTR, TMR, TMC>(this (IndexedDB, TR, IEntityTable<TTR>) query, MemoBase<TMR, TMC> memo)
             where TR : IEntityRow
             where TTR : TR, TMR
-            where TMR : IEntityRow<TMC>
+            where TMR : class, IEntityRow<TMC>
             where TMC : unmanaged, IEntityComponent, INeedEGID
         {
             return (query.Item1, query.Item2, query.Item3, memo, default);
@@ -104,7 +104,7 @@ namespace Svelto.ECS.Schema
                 Where<TR, TTR, TMR, TMC>(this (IndexedDB, TR, IEntityTables<TTR>) query, MemoBase<TMR, TMC> memo)
             where TR : IEntityRow
             where TTR : TR, TMR
-            where TMR : IEntityRow<TMC>
+            where TMR : class, IEntityRow<TMC>
             where TMC : unmanaged, IEntityComponent, INeedEGID
         {
             return (query.Item1, query.Item2, query.Item3, memo, default);
@@ -127,32 +127,6 @@ namespace Svelto.ECS.Schema
             }
 
             return new IndexedIndices(groupData.filter.filteredIndices);
-        }
-    }
-
-    public static class RowQueryNativeExtensions
-    {
-        // Select -> From Table -> Entity
-        public static ref T1 Entity<TR, T1>(
-                this (IndexedDB, IEntityRow<T1>, IEntityTable<TR>) query, uint entityID)
-            where TR : IEntityRow<T1>
-            where T1 : unmanaged, IEntityComponent
-        {
-            return ref query.Item1.entitiesDB.QueryEntity<T1>(
-                new EGID(entityID, query.Item3.ExclusiveGroup));
-        }
-    }
-
-    public static class RowQueryManagedExtensions
-    {
-        // Select -> From Table -> Entity
-        public static ref T1 Entity<TR, T1>(
-                this (IndexedDB, IEntityRow<T1>, IEntityTable<TR>) query, uint entityID)
-            where TR : IEntityRow<T1>
-            where T1 : struct, IEntityViewComponent
-        {
-            return ref query.Item1.entitiesDB.QueryEntity<T1>(
-                new EGID(entityID, query.Item3.ExclusiveGroup));
         }
     }
 }

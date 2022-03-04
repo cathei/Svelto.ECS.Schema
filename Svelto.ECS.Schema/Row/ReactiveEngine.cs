@@ -29,16 +29,19 @@ namespace Svelto.ECS.Schema.Internal
             this.indexedDB = indexedDB;
         }
     }
+}
 
+namespace Svelto.ECS.Schema
+{
     // TODO: Split this into different engines if necessary
-    public abstract class ReactiveRowEngine<TR, TC> :
+    public abstract class ReactToRowEngine<TR, TC> :
             ReactiveEngineBase<TR, TC>,
             IReactRowAddAndRemove<TR, TC>, IReactOnAddAndRemove<TC>,
             IReactRowSwap<TR, TC>, IReactOnSwap<TC>
-        where TR : class, IEntityRow<TC>
+        where TR : class, IReactiveRow<TC>
         where TC : struct, IEntityComponent
     {
-        internal ReactiveRowEngine(IndexedDB indexedDB) : base(indexedDB) { }
+        internal ReactToRowEngine(IndexedDB indexedDB) : base(indexedDB) { }
 
         public virtual void Add(ref TC component, IEntityTable<TR> table, uint entityID) { }
 

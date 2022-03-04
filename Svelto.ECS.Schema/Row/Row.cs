@@ -4,14 +4,9 @@ namespace Svelto.ECS.Schema
 {
     public interface IEntityRow {}
 
-    // okay for technical reason we only have 1 type variant for this
-    // Usage: IEntityRowWith<INeedEGID>
-    // Also only used for constraints, probably
-    public interface IEntityRowWith<out T> { }
-
     // We only have 4 variant of IEntityRow becase that is the most we can query
     // I might write code to fetch more from EntitiesDB
-    public interface IEntityRow<T1> : IEntityRow, IEntityRowWith<T1>
+    public interface IEntityRow<T1> : IEntityRow
         where T1 : struct, IEntityComponent
     {
         internal static IComponentBuilder[] componentBuilders = new IComponentBuilder[] {
@@ -55,13 +50,8 @@ namespace Svelto.ECS.Schema
         };
     }
 
-    public interface IReactiveRow<TR, TC> : IEntityRow<TC>
-        where TR : class, IReactiveRow<TR, TC>
-        where TC : struct, IEntityComponent
+    public interface IReactiveRow<TComponent> : IEntityRow<TComponent>
+        where TComponent : struct, IEntityComponent
     {
-        public abstract class Engine : ReactiveRowEngine<TR, TC>
-        {
-            protected Engine(IndexedDB indexedDB) : base(indexedDB) {}
-        }
     }
 }

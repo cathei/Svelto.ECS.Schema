@@ -10,7 +10,7 @@ public interface IIndexedController : IIndexedRow<int, IIndexedController.Tag>
     public struct Tag : ITag {}
 }
 ```
-IIndexedRow represent a indexable trait of a Entity. First type parameter is equatable value type that will be used as key of Index. Second type parameter is to ensure uniqueness of the generic class members (We have to define `struct` to pass as type parameter, we cannot pass `class` or `interface` due to Svelto limitation).
+IIndexedRow represent a indexable trait of a Entity. First type parameter is equatable value type that will be used as key of Index. Second type parameter is to ensure uniqueness of the generic class members (We have to define `struct` to pass as type parameter, we cannot pass `class` or `interface` due to Svelto and Unity Burst Compiler limitation).
 
 `IIndexedRow` has nested types of `Component` and `Index`. Now, let's add `IIndexedController` to your Descriptor Row.
 ```csharp

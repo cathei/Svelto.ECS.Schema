@@ -32,27 +32,27 @@ namespace Svelto.ECS.Schema
         }
 
         public static void Set<TR, TC, TMR, TMC>(this (IndexedDB, MemoBase<TR, TC>) query, MemoBase<TMR, TMC> memo)
-            where TR : IEntityRow<TC>, TMR
+            where TR : class, IEntityRow<TC>, TMR
             where TC : unmanaged, IEntityComponent, INeedEGID
-            where TMR : IEntityRow<TMC>
+            where TMR : class, IEntityRow<TMC>
             where TMC : unmanaged, IEntityComponent, INeedEGID
         {
             query.Item2.Set<IIndexQuery<TMR>, TMR>(query.Item1, memo);
         }
 
         public static void Union<TR, TC, TMR, TMC>(this (IndexedDB, MemoBase<TR, TC>) query, MemoBase<TMR, TMC> memo)
-            where TR : IEntityRow<TC>, TMR
+            where TR : class, IEntityRow<TC>, TMR
             where TC : unmanaged, IEntityComponent, INeedEGID
-            where TMR : IEntityRow<TMC>
+            where TMR : class, IEntityRow<TMC>
             where TMC : unmanaged, IEntityComponent, INeedEGID
         {
             query.Item2.Union<IIndexQuery<TMR>, TMR>(query.Item1, memo);
         }
 
         public static void Intersect<TR, TC, TMR, TMC>(this (IndexedDB, MemoBase<TR, TC>) query, MemoBase<TMR, TMC> memo)
-            where TR : IEntityRow<TC>, TMR
+            where TR : class, IEntityRow<TC>, TMR
             where TC : unmanaged, IEntityComponent, INeedEGID
-            where TMR : IEntityRow<TMC>
+            where TMR : class, IEntityRow<TMC>
             where TMC : unmanaged, IEntityComponent, INeedEGID
         {
             query.Item2.Intersect<IIndexQuery<TMR>, TMR>(query.Item1, memo);
@@ -60,7 +60,7 @@ namespace Svelto.ECS.Schema
 
         public static void Set<TR, TC, TIR, TIK, TIC>(this (IndexedDB, MemoBase<TR, TC>) query,
                 IIndexQueryable<TIR, TIK, TIC> index, in TIK key)
-            where TR : IEntityRow<TC>, TIR
+            where TR : class, IEntityRow<TC>, TIR
             where TC : unmanaged, IEntityComponent, INeedEGID
             where TIR : class, IIndexableRow<TIK, TIC>
             where TIK : unmanaged
@@ -71,7 +71,7 @@ namespace Svelto.ECS.Schema
 
         public static void Union<TR, TC, TIR, TIK, TIC>(this (IndexedDB, MemoBase<TR, TC>) query,
                 IIndexQueryable<TIR, TIK, TIC> index, in TIK key)
-            where TR : IEntityRow<TC>, TIR
+            where TR : class, IEntityRow<TC>, TIR
             where TC : unmanaged, IEntityComponent, INeedEGID
             where TIR : class, IIndexableRow<TIK, TIC>
             where TIK : unmanaged
@@ -82,7 +82,7 @@ namespace Svelto.ECS.Schema
 
         public static void Intersect<TR, TC, TIR, TIK, TIC>(this (IndexedDB, MemoBase<TR, TC>) query,
                 IIndexQueryable<TIR, TIK, TIC> index, in TIK key)
-            where TR : IEntityRow<TC>, TIR
+            where TR : class, IEntityRow<TC>, TIR
             where TC : unmanaged, IEntityComponent, INeedEGID
             where TIR : class, IIndexableRow<TIK, TIC>
             where TIK : unmanaged

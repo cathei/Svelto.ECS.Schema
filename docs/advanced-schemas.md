@@ -13,7 +13,7 @@ IEntityTable<ICharacterRow> charcterTable2 = enemyTable;
 And it is still type safe when you do queries! In other words with `IEntityTable<ICharacterRow>` you can only query with Selector Rows that ICharacterRow implements.
 
 ## Reactive Engine Usage
-To get notified when a Entity with specific Row is added, removed or swapped, you can define a Row extending `IReactiveRow<TRow, TComponent>`. And create a engine extending `IReactiveRow<TRow, TComponent>.Engine`.
+To get notified when a Entity with specific Row is added, removed or swapped, you can define a Row extending `IReactiveRow<TComponent>`. And create a engine extending `ReactToRowEngine<TRow, TComponent>`.
 
 ### Extending Schema
 In advance, you can extend your Schema with inheritance, or having multiple Schemas within same `EnginesRoot`. You can still share `IndexedDB` between schemas. Good thing is, underlying groups will remain static and unique per added Schema type.

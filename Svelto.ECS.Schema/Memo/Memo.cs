@@ -24,38 +24,10 @@ namespace Svelto.ECS.Schema.Internal
     }
 
     public class MemoBase<TRow, TComponent> : MemoBase, IIndexQuery<TRow>
-        where TRow : IEntityRow<TComponent>
+        where TRow : class, IEntityRow<TComponent>
         where TComponent : unmanaged, IEntityComponent, INeedEGID
     {
         internal MemoBase() { }
-
-        // public void Set<TQR, TQK, TQC>(IndexedDB indexedDB, IIndexQueryable<TQR, TQK, TQC> index, in TQK key)
-        //     where TQR : class, IIndexableRow<TQK, TQC>, TRow
-        //     where TQK : unmanaged
-        //     where TQC : unmanaged, IIndexableComponent<TQK>
-        // {
-        //     Set<IndexQuery<TQR, TQK, TQC>, TQR>(indexedDB, index.Query(key));
-        // }
-
-        // public void Add(IndexedDB indexedDB, ref TC component)
-        // {
-        //     indexedDB.AddMemo(this, component.ID.entityID, indexedDB.FindTable<TR>(component.ID.groupID));
-        // }
-
-        // public void Remove(IndexedDB indexedDB, ref TC component)
-        // {
-        //     indexedDB.RemoveMemo(this, component.ID.entityID, indexedDB.FindTable<TR>(component.ID.groupID));
-        // }
-
-        // public void Clear(IndexedDB indexedDB)
-        // {
-        //     indexedDB.ClearMemo(this);
-        // }
-
-        // public void Set(IndexedDB indexedDB, MemoBase other)
-        // {
-        //     Set(indexedDB, other);
-        // }
 
         internal void Set<TQ, TQR>(IndexedDB indexedDB, TQ query)
             where TQ : IIndexQuery<TQR>
@@ -96,7 +68,7 @@ namespace Svelto.ECS.Schema.Internal
                 // TODO: change group to table!
                 var (components, _) = indexedDB.Select<TRow>().From(table).Entities();
 
-                ref var originalGroupData = ref indexedDB.CreateOrGetMemoGroup<TRow, TComponent>(_memoID, table);
+                ref var originalGroupData = ref indexedDB.CreateOrGetMemoGroup(_memoID, table);
 
                 foreach (var i in new IndexedIndices(queryGroupData.filter.filteredIndices))
                     originalGroupData.filter.Add(components[i].ID.entityID, mapper);
@@ -182,7 +154,7 @@ namespace Svelto.ECS.Schema.Definition
     public interface IMemorableRow : IEntityRow<EGIDComponent> { }
 
     public sealed class Memo<TRow> : MemoBase<TRow, EGIDComponent>
-        where TRow : IMemorableRow
+        where TRow : class, IMemorableRow
     {
 
     }

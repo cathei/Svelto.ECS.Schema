@@ -41,6 +41,9 @@ namespace Svelto.ECS.Schema.Internal
         public IEntityTable<TRow> this[int index] => _tables[index];
         public IEntityTable<TRow> Get(int index) => _tables[index];
 
+        public IEntityTable<TRow> this[uint index] => _tables[index];
+        public IEntityTable<TRow> Get(uint index) => _tables[index];
+
         public static implicit operator TablesBuilder<TRow>(TablesBase<TRow> rangedTable)
             => new TablesBuilder<TRow>(rangedTable._tables);
 

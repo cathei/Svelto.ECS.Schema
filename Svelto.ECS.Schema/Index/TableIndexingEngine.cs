@@ -5,8 +5,8 @@ namespace Svelto.ECS.Schema.Internal
 {
     // TODO: if apply new filter system, we can remove handling for 'MovedTo' and 'Remove'
     // but we still need 'Add' to make sure new entities are included in index
-    internal class TableIndexingEngine<TR, TK, TC> : IReactiveRow<TR, TC>.Engine
-        where TR : class, IIndexableRow<TK, TC>, IReactiveRow<TR, TC>
+    internal class TableIndexingEngine<TR, TK, TC> : ReactToRowEngine<TR, TC>
+        where TR : class, IIndexableRow<TK, TC>, IReactiveRow<TC>
         where TK : unmanaged
         where TC : unmanaged, IIndexableComponent<TK>
     {

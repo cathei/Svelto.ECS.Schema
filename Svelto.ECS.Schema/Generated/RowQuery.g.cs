@@ -9,15 +9,6 @@ namespace Svelto.ECS.Schema
     public static partial class RowQueryExtensions
     {
 
-        // Select -> Groups
-        public static LocalFasterReadOnlyList<ExclusiveGroupStruct> Groups<T1>(
-                this (IndexedDB, IEntityRow<T1>) query)
-                where T1 : struct, IEntityComponent
-        {
-            // TODO this ultimately should return Tables<TR>
-            return query.Item1.entitiesDB.FindGroups<T1>();
-        }
-
         // Select -> From Table -> Entities
         public static EntityCollection<T1> Entities<TR, T1>(
                 this (IndexedDB, IEntityRow<T1>, IEntityTable<TR>) query)
@@ -37,14 +28,14 @@ namespace Svelto.ECS.Schema
         }
 
         // Select -> From Table -> Where -> Entities
-        public static IndexQueryTuple<T1> Entities<TR, TI, TIR, T1>(
+        public static IndexQueryTuple<T1, IndexedIndices> Entities<TR, TI, TIR, T1>(
                 this (IndexedDB, IEntityRow<T1>, IEntityTable<TR>, TI, TIR) query)
             where TR : IEntityRow<T1>
             where TI : IIndexQuery<TIR>
             where TIR : IEntityRow
                 where T1 : struct, IEntityComponent
         {
-            return new IndexQueryTuple<T1>(
+            return new IndexQueryTuple<T1, IndexedIndices>(
                 (query.Item1, query.Item2, query.Item3).Entities(), query.Indices());
         }
 
@@ -58,16 +49,6 @@ namespace Svelto.ECS.Schema
         {
             return new IndexQueryEnumerable<TR, TIR, T1>(
                 query.Item1, query.Item3, query.Item4.GetIndexedKeyData(query.Item1).groups);
-        }
-
-        // Select -> Groups
-        public static LocalFasterReadOnlyList<ExclusiveGroupStruct> Groups<T1, T2>(
-                this (IndexedDB, IEntityRow<T1, T2>) query)
-                where T1 : struct, IEntityComponent
-                where T2 : struct, IEntityComponent
-        {
-            // TODO this ultimately should return Tables<TR>
-            return query.Item1.entitiesDB.FindGroups<T1, T2>();
         }
 
         // Select -> From Table -> Entities
@@ -91,7 +72,7 @@ namespace Svelto.ECS.Schema
         }
 
         // Select -> From Table -> Where -> Entities
-        public static IndexQueryTuple<T1, T2> Entities<TR, TI, TIR, T1, T2>(
+        public static IndexQueryTuple<T1, T2, IndexedIndices> Entities<TR, TI, TIR, T1, T2>(
                 this (IndexedDB, IEntityRow<T1, T2>, IEntityTable<TR>, TI, TIR) query)
             where TR : IEntityRow<T1, T2>
             where TI : IIndexQuery<TIR>
@@ -99,7 +80,7 @@ namespace Svelto.ECS.Schema
                 where T1 : struct, IEntityComponent
                 where T2 : struct, IEntityComponent
         {
-            return new IndexQueryTuple<T1, T2>(
+            return new IndexQueryTuple<T1, T2, IndexedIndices>(
                 (query.Item1, query.Item2, query.Item3).Entities(), query.Indices());
         }
 
@@ -114,17 +95,6 @@ namespace Svelto.ECS.Schema
         {
             return new IndexQueryEnumerable<TR, TIR, T1, T2>(
                 query.Item1, query.Item3, query.Item4.GetIndexedKeyData(query.Item1).groups);
-        }
-
-        // Select -> Groups
-        public static LocalFasterReadOnlyList<ExclusiveGroupStruct> Groups<T1, T2, T3>(
-                this (IndexedDB, IEntityRow<T1, T2, T3>) query)
-                where T1 : struct, IEntityComponent
-                where T2 : struct, IEntityComponent
-                where T3 : struct, IEntityComponent
-        {
-            // TODO this ultimately should return Tables<TR>
-            return query.Item1.entitiesDB.FindGroups<T1, T2, T3>();
         }
 
         // Select -> From Table -> Entities
@@ -150,7 +120,7 @@ namespace Svelto.ECS.Schema
         }
 
         // Select -> From Table -> Where -> Entities
-        public static IndexQueryTuple<T1, T2, T3> Entities<TR, TI, TIR, T1, T2, T3>(
+        public static IndexQueryTuple<T1, T2, T3, IndexedIndices> Entities<TR, TI, TIR, T1, T2, T3>(
                 this (IndexedDB, IEntityRow<T1, T2, T3>, IEntityTable<TR>, TI, TIR) query)
             where TR : IEntityRow<T1, T2, T3>
             where TI : IIndexQuery<TIR>
@@ -159,7 +129,7 @@ namespace Svelto.ECS.Schema
                 where T2 : struct, IEntityComponent
                 where T3 : struct, IEntityComponent
         {
-            return new IndexQueryTuple<T1, T2, T3>(
+            return new IndexQueryTuple<T1, T2, T3, IndexedIndices>(
                 (query.Item1, query.Item2, query.Item3).Entities(), query.Indices());
         }
 
@@ -175,18 +145,6 @@ namespace Svelto.ECS.Schema
         {
             return new IndexQueryEnumerable<TR, TIR, T1, T2, T3>(
                 query.Item1, query.Item3, query.Item4.GetIndexedKeyData(query.Item1).groups);
-        }
-
-        // Select -> Groups
-        public static LocalFasterReadOnlyList<ExclusiveGroupStruct> Groups<T1, T2, T3, T4>(
-                this (IndexedDB, IEntityRow<T1, T2, T3, T4>) query)
-                where T1 : struct, IEntityComponent
-                where T2 : struct, IEntityComponent
-                where T3 : struct, IEntityComponent
-                where T4 : struct, IEntityComponent
-        {
-            // TODO this ultimately should return Tables<TR>
-            return query.Item1.entitiesDB.FindGroups<T1, T2, T3, T4>();
         }
 
         // Select -> From Table -> Entities
@@ -214,7 +172,7 @@ namespace Svelto.ECS.Schema
         }
 
         // Select -> From Table -> Where -> Entities
-        public static IndexQueryTuple<T1, T2, T3, T4> Entities<TR, TI, TIR, T1, T2, T3, T4>(
+        public static IndexQueryTuple<T1, T2, T3, T4, IndexedIndices> Entities<TR, TI, TIR, T1, T2, T3, T4>(
                 this (IndexedDB, IEntityRow<T1, T2, T3, T4>, IEntityTable<TR>, TI, TIR) query)
             where TR : IEntityRow<T1, T2, T3, T4>
             where TI : IIndexQuery<TIR>
@@ -224,7 +182,7 @@ namespace Svelto.ECS.Schema
                 where T3 : struct, IEntityComponent
                 where T4 : struct, IEntityComponent
         {
-            return new IndexQueryTuple<T1, T2, T3, T4>(
+            return new IndexQueryTuple<T1, T2, T3, T4, IndexedIndices>(
                 (query.Item1, query.Item2, query.Item3).Entities(), query.Indices());
         }
 

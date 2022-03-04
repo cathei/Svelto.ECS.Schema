@@ -9,21 +9,21 @@ namespace Svelto.ECS.Schema
     public partial class IndexedDB
     {
         internal void AddMemo<TR, TC>(MemoBase<TR, TC> memo, uint entityID, IEntityTable<TR> table)
-            where TR : IEntityRow<TC>
+            where TR : class, IEntityRow<TC>
             where TC : unmanaged, IEntityComponent, INeedEGID
         {
             var mapper = entitiesDB.QueryMappedEntities<TC>(table.ExclusiveGroup);
 
-            ref var groupData = ref CreateOrGetMemoGroup<TR, TC>(memo._memoID, table);
+            ref var groupData = ref CreateOrGetMemoGroup(memo._memoID, table);
 
             groupData.filter.Add(entityID, mapper);
         }
 
         internal void RemoveMemo<TR, TC>(MemoBase<TR, TC> memo, uint entityID, IEntityTable<TR> table)
-            where TR : IEntityRow<TC>
+            where TR : class, IEntityRow<TC>
             where TC : unmanaged, IEntityComponent, INeedEGID
         {
-            ref var groupData = ref CreateOrGetMemoGroup<TR, TC>(memo._memoID, table);
+            ref var groupData = ref CreateOrGetMemoGroup(memo._memoID, table);
 
             groupData.filter.TryRemove(entityID);
         }
@@ -41,9 +41,8 @@ namespace Svelto.ECS.Schema
                 values[i].Clear();
         }
 
-        internal ref IndexedGroupData<TR> CreateOrGetMemoGroup<TR, TC>(int memoID, IEntityTable<TR> table)
-            where TR : IEntityRow<TC>
-            where TC : struct, IEntityComponent
+        internal ref IndexedGroupData<TR> CreateOrGetMemoGroup<TR>(int memoID, IEntityTable<TR> table)
+            where TR : IEntityRow
         {
             var memoData = (MemoData<TR>)memos.GetOrCreate(memoID, () => new MemoData<TR>());
 
@@ -52,7 +51,8 @@ namespace Svelto.ECS.Schema
                 memoData.keyData.groups[table.ExclusiveGroup] = new IndexedGroupData<TR>
                 {
                     table = table,
-                    filter = entitiesDB.GetFilters().CreateOrGetFilterForGroup<TC>(GenerateFilterId(), table.ExclusiveGroup)
+                    filter = entitiesDB.GetFilters().CreateOrGetFilterForGroup<RowMetaComponent>(
+                        GenerateFilterId(), table.ExclusiveGroup)
                 };
             }
 

@@ -8,15 +8,6 @@ namespace Svelto.ECS.Schema.Generator
     public class RowQueryGenerator : ISourceGenerator
     {
         const string RowQueryTemplate = @"
-        // Select -> Groups
-        public static LocalFasterReadOnlyList<ExclusiveGroupStruct> Groups<{1}>(
-                this (IndexedDB, IEntityRow<{1}>) query)
-{2}
-        {{
-            // TODO this ultimately should return Tables<TR>
-            return query.Item1.entitiesDB.FindGroups<{1}>();
-        }}
-
         // Select -> From Table -> Entities
         public static EntityCollection<{1}> Entities<TR, {1}>(
                 this (IndexedDB, IEntityRow<{1}>, IEntityTable<TR>) query)
@@ -36,14 +27,14 @@ namespace Svelto.ECS.Schema.Generator
         }}
 
         // Select -> From Table -> Where -> Entities
-        public static IndexQueryTuple<{1}> Entities<TR, TI, TIR, {1}>(
+        public static IndexQueryTuple<{1}, IndexedIndices> Entities<TR, TI, TIR, {1}>(
                 this (IndexedDB, IEntityRow<{1}>, IEntityTable<TR>, TI, TIR) query)
             where TR : IEntityRow<{1}>
             where TI : IIndexQuery<TIR>
             where TIR : IEntityRow
 {2}
         {{
-            return new IndexQueryTuple<{1}>(
+            return new IndexQueryTuple<{1}, IndexedIndices>(
                 (query.Item1, query.Item2, query.Item3).Entities(), query.Indices());
         }}
 

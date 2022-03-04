@@ -9,7 +9,7 @@ namespace Svelto.ECS.Schema.Definition
     /// <typeparam name="TTag">Type to ensure uniqueness. It can be done with TSelf, but IsUnmanagedEx is on the way</typeparam>
     public interface IIndexedRow<TKey, TTag> :
             IIndexableRow<TKey, IIndexedRow<TKey, TTag>.Component>,
-            IReactiveRow<IIndexedRow<TKey, TTag>, IIndexedRow<TKey, TTag>.Component>
+            IReactiveRow<IIndexedRow<TKey, TTag>.Component>
         where TKey : unmanaged
         where TTag : unmanaged, IIndexedRow<TKey, TTag>.ITag
     {

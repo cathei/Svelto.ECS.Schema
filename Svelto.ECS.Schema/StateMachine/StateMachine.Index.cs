@@ -16,7 +16,7 @@ namespace Svelto.ECS.Schema
 
         // user should implement this Row Interface
         public interface IIndexedRow :
-            IIndexableRow<TState, Component>, IReactiveRow<IIndexedRow, Component> { }
+            IIndexableRow<TState, Component>, IReactiveRow<Component> { }
 
         public struct Component : IIndexableComponent<TState>
         {
