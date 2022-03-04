@@ -15,7 +15,7 @@ namespace Svelto.ECS.Schema
             = new FasterDictionary<RefWrapperType, IEntityTables>();
 
         internal IEntityTable<TR> FindTable<TR>(in ExclusiveGroupStruct groupID)
-            where TR : IEntityRow
+            where TR : class, IEntityRow
         {
             if (!_groupToTable.TryGetValue(groupID, out var table))
             {
@@ -36,7 +36,7 @@ namespace Svelto.ECS.Schema
         }
 
         internal IEntityTables<TR> FindTables<TR>()
-            where TR : IEntityRow
+            where TR : class, IEntityRow
         {
             if (!_rowToTables.TryGetValue(TypeRefWrapper<TR>.wrapper, out var tables))
             {
