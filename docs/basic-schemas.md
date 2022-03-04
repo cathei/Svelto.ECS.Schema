@@ -42,6 +42,9 @@ builder.Init(new DefenseComponent(5));
 ```
 Note that it automatically uses Descriptor from Descriptor Row, compare to original `BuildEntity`. We will get to how to query entities in next article.
 
+### Remove Entities or Move Entities between Tables
+You can call `IEntityFunctions.Remove(Table, entityID)` to remove Entity from Table. You can call `IEntityFunctions.Move(FromTable, entityID).To(ToTable)` to move Entity between Tables.
+
 ### Defining Ranged Table
 Sometimes you'll want many tables of same type, without defining many variables. Simiply use `DescriptorRow.Tables` (aware of 's' in the end), pass the number of group you want to be created, and there are multiple separated tables!
 ```csharp
