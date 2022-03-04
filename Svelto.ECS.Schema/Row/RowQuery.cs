@@ -24,7 +24,7 @@ namespace Svelto.ECS.Schema
         /// This will find all Tables containing Row type TR
         /// </summary>
         public static IEntityTables<TR> Tables<TR>(this (IndexedDB, TR) query)
-            where TR : IEntityRow
+            where TR : class, IEntityRow
         {
             return query.Item1.FindTables<TR>();
         }
@@ -53,7 +53,7 @@ namespace Svelto.ECS.Schema
         /// Only can be used to select - because indexing requires different Row type as well
         /// </summary>
         public static (IndexedDB, TR, IEntityTables<TR>) All<TR>(this (IndexedDB, TR) query)
-            where TR : IEntityRow
+            where TR : class, IEntityRow
         {
             return (query.Item1, query.Item2, query.Tables());
         }

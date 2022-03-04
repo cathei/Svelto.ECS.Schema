@@ -72,7 +72,7 @@ namespace Svelto.ECS.Schema
         }
 
         private void UpdateFilters<TR, TK, TC>(int indexerId, ref TC keyComponent, in TK oldKey, in TK newKey)
-            where TR : IIndexableRow<TK, TC>
+            where TR : class, IIndexableRow<TK, TC>
             where TK : unmanaged
             where TC : unmanaged, IIndexableComponent<TK>
         {

@@ -11,7 +11,7 @@ namespace Svelto.ECS.Schema
         }
 
         public static void Add<TR, TC>(this (IndexedDB, MemoBase<TR, TC>) query, TC component)
-            where TR : IEntityRow<TC>
+            where TR : class, IEntityRow<TC>
             where TC : unmanaged, IEntityComponent, INeedEGID
         {
             var table = query.Item1.FindTable<TR>(component.ID.groupID);
@@ -19,7 +19,7 @@ namespace Svelto.ECS.Schema
         }
 
         public static void Remove<TR, TC>(this (IndexedDB, MemoBase<TR, TC>) query, TC component)
-            where TR : IEntityRow<TC>
+            where TR : class, IEntityRow<TC>
             where TC : unmanaged, IEntityComponent, INeedEGID
         {
             var table = query.Item1.FindTable<TR>(component.ID.groupID);

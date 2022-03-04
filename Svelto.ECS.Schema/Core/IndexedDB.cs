@@ -56,7 +56,7 @@ namespace Svelto.ECS.Schema
         }
 
         internal void NotifyKeyUpdate<TR, TK, TC>(ref TC keyComponent, in TK oldKey, in TK newKey)
-            where TR : IIndexableRow<TK, TC>
+            where TR : class, IIndexableRow<TK, TC>
             where TK : unmanaged
             where TC : unmanaged, IIndexableComponent<TK>
         {

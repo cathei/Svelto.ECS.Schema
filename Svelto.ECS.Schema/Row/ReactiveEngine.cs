@@ -35,7 +35,7 @@ namespace Svelto.ECS.Schema.Internal
             ReactiveEngineBase<TR, TC>,
             IReactRowAddAndRemove<TR, TC>, IReactOnAddAndRemove<TC>,
             IReactRowSwap<TR, TC>, IReactOnSwap<TC>
-        where TR : IEntityRow<TC>
+        where TR : class, IEntityRow<TC>
         where TC : struct, IEntityComponent
     {
         internal ReactiveRowEngine(IndexedDB indexedDB) : base(indexedDB) { }

@@ -24,7 +24,7 @@ namespace Svelto.ECS.Schema.Internal
     { }
 
     public abstract class IndexBase<TR, TK, TC> : ISchemaDefinitionIndex, IIndexQueryable<TR, TK, TC>
-        where TR : IIndexableRow<TK, TC>, IReactiveRow<TR, TC>
+        where TR : class, IIndexableRow<TK, TC>, IReactiveRow<TR, TC>
         where TK : unmanaged
         where TC : unmanaged, IIndexableComponent<TK>
     {

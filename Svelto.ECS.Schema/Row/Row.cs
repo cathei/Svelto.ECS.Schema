@@ -56,7 +56,7 @@ namespace Svelto.ECS.Schema
     }
 
     public interface IReactiveRow<TR, TC> : IEntityRow<TC>
-        where TR : IReactiveRow<TR, TC>
+        where TR : class, IReactiveRow<TR, TC>
         where TC : struct, IEntityComponent
     {
         public abstract class Engine : ReactiveRowEngine<TR, TC>
