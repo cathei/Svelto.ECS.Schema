@@ -13,67 +13,19 @@ In Svelto.ECS, groups can hold entities having specific combination of component
 That is why I chose to take friendly terms from RDBMS and define Schema of ECS.
 
 ### Rows
-In Schema extensions, Rows are abstracted layer of traits that a Entity can have. It can be extended, layered, mxied and matched very flexiblely. Engines should query entities as `Selector Row`s, while actual Entity Descriptor is defined with `Descriptor Row`s.
-
-There is three level of Rows as it extends.
-
-#### Selector Rows
-`Selector Row`s are minimal blocks, leaf nodes of Rows. You can consider these as unit of components you can query. Specifically, in Svelto.ECS you query entities like this.
-```csharp
-var (component1, component2, component3, count) = entitiesDB.QueryEntities<Component1, Component2, Component3>(characterGroup);
-```
-In Schema Extensions, you should first define Seletor Row and then you can query.
-```csharp
-public interface ISelectorRow : IEntityRow<Component1, Component2, Component3> {}
-
-// yes, the return value is exactly same as when you're using plain Svelto
-var (component1, component2, component3, count) = indexedDB.Select<ISelectorRow>().From(characterTable).Entities();
-
-// below is valid, but not recommended at all. Always define as own selector row that has meaning.
-// var (component1, component2, component3, count) = indexedDB.Select<IEntityRow<Component1, Component2, Component3>>().From(characterTable).Entities();
-```
-Fundametally, it helps writing 'good code' because the set of components you query always should have meanings. You'll always have to define how Engines should see Entities, and what they know about Entities.
-
-#### Descriptor Rows
-`Descriptor Row`s represent `Entity Descriptor`, they are root of Rows. Descriptor Rows should be sealed, and not meant to be extended. They are the Rows you will eventually insert into Tables. In Svelto, simple Entity Descriptors are define as below.
-```csharp
-public class CharacterDescriptor : GenericEntityDescriptor<PositionComponent, SpeedComponent, HealthComponent> { }
-```
-In Schema extensions, Descriptor Rows are defined like this. Note than only one PositionComponent will be included in CharacterRow since they are same type.
-```csharp
-// selector rows
-public interface IMovableRow : IEntityRow<PositionComponent, SpeedComponent> {}
-public interface IDamagableRow : IEntityRow<PositionComponent, HealthComponent> {}
-
-// descriptor row implements multiple selector rows
-// a entity from this descriptor row will have PositionComponent, SpeedComponent, HealthComponent
-public sealed class CharacterRow : DescriptorRow<CharacterRow>, IMovableRow, IDamagableRow {}
-```
-As you can see, DescriptorRow doesn't even need to know what Component it has. It will focus on what Selector Rows it should include. In other words, it will make you focus more on logic than a data.
-
-#### Interface Rows
-`Interface Row`s are middle-mans, internal nodes of the Rows. You cannot Query with them, you cannot make descriptor with them, but what you can is using it as grouping of Seletor Rows commonly implemented.
-```csharp
-// common traits Descriptor Rows implementing
-public interface ICharacterRow : IMovableRow, IDamagableRow {}
-// all enemies are characters
-public interface IEnemyRow : ICharacterRow, ISpawnableRow {}
-
-// 'hero' is character with special ability
-public sealed class HeroRow : DescriptorRow<HeroRow>, ICharacterRow, ISpecialAbilityRow {}
-// ground enemy doens't have trait besides common enemy traits
-public sealed class GroundEnemyRow : DescriptorRow<GroundEnemyRow>, IEnemyRow {}
-// flying enemy is enemy with flying trait
-public sealed class FlyingEnemyRow : DescriptorRow<FlyingEnemyRow>, IEnemyRow, IFlyingRow {}
-```
-By making layers with Interface Rows, you'll have flexiblity to define and modify traits used over multiple Descriptor Rows.
+In Schema extensions, `Row`s are abstracted layer of traits that a Entity can have. It can be extended, layered, mxied and matched very flexiblely. Engines should query entities as `Selector Row`s, while actual Entity Descriptor is defined with `Descriptor Row`s.
 
 ### Tables
-`Table` is a wrapper for `Group` in Svelto ECS, mimicking RDBMS Tables. `Table` is tied up to specific `Descriptor Rows`. You'll be able to define 
+`Table` is a wrapper for `Group` in Svelto ECS, mimicking RDBMS Tables. A `Table` is tied up to specific `Descriptor Row`. You can either define single Table, or ranged, or combined Table from defined onces. Using `IEntityTable<out TRow>` interface is a way to treat Tables with same common interface same way.
 
 ### Indexes
-
+`Index` is a wrapper for `Filter` in Svelto ECS, mimicking RDMBS Indexes. It saves list of entities per key, and you can query entities having speicific key.
 
 ### Schemas
-A Schema is extendible, 
+`Schema` is extendible, nestable, reusable replacement of `GroupCompound` in Svelto ECS. A Schema can contain Tables, Indexes and other Schemas. While Groups must be rigid and static in Svelto, Schema is effective way to hide the limitation and make it easier to modify when game design changed.
 
+### State Machines
+Schema extensions also functionality to define [Finite State Machine](https://en.wikipedia.org/wiki/Finite-state_machine) in Svelto. You can define States, Conditions, Callbacks of FSM, and query Entities with speicific State.
+
+### Summary
+We looked into features of Schema extensions. [Next document](basic-rows.md) will teach you how to use Schema extensions, starting from defining Rows.

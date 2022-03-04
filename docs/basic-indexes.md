@@ -1,41 +1,61 @@
 ## Using Indexes
-### Defining Indexes
-Index is wrapper of filters system, but works like indexes in RDBMS. Filters are used to have subset from a group. Indexes are to collect entities by specific key, from a child or entire schema. Let's take a look. We'll start from defining `IndexTag`.
+Index is wrapper of Filter in Svelto, but works like indexes in RDBMS. Filters are used to have subset from a group. Indexes are to collect entities by specific key, from a child or entire schema. Let's take a look.
+
+### Defining Index
+To define a Index, first define a `IIndexedRow<,>`.
+
 ```csharp
-public class CharacterController : IndexTag<int, CharacterController.Unique>
+public interface IIndexedController : IIndexedRow<int, IIndexedController.Tag>
 {
-    public struct Unique : IUnique { }
+    public struct Tag : ITag {}
 }
 ```
-IndexTag represent a indexable trait of entity. First type parameter is equatable value type that will be used as key of Index. Second type parameter is to ensure uniqueness of the generic class members (We have to define struct to pass as type parameter, due to Svelto limitation).
+IIndexedRow represent a indexable trait of a Entity. First type parameter is equatable value type that will be used as key of Index. Second type parameter is to ensure uniqueness of the generic class members (We have to define `struct` to pass as type parameter, we cannot pass `class` or `interface` due to Svelto limitation).
 
-`IndexTag` has nested types of `Component` and `Index`. Now, let's add `CharacterController.Component` to your descriptor.
+`IIndexedRow` has nested types of `Component` and `Index`. Now, let's add `IIndexedController` to your Descriptor Row.
 ```csharp
-public class CharacterDescriptor<HealthComponent, PositionComponent, CharacterController.Component> { }
+public sealed class CharacterRow : DescriptorRow<CharacterRow>, IDamagableRow, IIndexedController { }
 ```
-`IndexTag.Component` is a special component holds the `Value` to index, and ensures that indexes are up-to-date. It has the first type parameter of `IndexTag`, which is `int` here, as member `Value`, but you cannot change the `Value` directly. Instead you need to call `Update(IndexedDB, TValue)`.
+`IIndexedRow.Component` is a special component holds the `Value` to index, and ensures that indexes are up-to-date. It has the first type parameter of `IIndexedRow`, which is `int` here, as member `Value`, but you cannot change the `Value` directly. Instead you need to call `IndexedDB.Update(ref Component, TValue)`.
 
-Before look how to query with indexes, Let's add `CharacterController.Index` to our schema.
+Before look how to query with indexes, Let's add `IIndexedController.Index` to our schema.
 ```csharp
 public class IndexedSchema : IEntitySchema
 {
-    public readonly Table<CharacterDescriptor> FlyingCharacter = new Table<CharacterDescriptor>();
-    public readonly Table<CharacterDescriptor> GroundCharacter = new Table<CharacterDescriptor>();
+    public readonly CharacterRow.Table FlyingCharacter = new CharacterRow.Table();
+    public readonly CharacterRow.Table GroundCharacter = new CharacterRow.Table();
 
-    public readonly CharacterController.Index CharactersByController = new CharacterController.Index();
+    public readonly IIndexedController.Index CharacterController = new IIndexedController.Index();
 }
 ```
-`IndexTag.Index` will index paired `IndexTag.Component` component in any tables within declared schema. Any child schema will be indexed as well. Since `CharacterController.Index` is defined in root schema, any table with `CharacterController.Component` will be indexed. In this example both `FlyingCharacter` and `GroundCharacter` group will be indexed and returned when queried. If you want to index specific groups only, define a child Schema.
+`IIndexedController.Index` will index paired `IIndexedController` in any tables within declared Schema. Any child Schema will be indexed as well. Since `CharacterController` Index is defined in root Schema, any Tables with `IIndexedController` will be indexed. In this example both `FlyingCharacter` and `GroundCharacter` Tables will be indexed. If you want to index specific Tables only, define a child Schema.
 
-Also, you can share `IndexTag.Component` across different descriptors. Index will handle them well.
+Also, you can share `IIndexedController` across different descriptors. Index will handle them well.
 
-### Querying Indexes
-Now, finally you can iterate over entities with `IndexTag.Index`. You don't have to include `IndexTag.Component` in the type list. You can query any type of component within the descriptor, because as long as you keep a group with single descriptor you can iterate with same filter.
-
-Just like how you query Entities in `Table`, you can query with `IndexedDB`. To query entites with `IndexTag.Component.Value` of 3:
+### Querying Indexes from Single Table
+Now, finally you can iterate over entities with `IIndexedController`. You can do this by adding `Where(Index, Value)` to your Query, just like how you will do in SQL. For example below will query Entites where `IIndexedController.Component.Value` is 3.
 ```csharp
-foreach (var ((health, position, count), indices, group) in schema.CharactersByController
-    .Query(3).Entities<HealthComponent, PositionComponent>(indexedDB))
+var ((health, defense, count), indices) = indexedDB.Select<IDamagableRow>().From(schema.FlyingCharacter).Where(schema.CharacterController, 3).Entities();
+```
+Which looks like this SQL.
+```sql
+SELECT IDamagableRow FROM FlyingCharacterTable WHERE CharacterController = 3;
+```
+Note that you got additional `indices` value. You'll have to loop through this to iterate filtered Entities by Index.
+```csharp
+foreach (var i in indices)
+{
+    health[i].current += 10;
+}
+```
+Also the group you provieded have to implement both `IDamagableRow` and `IIndexedController`. Otherwise the Query will emit compile-time error.
+
+### Querying Indexes from all Tables
+Same as other Queries, you could pass Tables or CombinedTables to `From()`.
+```csharp
+var tables = indexedDB.Select<CharacterRow>().Tables();
+
+foreach (var ((health, position, count), indices, table) in indexedDB.Select<IDamagableRow>().From(tables).Where(schema.CharacterController, 3).Entities())
 {
     foreach (var i in indices)
     {
@@ -43,10 +63,7 @@ foreach (var ((health, position, count), indices, group) in schema.CharactersByC
     }
 }
 ```
-Note that you can use foreach loop to iterate indices.  but **DO NOT** update `IndexTag.Component` component while iterating through index query with it. It is undefined behaviour. If you have to, consider using `StateMachine` instead, which will be explained later.
+Note that you can use foreach loop to iterate indices.
 
-If you want to query index within specific `Table<T>` or `Tables<T>`, use `From` like this:
-```csharp
-var ((health, position, count), indices) = schema.CharactersByController
-    .Query(3).From(schema.FlyingCharacter).Entities<HealthComponent, PositionComponent>(indexedDB);
-```
+### Summary
+We learned how to define and iterate through Indexes. Lastly, **DO NOT** update `IIndexedRow.Component` component while iterating through index query with it. It is undefined behaviour. If you have to, consider using `StateMachine` instead, which will be the [Next Document](basic-state-machines.md).

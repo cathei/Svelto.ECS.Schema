@@ -53,7 +53,7 @@ namespace Svelto.ECS.Schema
                     }
                 }
 
-                tables = new EntityTables<TR>(tablesList);
+                tables = new CombinedTables<TR>(tablesList);
                 _rowToTables[TypeRefWrapper<TR>.wrapper] = tables;
             }
 

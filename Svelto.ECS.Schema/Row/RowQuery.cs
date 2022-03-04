@@ -58,19 +58,6 @@ namespace Svelto.ECS.Schema
             return (query.Item1, query.Item2, query.Tables());
         }
 
-        // Select -> Where
-        // Result will be from all groups so no need to check for query type
-        // public static (IndexedDB, TR, IndexQuery<TIK, TIC>)
-        //         Where<TR, TIR, TIK, TIC>(this (IndexedDB, TR) query,
-        //             IIndexQueryable<TIR, TIK, TIC> index, TIK key)
-        //     where TR : IEntityRow
-        //     where TIR : IIndexableRow<TIK, TIC>
-        //     where TIK : unmanaged
-        //     where TIC : unmanaged, IIndexableComponent<TIK>
-        // {
-        //     return (query.Item1, query.Item2, index.Query(key));
-        // }
-
         // Select -> From Table -> Where
         // Table Row must implement both Selector Row and Index Row
         public static (IndexedDB, TR, IEntityTable<TTR>, IndexQuery<TIR, TIK, TIC>, TIR)
@@ -98,16 +85,6 @@ namespace Svelto.ECS.Schema
         {
             return (query.Item1, query.Item2, query.Item3, index.Query(key), default);
         }
-
-        // Select -> Where
-        // Result will be from all groups so no need to check for query type
-        // public static (IndexedDB, TR, Memo<TMR>)
-        //         Where<TR, TMR>(this (IndexedDB, TR) query, Memo<TMR> memo)
-        //     where TR : IEntityRow
-        //     where TMR : IMemorableRow
-        // {
-        //     return (query.Item1, query.Item2, memo);
-        // }
 
         // Select -> From Table -> Where
         // Table Row must implement both Selector Row and Index Row

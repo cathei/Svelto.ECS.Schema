@@ -24,10 +24,10 @@ namespace Svelto.ECS.Schema
     /// </summary>
     /// <typeparam name="TState">Value type representing a state. Usually enum type.</typeparam>
     /// <typeparam name="TTag">Type to ensure uniqueness. It can be done with TSelf, but IsUnmanagedEx is on the way</typeparam>
-    public abstract partial class StateMachine<TState, TTag> : IEntityStateMachine,
-            IIndexQueryable<StateMachine<TState, TTag>.IIndexedRow, TState, StateMachine<TState, TTag>.Component>
+    public abstract partial class EntityStateMachine<TState, TTag> : IEntityStateMachine,
+            IIndexQueryable<EntityStateMachine<TState, TTag>.IIndexedRow, TState, EntityStateMachine<TState, TTag>.Component>
         where TState : unmanaged
-        where TTag : unmanaged, StateMachine<TState, TTag>.ITag
+        where TTag : unmanaged, EntityStateMachine<TState, TTag>.ITag
     {
         public interface ITag {}
 
@@ -35,7 +35,7 @@ namespace Svelto.ECS.Schema
 
         public TransitionEngine Engine { get; internal set; }
 
-        protected StateMachine()
+        protected EntityStateMachine()
         {
             if (Config != null)
                 return;

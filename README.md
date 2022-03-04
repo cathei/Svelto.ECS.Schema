@@ -6,10 +6,10 @@ Schema and State Machine extensions for [Svelto.ECS](https://github.com/sebas77/
 ## Features
 * RDBMS-like **Schema Definition** with Extendible, Nestable Layout.
 * **Abstracted Interface Definition** to define how Engines should see Entities.
-* **LINQ-like Queries**, with **Extra Type Safety**.
+* **SQL-like Queries** with **Extra Type Safety**.
 * **Indexing Entities** and Automatic Tracking over Tables.
 * **Finite State Machine** with Transitions, Conditions and Callbacks.
-* Ensures **Zero-allocation** for Frequently Called Critical Pathes.
+* Ensures [**Zero-allocation**](https://www.sebaslab.com/zero-allocation-code-in-unity/) for Frequently Called Critical Pathes.
 
 ## Getting Started
 Currently it is alpha stage. You can clone this repository, or reference with [NuGet](https://www.nuget.org/packages/Svelto.ECS.Schema/). While I don't recommend to use it on production, feel free to try it and please share me the experience!
@@ -26,7 +26,6 @@ If you need help or want to give feedback, you can either join [my Discord Chann
 ### Basic Usages
 * [Defining Rows](docs/basic-rows.md)
 * [Defining Schemas](docs/basic-schemas.md)
-* [vs. Doofus Example](docs/vs-doofus.md)
 * [Using Queries](docs/basic-queries.md)
 * [Using Indexes](docs/basic-indexes.md)
 * [Using State Machines](docs/basic-state-machines.md)
@@ -35,4 +34,5 @@ If you need help or want to give feedback, you can either join [my Discord Chann
 * [Advanced Schema Usages](docs/advanced-schemas.md)
 
 ### Etc.
+* [vs. Doofus Example](docs/vs-doofus.md)
 * [Naming Convention Recommendations](docs/naming-conventions.md)

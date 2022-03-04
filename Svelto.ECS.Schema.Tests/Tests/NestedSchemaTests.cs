@@ -39,7 +39,7 @@ namespace Svelto.ECS.Schema.Tests
 
             public readonly StateSchema Dead = new StateSchema();
 
-            public readonly EntityTables<DoofusRow> EatingDoofuses;
+            public readonly CombinedTables<DoofusRow> EatingDoofuses;
 
             public TestSchema()
             {

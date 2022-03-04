@@ -32,7 +32,7 @@ namespace Svelto.ECS.Schema.Tests
 
         public enum CharacterState { Normal, Upset, Angry, Special, MAX }
 
-        public class CharacterFSM : StateMachine<CharacterState, CharacterFSM.Tag>
+        public class CharacterFSM : EntityStateMachine<CharacterState, CharacterFSM.Tag>
         {
             public struct Tag : ITag { }
 

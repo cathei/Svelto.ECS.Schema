@@ -55,10 +55,10 @@ namespace Svelto.ECS.Schema.Internal
 
 namespace Svelto.ECS.Schema.Definition
 {
-    public sealed class EntityTables<TRow> : TablesBase<TRow>
+    public sealed class CombinedTables<TRow> : TablesBase<TRow>
         where TRow : IEntityRow
     {
-        internal EntityTables(IEnumerable<IEntityTable<TRow>> tables) : base(tables.ToArray(), true) { }
-        internal EntityTables(FasterList<IEntityTable<TRow>> tables) : base(tables.ToArray(), true) { }
+        internal CombinedTables(IEnumerable<IEntityTable<TRow>> tables) : base(tables.ToArray(), true) { }
+        internal CombinedTables(FasterList<IEntityTable<TRow>> tables) : base(tables.ToArray(), true) { }
     }
 }

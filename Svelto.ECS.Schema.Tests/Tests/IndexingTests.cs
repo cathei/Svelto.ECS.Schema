@@ -32,8 +32,8 @@ namespace Svelto.ECS.Schema.Tests
 
             public readonly IIndexedItemOwner.Index ItemOwner = new IIndexedItemOwner.Index();
 
-            public readonly EntityTables<CharacterRow> AllCharacters;
-            public readonly EntityTables<ItemRow> AllItems;
+            public readonly CombinedTables<CharacterRow> AllCharacters;
+            public readonly CombinedTables<ItemRow> AllItems;
 
             public TestSchema()
             {

@@ -4,7 +4,7 @@ using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema
 {
-    public partial class StateMachine<TState, TTag>
+    public partial class EntityStateMachine<TState, TTag>
     {
         void IEntityStateMachine.AddEngines(EnginesRoot enginesRoot, IndexedDB indexedDB)
         {
