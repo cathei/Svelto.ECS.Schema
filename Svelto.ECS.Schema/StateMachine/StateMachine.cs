@@ -197,6 +197,7 @@ namespace Svelto.ECS.Schema.Definition
 
         internal sealed class StateConfig
         {
+            internal readonly StateMachineConfigBase _config;
             internal readonly TKey _key;
             internal readonly FasterList<TransitionConfig> _transitions;
 
@@ -206,8 +207,9 @@ namespace Svelto.ECS.Schema.Definition
             internal readonly FasterList<CallbackConfig> _onExit;
             internal readonly FasterList<CallbackConfig> _onEnter;
 
-            internal StateConfig(in TKey state)
+            internal StateConfig(StateMachineConfigBase config, in TKey state)
             {
+                _config = config;
                 _key = state;
                 _transitions = new FasterList<TransitionConfig>();
 
@@ -218,12 +220,12 @@ namespace Svelto.ECS.Schema.Definition
                 _onEnter = new FasterList<CallbackConfig>();
             }
 
-            internal void Evaluate<TR>(StateMachineConfig<TR> config, IndexedDB indexedDB,
-                    NB<Component> component, IEntityTable<TR> table)
+            internal void Evaluate<TR>(
+                    IndexedDB indexedDB, NB<Component> component, IEntityTable<TR> table)
                 where TR : class, IIndexedRow
             {
                 var indices = indexedDB
-                    .Select<IIndexedRow>().From(table).Where(config._index, _key).Indices();
+                    .Select<IIndexedRow>().From(table).Where(_config._index, _key).Indices();
 
                 // nothing to check
                 if (indices.Count() == 0)
@@ -244,8 +246,8 @@ namespace Svelto.ECS.Schema.Definition
                         var currentState = new KeyWrapper<TKey>(component[index]._key);
                         var nextState = new KeyWrapper<TKey>(_transitions[i]._next);
 
-                        indexedDB.Memo(config._states[currentState]._exitCandidates).Add(component[i]);
-                        indexedDB.Memo(config._states[nextState]._enterCandidates).Add(component[i]);
+                        indexedDB.Memo(_config._states[currentState]._exitCandidates).Add(component[index]);
+                        indexedDB.Memo(_config._states[nextState]._enterCandidates).Add(component[index]);
                         break;
                     }
                 }
@@ -287,10 +289,10 @@ namespace Svelto.ECS.Schema.Definition
                 {
                     // this group will not be visited again in this step
                     // updating indexes
-                    var oldState = component[index]._key;
+                    var oldKey = component[index]._key;
                     component[index]._key = _key;
 
-                    indexedDB.NotifyKeyUpdate(ref component[index], oldState, _key);
+                    indexedDB.NotifyKeyUpdate(ref component[index], oldKey, _key);
 
                     for (int i = 0; i < _onEnter.count; ++i)
                         _onEnter[i].Invoke(index);
@@ -300,15 +302,17 @@ namespace Svelto.ECS.Schema.Definition
 
         internal sealed class AnyStateConfig
         {
+            internal readonly StateMachineConfigBase _config;
             internal readonly FasterList<TransitionConfig> _transitions;
 
-            internal AnyStateConfig()
+            internal AnyStateConfig(StateMachineConfigBase config)
             {
+                _config = config;
                 _transitions = new FasterList<TransitionConfig>();
             }
 
-            internal void Evaluate<TR>(StateMachineConfig<TR> config, IndexedDB indexedDB,
-                    NB<Component> component, int count, IEntityTable<TR> table)
+            internal void Evaluate<TR>(
+                    IndexedDB indexedDB, NB<Component> component, int count, IEntityTable<TR> table)
                 where TR : class, IIndexedRow
             {
                 for (int i = 0; i < _transitions.count; ++i)
@@ -325,8 +329,8 @@ namespace Svelto.ECS.Schema.Definition
                         var currentState = new KeyWrapper<TKey>(component[index]._key);
                         var nextState = new KeyWrapper<TKey>(_transitions[i]._next);
 
-                        indexedDB.Memo(config._states[currentState]._exitCandidates).Add(component[i]);
-                        indexedDB.Memo(config._states[nextState]._enterCandidates).Add(component[i]);
+                        indexedDB.Memo(_config._states[currentState]._exitCandidates).Add(component[index]);
+                        indexedDB.Memo(_config._states[nextState]._enterCandidates).Add(component[index]);
                         break;
                     }
                 }

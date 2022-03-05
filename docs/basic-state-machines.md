@@ -4,6 +4,18 @@ Schema extensions support Finite State Machine (FSM) feature, which automaticall
 ```csharp
 public enum CharacterState { Normal, Angry, Fever, MAX }
 ```
+And StateMachineKey class to ensure uniquness of State Machine you create.
+```csharp
+public readonly struct CharacterStateKey : IStateMachineKey<CharacterStateKey>
+{
+    public readonly CharacterState state;
+
+    public CharacterStateKey(CharacterState state) => this.state = state;
+
+    public static implicit operator CharacterStateKey(CharacterState state)
+        => new CharacterStateKey(state);
+}
+```
 
 Now you can define FSM class, inherit `EntityStateMachine<TState, TUnique>`.
 ```csharp

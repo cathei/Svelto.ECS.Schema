@@ -17,6 +17,8 @@ namespace Svelto.ECS.Schema.Tests
 
             public bool KeyEquals(in CharacterController other)
                 => key.Equals(other.key);
+
+            public int KeyHashCode() => key.GetHashCode();
         }
 
         public struct CharacterStateKey : IIndexKey<CharacterStateKey>
@@ -28,6 +30,8 @@ namespace Svelto.ECS.Schema.Tests
 
             public bool KeyEquals(in CharacterStateKey other)
                 => key.Equals(other.key);
+
+            public int KeyHashCode() => key.GetHashCode();
         }
 
 

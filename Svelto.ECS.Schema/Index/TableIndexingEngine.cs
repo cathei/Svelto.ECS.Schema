@@ -75,7 +75,7 @@ namespace Svelto.ECS.Schema.Internal
         {
             foreach (var groupData in _groupsToRebuild)
             {
-                var mapper = indexedDB.entitiesDB.QueryMappedEntities<TC>(groupData.table.ExclusiveGroup);
+                var mapper = indexedDB.GetEGIDMapper(groupData.table);
                 groupData.filter.RebuildIndicesOnStructuralChange(mapper);
             }
 

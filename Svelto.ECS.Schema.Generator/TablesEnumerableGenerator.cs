@@ -67,6 +67,8 @@ namespace Svelto.ECS.Schema.Generator
 
             public void Reset() {{ _indexValue = -1; }}
 
+            public void Dispose() {{ }}
+
             public RefCurrent Current => new RefCurrent(_collection, _tables.GetTable(_indexValue));
 
             public readonly ref struct RefCurrent

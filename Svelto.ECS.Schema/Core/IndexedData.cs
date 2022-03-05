@@ -31,7 +31,7 @@ namespace Svelto.ECS.Schema.Internal
         }
     }
 
-    internal interface IndexerData { }
+    internal abstract class IndexerData { }
 
     internal sealed class IndexerData<TKey> : IndexerData
         where TKey : unmanaged, IKeyEquatable<TKey>

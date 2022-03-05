@@ -83,7 +83,7 @@ namespace Svelto.ECS.Schema
             ref var oldGroupData = ref CreateOrGetIndexedGroupData(indexerId, oldKey, table);
             ref var newGroupData = ref CreateOrGetIndexedGroupData(indexerId, newKey, table);
 
-            var mapper = entitiesDB.QueryMappedEntities<RowIdentityComponent>(keyComponent.ID.groupID);
+            var mapper = GetEGIDMapper(table);
 
             oldGroupData.filter.TryRemove(keyComponent.ID.entityID);
             newGroupData.filter.Add(keyComponent.ID.entityID, mapper);

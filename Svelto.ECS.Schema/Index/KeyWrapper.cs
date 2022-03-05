@@ -19,7 +19,7 @@ namespace Svelto.ECS.Schema.Internal
         public KeyWrapper(in T value)
         {
             _value = value;
-            _hashcode = _value.GetHashCode();
+            _hashcode = _value.KeyHashCode();
         }
 
         public bool Equals(KeyWrapper<T> other) => _value.KeyEquals(other._value);

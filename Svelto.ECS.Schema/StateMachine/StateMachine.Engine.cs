@@ -28,7 +28,7 @@ namespace Svelto.ECS.Schema.Definition
             protected StateMachineConfigBase()
             {
                 _states = new FasterDictionary<KeyWrapper<TKey>, StateConfig>();
-                _anyState = new AnyStateConfig();
+                _anyState = new AnyStateConfig(this);
                 _index = new Index();
             }
 
@@ -45,6 +45,7 @@ namespace Svelto.ECS.Schema.Definition
 
                 // clear all filters before proceed
                 // maybe not needed with new filter system
+                // but again we have to make sure because engine can called multiple times
                 for (int i = 0; i < stateCount; ++i)
                 {
                     indexedDB.Memo(states[i]._exitCandidates).Clear();
@@ -56,11 +57,11 @@ namespace Svelto.ECS.Schema.Definition
                 {
                     for (int i = 0; i < stateCount; ++i)
                     {
-                        states[i].Evaluate(this, indexedDB, component, table);
+                        states[i].Evaluate(indexedDB, component, table);
                     }
 
                     // any state transition has lower priority
-                    _anyState.Evaluate(this, indexedDB, component, count, table);
+                    _anyState.Evaluate(indexedDB, component, count, table);
 
                     // check for exit candidates
                     for (int i = 0; i < stateCount; ++i)
@@ -77,7 +78,7 @@ namespace Svelto.ECS.Schema.Definition
             }
         }
 
-        protected sealed class TransitionEngine : IStepEngine
+        private sealed class TransitionEngine : IStepEngine
         {
             private readonly IndexedDB _indexedDB;
 

@@ -15,8 +15,9 @@ namespace Svelto.ECS.Schema.Tests
             public static implicit operator ItemOwner(int key)
                 => new ItemOwner { key = key };
 
-            public bool KeyEquals(in ItemOwner other)
-                => key.Equals(other.key);
+            public bool KeyEquals(in ItemOwner other) => key.Equals(other.key);
+
+            public int KeyHashCode() => key.GetHashCode();
         }
 
         public interface IIndexedItemOwner : IIndexedRow<ItemOwner>, ISelectorRow<Indexed<ItemOwner>> {}

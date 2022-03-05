@@ -5,6 +5,6 @@ using Svelto.ECS.Schema.Internal;
 namespace Svelto.ECS.Schema
 {
     public interface IStateMachineKey<TSelf> : IKeyEquatable<TSelf>
-        where TSelf : IStateMachineKey<TSelf>
+        where TSelf : unmanaged, IStateMachineKey<TSelf>
     { }
 }

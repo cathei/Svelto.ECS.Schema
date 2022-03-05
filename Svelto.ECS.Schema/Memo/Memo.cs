@@ -61,7 +61,7 @@ namespace Svelto.ECS.Schema.Internal
                 if (table == null)
                     continue;
 
-                var mapper = indexedDB.entitiesDB.QueryMappedEntities<TComponent>(table.ExclusiveGroup);
+                var mapper = indexedDB.GetEGIDMapper(table);
 
                 // TODO: change group to table!
                 var (components, _) = indexedDB.Select<TRow>().From(table).Entities();

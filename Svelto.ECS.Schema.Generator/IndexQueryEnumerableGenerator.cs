@@ -78,6 +78,8 @@ namespace Svelto.ECS.Schema.Generator
 
             public void Reset() {{ _indexValue = -1; }}
 
+            public void Dispose() {{ }}
+
             public IndexQueryTableTuple<TR, {1}> Current => new IndexQueryTableTuple<TR, {1}>(
                 _collection, new IndexedIndices(_indices), _tables.GetTable(_indexValue));
         }}

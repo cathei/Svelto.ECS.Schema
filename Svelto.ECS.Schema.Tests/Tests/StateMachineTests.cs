@@ -46,11 +46,11 @@ namespace Svelto.ECS.Schema.Tests
             public override bool Equals(object obj)
                 => obj is CharacterStateKey other && KeyEquals(other);
 
-            public override int GetHashCode()
-                => state.GetHashCode();
+            public int KeyHashCode() => state.GetHashCode();
 
-            public override string ToString()
-                => state.ToString();
+            public override int GetHashCode() => state.GetHashCode();
+
+            public override string ToString() => state.ToString();
         }
 
         public class CharacterFSM : StateMachine<CharacterStateKey>

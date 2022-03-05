@@ -10,16 +10,17 @@ namespace Svelto.ECS.Schema.Internal
     }
 
     public interface IKeyEquatable<TSelf>
-        where TSelf : IKeyEquatable<TSelf>
+        where TSelf : unmanaged, IKeyEquatable<TSelf>
     {
         bool KeyEquals(in TSelf other);
+        int KeyHashCode();
     }
 }
 
 namespace Svelto.ECS.Schema
 {
     public interface IIndexKey<TSelf> : IKeyEquatable<TSelf>
-        where TSelf : IIndexKey<TSelf>
+        where TSelf : unmanaged, IIndexKey<TSelf>
     { }
 
     public struct Indexed<TKey> : IIndexableComponent<TKey>

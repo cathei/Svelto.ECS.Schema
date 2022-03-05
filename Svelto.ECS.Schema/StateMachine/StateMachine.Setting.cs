@@ -41,7 +41,7 @@ namespace Svelto.ECS.Schema.Definition
                     throw new ECSException($"State {key} already exsists!");
                 }
 
-                var stateConfig = new StateConfig(key);
+                var stateConfig = new StateConfig(_config, key);
                 _config._states[wrapper] = stateConfig;
 
                 return new StateBuilder(stateConfig);

@@ -12,7 +12,7 @@ namespace Svelto.ECS.Schema
             where TR : class, ISelectorRow<TC>
             where TC : unmanaged, IEntityComponent, INeedEGID
         {
-            var mapper = entitiesDB.QueryMappedEntities<TC>(table.ExclusiveGroup);
+            var mapper = GetEGIDMapper(table);
 
             ref var groupData = ref CreateOrGetMemoGroup(memo._memoID, table);
 
