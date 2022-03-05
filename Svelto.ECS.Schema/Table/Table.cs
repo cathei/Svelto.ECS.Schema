@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema.Internal
 {
@@ -17,7 +19,7 @@ namespace Svelto.ECS.Schema.Internal
     }
 
     public abstract class TableBase<TRow> : TableBase, IEntityTable<TRow>, IEntityTablesBuilder<TRow>
-        where TRow : DescriptorRow<TRow>
+        where TRow : DescriptorRow
     {
         internal TableBase() : base() { }
 
@@ -26,4 +28,47 @@ namespace Svelto.ECS.Schema.Internal
             get { yield return this; }
         }
     }
+}
+
+namespace Svelto.ECS.Schema
+{
+    public sealed class Table<TRow> : TableBase<TRow>
+        where TRow : DescriptorRow
+    { }
+
+    public class Tables<TRow> : TablesBase<TRow>
+        where TRow : DescriptorRow
+    {
+        public Tables(int range) : base(GenerateTables(range), false) { }
+
+        private static Table<TRow>[] GenerateTables(int range)
+        {
+            var tables = new Table<TRow>[range];
+
+            for (int i = 0; i < range; ++i)
+                tables[i] = new Table<TRow>();
+
+            return tables;
+        }
+    }
+
+    public sealed class Tables<TRow, TIndex> : Tables<TRow>
+        where TRow : DescriptorRow
+    {
+        internal readonly Func<TIndex, int> _mapper;
+
+        internal Tables(int range, Func<TIndex, int> mapper) : base(range)
+        {
+            _mapper = mapper;
+        }
+
+        internal Tables(TIndex range, Func<TIndex, int> mapper) : base(mapper(range))
+        {
+            _mapper = mapper;
+        }
+
+        public IEntityTable<TRow> this[TIndex index] => _tables[_mapper(index)];
+        public IEntityTable<TRow> Get(TIndex index) => _tables[_mapper(index)];
+    }
+
 }

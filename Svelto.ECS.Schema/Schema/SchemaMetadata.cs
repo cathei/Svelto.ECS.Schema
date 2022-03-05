@@ -19,7 +19,7 @@ namespace Svelto.ECS.Schema
         internal class ShardNode
         {
             public ShardNode parent;
-            public FasterList<ISchemaDefinitionIndex> indexers;
+            public FasterList<IEntityIndex> indexers;
 
             public ShardNode(ShardNode parent)
             {
@@ -30,14 +30,14 @@ namespace Svelto.ECS.Schema
         internal readonly ShardNode root;
 
         internal readonly FasterDictionary<ExclusiveGroupStruct, TableNode> groupToTable;
-        internal readonly FasterDictionary<RefWrapperType, ISchemaDefinitionIndex> indexersToGenerateEngine;
+        internal readonly FasterDictionary<RefWrapperType, IEntityIndex> indexersToGenerateEngine;
 
         private static readonly Type ElementBaseType = typeof(ISchemaDefinition);
 
         internal SchemaMetadata(IEntitySchema schema)
         {
             groupToTable = new FasterDictionary<ExclusiveGroupStruct, TableNode>();
-            indexersToGenerateEngine = new FasterDictionary<RefWrapperType, ISchemaDefinitionIndex>();
+            indexersToGenerateEngine = new FasterDictionary<RefWrapperType, IEntityIndex>();
 
             root = new ShardNode(null);
             GenerateChildren(root, schema, schema.GetType().FullName);
@@ -66,7 +66,7 @@ namespace Svelto.ECS.Schema
                             RegisterTable(node, rangedTable.GetTable(i), $"{name}.{fieldInfo.Name}.{i}");
                         break;
 
-                    case ISchemaDefinitionIndex indexer:
+                    case IEntityIndex indexer:
                         RegisterIndexer(node, indexer);
                         break;
 
@@ -106,9 +106,9 @@ namespace Svelto.ECS.Schema
             ExclusiveGroupKnownGroups?.Add(name, table.ExclusiveGroup);
         }
 
-        private void RegisterIndexer(ShardNode node, ISchemaDefinitionIndex indexer)
+        private void RegisterIndexer(ShardNode node, IEntityIndex indexer)
         {
-            node.indexers ??= new FasterList<ISchemaDefinitionIndex>();
+            node.indexers ??= new FasterList<IEntityIndex>();
             node.indexers.Add(indexer);
 
             var componentType = indexer.ComponentType;

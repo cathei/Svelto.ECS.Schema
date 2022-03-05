@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Svelto.DataStructures;
+using Svelto.ECS.Internal;
 using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema
@@ -14,18 +15,17 @@ namespace Svelto.ECS.Schema
         // cache for indexer update
         internal struct GroupCache
         {
-            public FasterDictionary<RefWrapperType, FasterList<ISchemaDefinitionIndex>> componentToIndexers;
+            public FasterDictionary<RefWrapperType, FasterList<IEntityIndex>> componentToIndexers;
         }
 
-        internal FasterList<ISchemaDefinitionIndex> FindIndexers<TK, TC>(in ExclusiveGroupStruct groupID)
+        internal FasterList<IEntityIndex> FindIndexers<TK, TC>(in ExclusiveGroupStruct groupID)
             where TK : unmanaged
-            where TC : IIndexableComponent<TK>
         {
             var componentType = TypeRefWrapper<TC>.wrapper;
 
             var groupCache = _groupCaches.GetOrCreate(groupID, () => new GroupCache
             {
-                componentToIndexers = new FasterDictionary<RefWrapperType, FasterList<ISchemaDefinitionIndex>>()
+                componentToIndexers = new FasterDictionary<RefWrapperType, FasterList<IEntityIndex>>()
             });
 
             if (groupCache.componentToIndexers.TryGetValue(componentType, out var result))
@@ -33,7 +33,7 @@ namespace Svelto.ECS.Schema
 
             // Cache doesn't exists, let's build one
             // We don't support dynamic addition of Schemas and StateMachines
-            var componentIndexers = new FasterList<ISchemaDefinitionIndex>();
+            var componentIndexers = new FasterList<IEntityIndex>();
 
             groupCache.componentToIndexers.Add(componentType, componentIndexers);
 
@@ -71,61 +71,57 @@ namespace Svelto.ECS.Schema
             return componentIndexers;
         }
 
-        private void UpdateFilters<TR, TK, TC>(int indexerId, ref TC keyComponent, in TK oldKey, in TK newKey)
-            where TR : class, IIndexableRow<TK, TC>
+        private void UpdateFilters<TK, TC>(int indexerId, ref TC keyComponent, in TK oldKey, in TK newKey)
             where TK : unmanaged
-            where TC : unmanaged, IIndexableComponent<TK>
+            where TC : struct, IIndexedComponent
         {
-            var table = FindTable<TR>(keyComponent.ID.groupID);
+            var table = FindTable<IIndexableRow<TC>>(keyComponent.ID.groupID);
 
             if (table == null)
                 return;
 
-            ref var oldGroupData = ref CreateOrGetIndexedGroupData<TR, TK, TC>(indexerId, oldKey, table);
-            ref var newGroupData = ref CreateOrGetIndexedGroupData<TR, TK, TC>(indexerId, newKey, table);
+            ref var oldGroupData = ref CreateOrGetIndexedGroupData(indexerId, oldKey, table);
+            ref var newGroupData = ref CreateOrGetIndexedGroupData(indexerId, newKey, table);
 
-            var mapper = entitiesDB.QueryMappedEntities<TC>(keyComponent.ID.groupID);
+            var mapper = entitiesDB.QueryMappedEntities<RowIdentityComponent>(keyComponent.ID.groupID);
 
             oldGroupData.filter.TryRemove(keyComponent.ID.entityID);
             newGroupData.filter.Add(keyComponent.ID.entityID, mapper);
         }
 
-        internal ref IndexedGroupData<TR> CreateOrGetIndexedGroupData<TR, TK, TC>(int indexerID, in TK key, IEntityTable<TR> table)
-            where TR : IIndexableRow<TK, TC>
+        internal ref IndexerGroupData CreateOrGetIndexedGroupData<TK>(int indexerID, in TK key, IEntityTable table)
             where TK : unmanaged
-            where TC : unmanaged, IIndexableComponent<TK>
         {
-            var indexerData = CreateOrGetIndexedData<TR, TK>(indexerID);
+            var indexerData = CreateOrGetIndexedData<TK>(indexerID);
 
             var groupDict = indexerData.CreateOrGet(key).groups;
 
             if (!groupDict.ContainsKey(table.ExclusiveGroup))
             {
-                groupDict[table.ExclusiveGroup] = new IndexedGroupData<TR>
+                groupDict[table.ExclusiveGroup] = new IndexerGroupData
                 {
                     table = table,
                     filter = entitiesDB.GetFilters()
-                        .CreateOrGetFilterForGroup<TC>(GenerateFilterId(), table.ExclusiveGroup)
+                        .CreateOrGetFilterForGroup<RowIdentityComponent>(GenerateFilterId(), table.ExclusiveGroup)
                 };
             }
 
             return ref groupDict.GetValueByRef(table.ExclusiveGroup);
         }
 
-        private IndexedData<TR, TK> CreateOrGetIndexedData<TR, TK>(int indexerId)
-            where TR : IEntityRow
+        private IndexerData<TK> CreateOrGetIndexedData<TK>(int indexerId)
             where TK : unmanaged
         {
-            IndexedData<TR, TK> indexerData;
+            IndexerData<TK> indexerData;
 
             if (!indexers.ContainsKey(indexerId))
             {
-                indexerData = new IndexedData<TR, TK>();
+                indexerData = new IndexerData<TK>();
                 indexers[indexerId] = indexerData;
             }
             else
             {
-                indexerData = (IndexedData<TR, TK>)indexers[indexerId];
+                indexerData = (IndexerData<TK>)indexers[indexerId];
             }
 
             return indexerData;

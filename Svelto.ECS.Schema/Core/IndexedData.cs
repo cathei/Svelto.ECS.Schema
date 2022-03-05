@@ -5,19 +5,18 @@ using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema.Internal
 {
-    internal struct IndexedGroupData<TRow> : IEquatable<IndexedGroupData<TRow>>
-        where TRow : IEntityRow
+    internal struct IndexerGroupData : IEquatable<IndexerGroupData>
     {
-        public IEntityTable<TRow> table;
+        public IEntityTable table;
         public FilterGroup filter;
 
-        public bool Equals(IndexedGroupData<TRow> other) => table == other.table;
+        public bool Equals(IndexerGroupData other) => table == other.table;
         public override int GetHashCode() => table.ExclusiveGroup.GetHashCode();
     }
 
-    public struct IndexedKeyData<TRow> where TRow : IEntityRow
+    public struct IndexerKeyData
     {
-        internal FasterDictionary<ExclusiveGroupStruct, IndexedGroupData<TRow>> groups;
+        internal FasterDictionary<ExclusiveGroupStruct, IndexerGroupData> groups;
 
         // Do I want to delete group from dictionary, but only cache filter id?
         // Can be rewarded in faster iteration
@@ -32,44 +31,37 @@ namespace Svelto.ECS.Schema.Internal
         }
     }
 
-    internal interface IIndexedData { }
+    internal interface IndexerData { }
 
-    internal sealed class IndexedData<TRow, TKey> : IIndexedData
-        where TRow : IEntityRow
+    internal sealed class IndexerData<TKey> : IndexerData
         where TKey : unmanaged
     {
-        private readonly FasterDictionary<KeyWrapper<TKey>, IndexedKeyData<TRow>> keyToGroups
-            = new FasterDictionary<KeyWrapper<TKey>, IndexedKeyData<TRow>>();
+        private readonly FasterDictionary<KeyWrapper<TKey>, IndexerKeyData> keyToGroups
+            = new FasterDictionary<KeyWrapper<TKey>, IndexerKeyData>();
 
-        public ref IndexedKeyData<TRow> CreateOrGet(in TKey key)
+        public ref IndexerKeyData CreateOrGet(in TKey key)
         {
-            return ref keyToGroups.GetOrCreate(new KeyWrapper<TKey>(key), () => new IndexedKeyData<TRow>
+            return ref keyToGroups.GetOrCreate(new KeyWrapper<TKey>(key), () => new IndexerKeyData
             {
-                groups = new FasterDictionary<ExclusiveGroupStruct, IndexedGroupData<TRow>>()
+                groups = new FasterDictionary<ExclusiveGroupStruct, IndexerGroupData>()
             });
         }
 
-        public bool TryGetValue(in TKey key, out IndexedKeyData<TRow> result)
+        public bool TryGetValue(in TKey key, out IndexerKeyData result)
         {
             return keyToGroups.TryGetValue(new KeyWrapper<TKey>(key), out result);
         }
     }
 
-    internal interface IMemoData
+    internal sealed class MemoData
     {
-        void Clear();
-    }
-
-    internal sealed class MemoData<TRow> : IMemoData
-        where TRow : IEntityRow
-    {
-        public readonly IndexedKeyData<TRow> keyData;
+        public readonly IndexerKeyData keyData;
 
         public MemoData()
         {
-            keyData = new IndexedKeyData<TRow>
+            keyData = new IndexerKeyData
             {
-                groups = new FasterDictionary<ExclusiveGroupStruct, IndexedGroupData<TRow>>()
+                groups = new FasterDictionary<ExclusiveGroupStruct, IndexerGroupData>()
             };
         }
 

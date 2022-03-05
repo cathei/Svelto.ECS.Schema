@@ -41,17 +41,17 @@ namespace Svelto.ECS.Schema
                 values[i].Clear();
         }
 
-        internal ref IndexedGroupData<TR> CreateOrGetMemoGroup<TR>(int memoID, IEntityTable<TR> table)
+        internal ref IndexerGroupData<TR> CreateOrGetMemoGroup<TR>(int memoID, IEntityTable<TR> table)
             where TR : IEntityRow
         {
             var memoData = (MemoData<TR>)memos.GetOrCreate(memoID, () => new MemoData<TR>());
 
             if (!memoData.keyData.groups.ContainsKey(table.ExclusiveGroup))
             {
-                memoData.keyData.groups[table.ExclusiveGroup] = new IndexedGroupData<TR>
+                memoData.keyData.groups[table.ExclusiveGroup] = new IndexerGroupData<TR>
                 {
                     table = table,
-                    filter = entitiesDB.GetFilters().CreateOrGetFilterForGroup<RowMetaComponent>(
+                    filter = entitiesDB.GetFilters().CreateOrGetFilterForGroup<RowIdentityComponent>(
                         GenerateFilterId(), table.ExclusiveGroup)
                 };
             }

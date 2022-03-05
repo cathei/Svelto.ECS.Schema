@@ -10,7 +10,7 @@ namespace Svelto.ECS.Schema
     {
         public bool Exists(IEntityTable table, uint entityID)
         {
-            return entitiesDB.Exists<RowMetaComponent>(entityID, table.ExclusiveGroup);
+            return entitiesDB.Exists<RowIdentityComponent>(entityID, table.ExclusiveGroup);
         }
 
         public bool TryGetEGID<TRow>(EntityReference entityReference, out IEntityTable<TRow> table, out uint entityID)
@@ -30,7 +30,7 @@ namespace Svelto.ECS.Schema
 
         public bool TryGetEntityIndex(IEntityTable table, uint entityID, out uint entityIndex)
         {
-            var mapper = entitiesDB.QueryMappedEntities<RowMetaComponent>(table.ExclusiveGroup);
+            var mapper = entitiesDB.QueryMappedEntities<RowIdentityComponent>(table.ExclusiveGroup);
             return mapper.FindIndex(entityID, out entityIndex);
         }
 

@@ -52,6 +52,5 @@ namespace Svelto.ECS.Schema
 
     public interface IReactiveRow<TComponent> : IEntityRow<TComponent>
         where TComponent : struct, IEntityComponent
-    {
-    }
+    { }
 }

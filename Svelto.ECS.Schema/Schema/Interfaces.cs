@@ -14,7 +14,7 @@ namespace Svelto.ECS.Schema
             ref readonly ExclusiveGroupStruct ExclusiveGroup { get; }
         }
 
-        public interface ISchemaDefinitionIndex : ISchemaDefinition
+        public interface IEntityIndex : ISchemaDefinition
         {
             RefWrapperType ComponentType { get; }
             int IndexerID { get; }
@@ -43,7 +43,7 @@ namespace Svelto.ECS.Schema
         public interface IEntityStateMachine
         {
             void AddEngines(EnginesRoot enginesRoot, IndexedDB indexedDB);
-            ISchemaDefinitionIndex Index { get; }
+            IEntityIndex Index { get; }
         }
     }
 

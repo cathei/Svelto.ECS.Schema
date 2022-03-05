@@ -37,7 +37,7 @@ namespace Svelto.ECS.Schema
             where TMR : class, IEntityRow<TMC>
             where TMC : unmanaged, IEntityComponent, INeedEGID
         {
-            query.Item2.Set<IIndexQuery<TMR>, TMR>(query.Item1, memo);
+            query.Item2.Set(query.Item1, memo);
         }
 
         public static void Union<TR, TC, TMR, TMC>(this (IndexedDB, MemoBase<TR, TC>) query, MemoBase<TMR, TMC> memo)
@@ -46,7 +46,7 @@ namespace Svelto.ECS.Schema
             where TMR : class, IEntityRow<TMC>
             where TMC : unmanaged, IEntityComponent, INeedEGID
         {
-            query.Item2.Union<IIndexQuery<TMR>, TMR>(query.Item1, memo);
+            query.Item2.Union(query.Item1, memo);
         }
 
         public static void Intersect<TR, TC, TMR, TMC>(this (IndexedDB, MemoBase<TR, TC>) query, MemoBase<TMR, TMC> memo)
@@ -55,40 +55,37 @@ namespace Svelto.ECS.Schema
             where TMR : class, IEntityRow<TMC>
             where TMC : unmanaged, IEntityComponent, INeedEGID
         {
-            query.Item2.Intersect<IIndexQuery<TMR>, TMR>(query.Item1, memo);
+            query.Item2.Intersect(query.Item1, memo);
         }
 
-        public static void Set<TR, TC, TIR, TIK, TIC>(this (IndexedDB, MemoBase<TR, TC>) query,
-                IIndexQueryable<TIR, TIK, TIC> index, in TIK key)
+        public static void Set<TR, TC, TIR, TIK>(this (IndexedDB, MemoBase<TR, TC>) query,
+                IIndexQueryable<TIR, TIK> index, in TIK key)
             where TR : class, IEntityRow<TC>, TIR
             where TC : unmanaged, IEntityComponent, INeedEGID
-            where TIR : class, IIndexableRow<TIK, TIC>
+            where TIR : class, IEntityRow
             where TIK : unmanaged
-            where TIC : unmanaged, IIndexableComponent<TIK>
         {
-            query.Item2.Set<IndexQuery<TIR, TIK, TIC>, TIR>(query.Item1, index.Query(key));
+            query.Item2.Set(query.Item1, index.Query(key));
         }
 
-        public static void Union<TR, TC, TIR, TIK, TIC>(this (IndexedDB, MemoBase<TR, TC>) query,
-                IIndexQueryable<TIR, TIK, TIC> index, in TIK key)
+        public static void Union<TR, TC, TIR, TIK>(this (IndexedDB, MemoBase<TR, TC>) query,
+                IIndexQueryable<TIR, TIK> index, in TIK key)
             where TR : class, IEntityRow<TC>, TIR
             where TC : unmanaged, IEntityComponent, INeedEGID
-            where TIR : class, IIndexableRow<TIK, TIC>
+            where TIR : class, IEntityRow
             where TIK : unmanaged
-            where TIC : unmanaged, IIndexableComponent<TIK>
         {
-            query.Item2.Union<IndexQuery<TIR, TIK, TIC>, TIR>(query.Item1, index.Query(key));
+            query.Item2.Union(query.Item1, index.Query(key));
         }
 
         public static void Intersect<TR, TC, TIR, TIK, TIC>(this (IndexedDB, MemoBase<TR, TC>) query,
-                IIndexQueryable<TIR, TIK, TIC> index, in TIK key)
+                IIndexQueryable<TIR, TIK> index, in TIK key)
             where TR : class, IEntityRow<TC>, TIR
             where TC : unmanaged, IEntityComponent, INeedEGID
-            where TIR : class, IIndexableRow<TIK, TIC>
+            where TIR : class, IEntityRow
             where TIK : unmanaged
-            where TIC : unmanaged, IIndexableComponent<TIK>
         {
-            query.Item2.Intersect<IndexQuery<TIR, TIK, TIC>, TIR>(query.Item1, index.Query(key));
+            query.Item2.Intersect(query.Item1, index.Query(key));
         }
     }
 }

@@ -43,6 +43,6 @@ namespace Svelto.ECS.Schema
         IndexQuery<IIndexedRow, TState, Component> IIndexQueryable<IIndexedRow, TState, Component>.Query(in TState key)
             => Config.Index.Query(key);
 
-        ISchemaDefinitionIndex IEntityStateMachine.Index => Config.Index;
+        IEntityIndex IEntityStateMachine.Index => Config.Index;
     }
 }

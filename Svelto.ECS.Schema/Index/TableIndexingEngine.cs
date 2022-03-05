@@ -1,18 +1,25 @@
+using System;
 using System.Collections.Generic;
 using Svelto.DataStructures;
+using Svelto.ECS.Internal;
 
 namespace Svelto.ECS.Schema.Internal
 {
     // TODO: if apply new filter system, we can remove handling for 'MovedTo' and 'Remove'
     // but we still need 'Add' to make sure new entities are included in index
     internal class TableIndexingEngine<TR, TK, TC> : ReactToRowEngine<TR, TC>
-        where TR : class, IIndexableRow<TK, TC>, IReactiveRow<TC>
+        where TR : class, IIndexableRow<TC>
         where TK : unmanaged
-        where TC : unmanaged, IIndexableComponent<TK>
+        where TC : unmanaged, IIndexedComponent
     {
-        private readonly HashSet<IndexedGroupData<TR>> _groupsToRebuild = new HashSet<IndexedGroupData<TR>>();
+        private readonly HashSet<IndexerGroupData> _groupsToRebuild = new HashSet<IndexerGroupData>();
 
-        public TableIndexingEngine(IndexedDB indexedDB) : base(indexedDB) { }
+        private readonly Func<TC, TK> _keyGetter;
+
+        public TableIndexingEngine(IndexedDB indexedDB, Func<TC, TK> keyGetter) : base(indexedDB)
+        {
+            _keyGetter = keyGetter;
+        }
 
         public override void Add(ref TC component, IEntityTable<TR> table, uint entityID)
         {
@@ -52,18 +59,18 @@ namespace Svelto.ECS.Schema.Internal
 
         private void AddToFilter(int indexerID, ref TC keyComponent, IEntityTable<TR> table)
         {
-            ref var groupData = ref indexedDB.CreateOrGetIndexedGroupData<TR, TK, TC>(
-                indexerID, keyComponent.Value, table);
+            ref var groupData = ref indexedDB.CreateOrGetIndexedGroupData(
+                indexerID, _keyGetter(keyComponent), table);
 
-            var mapper = indexedDB.entitiesDB.QueryMappedEntities<TC>(table.ExclusiveGroup);
+            var mapper = indexedDB.entitiesDB.QueryMappedEntities<RowIdentityComponent>(table.ExclusiveGroup);
 
             groupData.filter.Add(keyComponent.ID.entityID, mapper);
         }
 
         private void RemoveFromFilter(int indexerID, ref TC keyComponent, IEntityTable<TR> table)
         {
-            ref var groupData = ref indexedDB.CreateOrGetIndexedGroupData<TR, TK, TC>(
-                indexerID, keyComponent.Value, table);
+            ref var groupData = ref indexedDB.CreateOrGetIndexedGroupData(
+                indexerID, _keyGetter(keyComponent), table);
 
             groupData.filter.TryRemove(keyComponent.ID.entityID);
 

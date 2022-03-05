@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Svelto.DataStructures;
+using Svelto.ECS.Internal;
 using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema
@@ -16,7 +17,7 @@ namespace Svelto.ECS.Schema
         // indexer will be created per TComponent
         internal readonly HashSet<RefWrapperType> createdIndexerEngines = new HashSet<RefWrapperType>();
 
-        internal readonly FasterDictionary<int, IIndexedData> indexers = new FasterDictionary<int, IIndexedData>();
+        internal readonly FasterDictionary<int, IndexerData> indexers = new FasterDictionary<int, IndexerData>();
         internal readonly FasterDictionary<int, IMemoData> memos = new FasterDictionary<int, IMemoData>();
 
         // well... let's have some space for user defined filter
@@ -55,10 +56,9 @@ namespace Svelto.ECS.Schema
             }
         }
 
-        internal void NotifyKeyUpdate<TR, TK, TC>(ref TC keyComponent, in TK oldKey, in TK newKey)
-            where TR : class, IIndexableRow<TK, TC>
+        internal void NotifyKeyUpdate<TK, TC>(ref TC keyComponent, in TK oldKey, in TK newKey)
             where TK : unmanaged
-            where TC : unmanaged, IIndexableComponent<TK>
+            where TC : struct, IIndexedComponent
         {
             // component updated but key didn't change
             if (oldKey.Equals(newKey))
@@ -68,7 +68,7 @@ namespace Svelto.ECS.Schema
 
             foreach (var indexer in indexers)
             {
-                UpdateFilters<TR, TK, TC>(indexer.IndexerID, ref keyComponent, oldKey, newKey);
+                UpdateFilters<TK, TC>(indexer.IndexerID, ref keyComponent, oldKey, newKey);
             }
         }
 

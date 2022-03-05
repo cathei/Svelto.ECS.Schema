@@ -23,25 +23,23 @@ namespace Svelto.ECS.Schema.Internal
         internal MemoBase() { }
     }
 
-    public class MemoBase<TRow, TComponent> : MemoBase, IIndexQuery<TRow>
+    public class MemoBase<TRow, TComponent> : MemoBase, IIndexQuery
         where TRow : class, IEntityRow<TComponent>
         where TComponent : unmanaged, IEntityComponent, INeedEGID
     {
         internal MemoBase() { }
 
-        internal void Set<TQ, TQR>(IndexedDB indexedDB, TQ query)
-            where TQ : IIndexQuery<TQR>
-            where TQR : IEntityRow
+        internal void Set<TQ>(IndexedDB indexedDB, TQ query)
+            where TQ : IIndexQuery
         {
             indexedDB.ClearMemo(this);
-            Union<TQ, TQR>(indexedDB, query);
+            Union(indexedDB, query);
         }
 
-        internal void Union<TQ, TQR>(IndexedDB indexedDB, TQ query)
-            where TQ : IIndexQuery<TQR>
-            where TQR : IEntityRow
+        internal void Union<TQ>(IndexedDB indexedDB, TQ query)
+            where TQ : IIndexQuery
         {
-            var queryData = query.GetIndexedKeyData(indexedDB).groups;
+            var queryData = query.GetIndexerKeyData(indexedDB).groups;
 
             // if empty nothing to add
             if (queryData == null)
@@ -75,17 +73,16 @@ namespace Svelto.ECS.Schema.Internal
             }
         }
 
-        internal void Intersect<TQ, TQR>(IndexedDB indexedDB, TQ query)
-            where TQ : IIndexQuery<TQR>
-            where TQR : IEntityRow
+        internal void Intersect<TQ>(IndexedDB indexedDB, TQ query)
+            where TQ : IIndexQuery
         {
-            var originalData = GetIndexedKeyData(indexedDB).groups;
+            var originalData = GetIndexerKeyData(indexedDB).groups;
 
             // if empty nothing to intersect
             if (originalData == null)
                 return;
 
-            var queryData = query.GetIndexedKeyData(indexedDB).groups;
+            var queryData = query.GetIndexerKeyData(indexedDB).groups;
 
             // if empty nothing to intersect
             if (queryData == null)
@@ -112,9 +109,15 @@ namespace Svelto.ECS.Schema.Internal
                     continue;
                 }
 
-                var table = originalGroupData.table;
+                var table = queryGroupData.table as IEntityTable<TRow>;
 
-                // TODO: change group to table!
+                // type mismatch - no intersection
+                if (table == null)
+                {
+                    originalGroupData.filter.Clear();
+                    continue;
+                }
+
                 var (components, _) = indexedDB.Select<TRow>().From(table).Entities();
 
                 // ugh I have to check what to delete
@@ -135,15 +138,15 @@ namespace Svelto.ECS.Schema.Internal
             }
         }
 
-        private IndexedKeyData<TRow> GetIndexedKeyData(IndexedDB indexedDB)
+        private IndexerKeyData GetIndexerKeyData(IndexedDB indexedDB)
         {
             if (indexedDB.memos.TryGetValue(_memoID, out var result))
-                return ((MemoData<TRow>)result).keyData;
+                return result.keyData;
             return default;
         }
 
-        IndexedKeyData<TRow> IIndexQuery<TRow>.GetIndexedKeyData(IndexedDB indexedDB)
-            => GetIndexedKeyData(indexedDB);
+        IndexerKeyData IIndexQuery.GetIndexerKeyData(IndexedDB indexedDB)
+            => GetIndexerKeyData(indexedDB);
     }
 }
 
