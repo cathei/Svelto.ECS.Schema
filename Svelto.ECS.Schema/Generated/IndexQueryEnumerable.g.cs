@@ -6,18 +6,17 @@ using Svelto.ECS.Schema.Internal;
 namespace Svelto.ECS.Schema
 {
 
-    public readonly ref struct IndexQueryEnumerable<TR, TIR, T1>
-        where TR : IEntityRow<T1>, TIR
-        where TIR : IEntityRow
+    public readonly ref struct IndexQueryEnumerable<TR, T1>
+        where TR : IEntityRow<T1>
                 where T1 : struct, IEntityComponent
     {
         private readonly IndexedDB _indexedDB;
         private readonly IEntityTables<TR> _tables;
-        private readonly FasterDictionary<ExclusiveGroupStruct, IndexedGroupData<TIR>> _dict;
+        private readonly FasterDictionary<ExclusiveGroupStruct, IndexerGroupData> _dict;
 
         internal IndexQueryEnumerable(IndexedDB indexedDB,
             IEntityTables<TR> tables,
-            FasterDictionary<ExclusiveGroupStruct, IndexedGroupData<TIR>> dict)
+            FasterDictionary<ExclusiveGroupStruct, IndexerGroupData> dict)
         {
             _indexedDB = indexedDB;
             _tables = tables;
@@ -30,7 +29,7 @@ namespace Svelto.ECS.Schema
         {
             private readonly IndexedDB _indexedDB;
             private readonly IEntityTables<TR> _tables;
-            private readonly FasterDictionary<ExclusiveGroupStruct, IndexedGroupData<TIR>> _dict;
+            private readonly FasterDictionary<ExclusiveGroupStruct, IndexerGroupData> _dict;
 
             private EntityCollection<T1> _collection;
             private FilteredIndices _indices;
@@ -38,7 +37,7 @@ namespace Svelto.ECS.Schema
 
             internal RefIterator(IndexedDB indexedDB,
                 IEntityTables<TR> tables,
-                FasterDictionary<ExclusiveGroupStruct, IndexedGroupData<TIR>> dict) : this()
+                FasterDictionary<ExclusiveGroupStruct, IndexerGroupData> dict) : this()
             {
                 _indexedDB = indexedDB;
                 _tables = tables;
@@ -82,19 +81,18 @@ namespace Svelto.ECS.Schema
         }
     }
 
-    public readonly ref struct IndexQueryEnumerable<TR, TIR, T1, T2>
-        where TR : IEntityRow<T1, T2>, TIR
-        where TIR : IEntityRow
+    public readonly ref struct IndexQueryEnumerable<TR, T1, T2>
+        where TR : IEntityRow<T1, T2>
                 where T1 : struct, IEntityComponent
                 where T2 : struct, IEntityComponent
     {
         private readonly IndexedDB _indexedDB;
         private readonly IEntityTables<TR> _tables;
-        private readonly FasterDictionary<ExclusiveGroupStruct, IndexedGroupData<TIR>> _dict;
+        private readonly FasterDictionary<ExclusiveGroupStruct, IndexerGroupData> _dict;
 
         internal IndexQueryEnumerable(IndexedDB indexedDB,
             IEntityTables<TR> tables,
-            FasterDictionary<ExclusiveGroupStruct, IndexedGroupData<TIR>> dict)
+            FasterDictionary<ExclusiveGroupStruct, IndexerGroupData> dict)
         {
             _indexedDB = indexedDB;
             _tables = tables;
@@ -107,7 +105,7 @@ namespace Svelto.ECS.Schema
         {
             private readonly IndexedDB _indexedDB;
             private readonly IEntityTables<TR> _tables;
-            private readonly FasterDictionary<ExclusiveGroupStruct, IndexedGroupData<TIR>> _dict;
+            private readonly FasterDictionary<ExclusiveGroupStruct, IndexerGroupData> _dict;
 
             private EntityCollection<T1, T2> _collection;
             private FilteredIndices _indices;
@@ -115,7 +113,7 @@ namespace Svelto.ECS.Schema
 
             internal RefIterator(IndexedDB indexedDB,
                 IEntityTables<TR> tables,
-                FasterDictionary<ExclusiveGroupStruct, IndexedGroupData<TIR>> dict) : this()
+                FasterDictionary<ExclusiveGroupStruct, IndexerGroupData> dict) : this()
             {
                 _indexedDB = indexedDB;
                 _tables = tables;
@@ -159,20 +157,19 @@ namespace Svelto.ECS.Schema
         }
     }
 
-    public readonly ref struct IndexQueryEnumerable<TR, TIR, T1, T2, T3>
-        where TR : IEntityRow<T1, T2, T3>, TIR
-        where TIR : IEntityRow
+    public readonly ref struct IndexQueryEnumerable<TR, T1, T2, T3>
+        where TR : IEntityRow<T1, T2, T3>
                 where T1 : struct, IEntityComponent
                 where T2 : struct, IEntityComponent
                 where T3 : struct, IEntityComponent
     {
         private readonly IndexedDB _indexedDB;
         private readonly IEntityTables<TR> _tables;
-        private readonly FasterDictionary<ExclusiveGroupStruct, IndexedGroupData<TIR>> _dict;
+        private readonly FasterDictionary<ExclusiveGroupStruct, IndexerGroupData> _dict;
 
         internal IndexQueryEnumerable(IndexedDB indexedDB,
             IEntityTables<TR> tables,
-            FasterDictionary<ExclusiveGroupStruct, IndexedGroupData<TIR>> dict)
+            FasterDictionary<ExclusiveGroupStruct, IndexerGroupData> dict)
         {
             _indexedDB = indexedDB;
             _tables = tables;
@@ -185,7 +182,7 @@ namespace Svelto.ECS.Schema
         {
             private readonly IndexedDB _indexedDB;
             private readonly IEntityTables<TR> _tables;
-            private readonly FasterDictionary<ExclusiveGroupStruct, IndexedGroupData<TIR>> _dict;
+            private readonly FasterDictionary<ExclusiveGroupStruct, IndexerGroupData> _dict;
 
             private EntityCollection<T1, T2, T3> _collection;
             private FilteredIndices _indices;
@@ -193,7 +190,7 @@ namespace Svelto.ECS.Schema
 
             internal RefIterator(IndexedDB indexedDB,
                 IEntityTables<TR> tables,
-                FasterDictionary<ExclusiveGroupStruct, IndexedGroupData<TIR>> dict) : this()
+                FasterDictionary<ExclusiveGroupStruct, IndexerGroupData> dict) : this()
             {
                 _indexedDB = indexedDB;
                 _tables = tables;
@@ -237,9 +234,8 @@ namespace Svelto.ECS.Schema
         }
     }
 
-    public readonly ref struct IndexQueryEnumerable<TR, TIR, T1, T2, T3, T4>
-        where TR : IEntityRow<T1, T2, T3, T4>, TIR
-        where TIR : IEntityRow
+    public readonly ref struct IndexQueryEnumerable<TR, T1, T2, T3, T4>
+        where TR : IEntityRow<T1, T2, T3, T4>
                 where T1 : struct, IEntityComponent
                 where T2 : struct, IEntityComponent
                 where T3 : struct, IEntityComponent
@@ -247,11 +243,11 @@ namespace Svelto.ECS.Schema
     {
         private readonly IndexedDB _indexedDB;
         private readonly IEntityTables<TR> _tables;
-        private readonly FasterDictionary<ExclusiveGroupStruct, IndexedGroupData<TIR>> _dict;
+        private readonly FasterDictionary<ExclusiveGroupStruct, IndexerGroupData> _dict;
 
         internal IndexQueryEnumerable(IndexedDB indexedDB,
             IEntityTables<TR> tables,
-            FasterDictionary<ExclusiveGroupStruct, IndexedGroupData<TIR>> dict)
+            FasterDictionary<ExclusiveGroupStruct, IndexerGroupData> dict)
         {
             _indexedDB = indexedDB;
             _tables = tables;
@@ -264,7 +260,7 @@ namespace Svelto.ECS.Schema
         {
             private readonly IndexedDB _indexedDB;
             private readonly IEntityTables<TR> _tables;
-            private readonly FasterDictionary<ExclusiveGroupStruct, IndexedGroupData<TIR>> _dict;
+            private readonly FasterDictionary<ExclusiveGroupStruct, IndexerGroupData> _dict;
 
             private EntityCollection<T1, T2, T3, T4> _collection;
             private FilteredIndices _indices;
@@ -272,7 +268,7 @@ namespace Svelto.ECS.Schema
 
             internal RefIterator(IndexedDB indexedDB,
                 IEntityTables<TR> tables,
-                FasterDictionary<ExclusiveGroupStruct, IndexedGroupData<TIR>> dict) : this()
+                FasterDictionary<ExclusiveGroupStruct, IndexerGroupData> dict) : this()
             {
                 _indexedDB = indexedDB;
                 _tables = tables;

@@ -8,18 +8,17 @@ namespace Svelto.ECS.Schema.Generator
     public class IndexQueryEnumerableGenerator : ISourceGenerator
     {
         const string IndexQueryEnumerableTemplate = @"
-    public readonly ref struct IndexQueryEnumerable<TR, TIR, {1}>
-        where TR : IEntityRow<{1}>, TIR
-        where TIR : IEntityRow
+    public readonly ref struct IndexQueryEnumerable<TR, {1}>
+        where TR : IEntityRow<{1}>
 {2}
     {{
         private readonly IndexedDB _indexedDB;
         private readonly IEntityTables<TR> _tables;
-        private readonly FasterDictionary<ExclusiveGroupStruct, IndexedGroupData<TIR>> _dict;
+        private readonly FasterDictionary<ExclusiveGroupStruct, IndexerGroupData> _dict;
 
         internal IndexQueryEnumerable(IndexedDB indexedDB,
             IEntityTables<TR> tables,
-            FasterDictionary<ExclusiveGroupStruct, IndexedGroupData<TIR>> dict)
+            FasterDictionary<ExclusiveGroupStruct, IndexerGroupData> dict)
         {{
             _indexedDB = indexedDB;
             _tables = tables;
@@ -32,7 +31,7 @@ namespace Svelto.ECS.Schema.Generator
         {{
             private readonly IndexedDB _indexedDB;
             private readonly IEntityTables<TR> _tables;
-            private readonly FasterDictionary<ExclusiveGroupStruct, IndexedGroupData<TIR>> _dict;
+            private readonly FasterDictionary<ExclusiveGroupStruct, IndexerGroupData> _dict;
 
             private EntityCollection<{1}> _collection;
             private FilteredIndices _indices;
@@ -40,7 +39,7 @@ namespace Svelto.ECS.Schema.Generator
 
             internal RefIterator(IndexedDB indexedDB,
                 IEntityTables<TR> tables,
-                FasterDictionary<ExclusiveGroupStruct, IndexedGroupData<TIR>> dict) : this()
+                FasterDictionary<ExclusiveGroupStruct, IndexerGroupData> dict) : this()
             {{
                 _indexedDB = indexedDB;
                 _tables = tables;

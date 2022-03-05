@@ -60,60 +60,59 @@ namespace Svelto.ECS.Schema
 
         // Select -> From Table -> Where
         // Table Row must implement both Selector Row and Index Row
-        public static (IndexedDB, TR, IEntityTable<TTR>, IndexQuery<TIR, TIK>, TIR)
+        public static (IndexedDB, TR, IEntityTable<TTR>, IndexQuery<TIR, TIK>)
                 Where<TR, TTR, TIR, TIK>(this (IndexedDB, TR, IEntityTable<TTR>) query,
                     IIndexQueryable<TIR, TIK> index, TIK key)
             where TR : IEntityRow
             where TTR : TR, TIR
             where TIR : IEntityRow
-            where TIK : unmanaged
+            where TIK : unmanaged, IKeyEquatable<TIK>
         {
-            return (query.Item1, query.Item2, query.Item3, index.Query(key), default);
+            return (query.Item1, query.Item2, query.Item3, index.Query(key));
         }
 
         // Select -> From Tables -> Where
         // Tables Row must implement both Selector Row and Index Row
-        public static (IndexedDB, TR, IEntityTables<TTR>, IndexQuery<TIR, TIK>, TIR)
+        public static (IndexedDB, TR, IEntityTables<TTR>, IndexQuery<TIR, TIK>)
                 Where<TR, TTR, TIR, TIK>(this (IndexedDB, TR, IEntityTables<TTR>) query,
                     IIndexQueryable<TIR, TIK> index, TIK key)
             where TR : IEntityRow
             where TTR : TR, TIR
             where TIR : IEntityRow
-            where TIK : unmanaged
+            where TIK : unmanaged, IKeyEquatable<TIK>
         {
-            return (query.Item1, query.Item2, query.Item3, index.Query(key), default);
+            return (query.Item1, query.Item2, query.Item3, index.Query(key));
         }
 
         // Select -> From Table -> Where
         // Table Row must implement both Selector Row and Index Row
-        public static (IndexedDB, TR, IEntityTable<TTR>, MemoBase<TMR, TMC>, TMR)
+        public static (IndexedDB, TR, IEntityTable<TTR>, MemoBase<TMR, TMC>)
                 Where<TR, TTR, TMR, TMC>(this (IndexedDB, TR, IEntityTable<TTR>) query, MemoBase<TMR, TMC> memo)
             where TR : IEntityRow
             where TTR : TR, TMR
             where TMR : class, IEntityRow<TMC>
             where TMC : unmanaged, IEntityComponent, INeedEGID
         {
-            return (query.Item1, query.Item2, query.Item3, memo, default);
+            return (query.Item1, query.Item2, query.Item3, memo);
         }
 
         // Select -> From Tables -> Where
         // Tables Row must implement both Selector Row and Index Row
-        public static (IndexedDB, TR, IEntityTables<TTR>, MemoBase<TMR, TMC>, TMR)
+        public static (IndexedDB, TR, IEntityTables<TTR>, MemoBase<TMR, TMC>)
                 Where<TR, TTR, TMR, TMC>(this (IndexedDB, TR, IEntityTables<TTR>) query, MemoBase<TMR, TMC> memo)
             where TR : IEntityRow
             where TTR : TR, TMR
             where TMR : class, IEntityRow<TMC>
             where TMC : unmanaged, IEntityComponent, INeedEGID
         {
-            return (query.Item1, query.Item2, query.Item3, memo, default);
+            return (query.Item1, query.Item2, query.Item3, memo);
         }
 
         // Select -> From Table -> Where -> Indices
-        internal static IndexedIndices Indices<TR, TI, TIR>(
-                this (IndexedDB, TR, IEntityTable, TI, TIR) query)
+        internal static IndexedIndices Indices<TR, TI>(
+                this (IndexedDB, TR, IEntityTable, TI) query)
             where TR : IEntityRow
             where TI : IIndexQuery
-            where TIR : IEntityRow
         {
             var keyData = query.Item4.GetIndexerKeyData(query.Item1);
             var group = query.Item3.ExclusiveGroup;

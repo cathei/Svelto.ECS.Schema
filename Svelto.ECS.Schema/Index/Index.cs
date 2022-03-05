@@ -16,7 +16,7 @@ namespace Svelto.ECS.Schema.Internal
 
     public class IndexBase<TRow, TKey, TComponent> : IEntityIndex, IIndexQueryable<TRow, TKey>
         where TRow : class, IReactiveRow<TComponent>
-        where TKey : unmanaged
+        where TKey : unmanaged, IKeyEquatable<TKey>
         where TComponent : unmanaged, IIndexableComponent<TKey>
     {
         // equvalent to ExclusiveGroupStruct.Generate()

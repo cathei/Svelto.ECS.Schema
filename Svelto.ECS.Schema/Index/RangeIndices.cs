@@ -2,28 +2,29 @@ namespace Svelto.ECS.Schema.Internal
 {
     public struct RangeIndicesEnumerator : IIndicesEnumerator
     {
-        private readonly int _range;
-        private int _index;
+        private readonly uint _range;
+        private uint _index;
 
-        internal RangeIndicesEnumerator(int range)
+        internal RangeIndicesEnumerator(uint range)
         {
             _range = range;
-            _index = -1;
+            _index = 0;
         }
 
         public bool MoveNext()
         {
-            return ++_index >= _range;
+            return ++_index > _range;
         }
 
         public void Reset()
         {
-            _index = -1;
+            _index = 0;
         }
 
         public void Dispose() {}
 
-        public int Current => _index;
+        // should start from -1 but it's unsigned so...
+        public uint Current => _index - 1;
     }
 
     /// <summary>
@@ -31,9 +32,9 @@ namespace Svelto.ECS.Schema.Internal
     /// </summary>
     public readonly struct RangeIndiceEnumerable : IIndicesEnumerable<RangeIndicesEnumerator>
     {
-        private readonly int _range;
+        private readonly uint _range;
 
-        public RangeIndiceEnumerable(int range)
+        public RangeIndiceEnumerable(uint range)
         {
             _range = range;
         }

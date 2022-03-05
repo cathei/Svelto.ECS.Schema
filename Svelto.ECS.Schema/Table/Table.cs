@@ -19,7 +19,7 @@ namespace Svelto.ECS.Schema.Internal
     }
 
     public abstract class TableBase<TRow> : TableBase, IEntityTable<TRow>, IEntityTablesBuilder<TRow>
-        where TRow : DescriptorRow
+        where TRow : DescriptorRow<TRow>
     {
         internal TableBase() : base() { }
 
@@ -33,11 +33,11 @@ namespace Svelto.ECS.Schema.Internal
 namespace Svelto.ECS.Schema
 {
     public sealed class Table<TRow> : TableBase<TRow>
-        where TRow : DescriptorRow
+        where TRow : DescriptorRow<TRow>
     { }
 
     public class Tables<TRow> : TablesBase<TRow>
-        where TRow : DescriptorRow
+        where TRow : DescriptorRow<TRow>
     {
         public Tables(int range) : base(GenerateTables(range), false) { }
 
@@ -53,7 +53,7 @@ namespace Svelto.ECS.Schema
     }
 
     public sealed class Tables<TRow, TIndex> : Tables<TRow>
-        where TRow : DescriptorRow
+        where TRow : DescriptorRow<TRow>
     {
         internal readonly Func<TIndex, int> _mapper;
 
