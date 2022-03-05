@@ -4,7 +4,7 @@ using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema.Definition
 {
-    public partial class StateMachine<TState>
+    public partial class StateMachine<TKey>
     {
         // 'available' has to be default (0)
         internal enum TransitionState
@@ -14,29 +14,29 @@ namespace Svelto.ECS.Schema.Definition
             Confirmed
         }
 
-        protected internal interface IIndexedRow :
+        public interface IIndexedRow :
             IIndexableRow<Component>, ISelectorRow<Component> { }
 
-        public struct Component : IIndexableComponent<TState>
+        public struct Component : IIndexableComponent<TKey>
         {
             public EGID ID { get; set; }
 
-            internal TState _state;
+            internal TKey _key;
 
-            public TState Key => _state;
+            public TKey Key => _key;
 
             // constructors should be only called when building entity
-            public Component(in TState state) : this()
+            public Component(in TKey state) : this()
             {
-                _state = state;
+                _key = state;
             }
         }
 
-        protected internal sealed class Index : IndexBase<IIndexedRow, TState, Component> { }
+        protected internal sealed class Index : IndexBase<IIndexedRow, TKey, Component> { }
 
         protected internal sealed class Memo : MemoBase<IIndexedRow, Component> { }
 
-        IndexQuery<IIndexedRow, TState> IIndexQueryable<IIndexedRow, TState>.Query(in TState key)
+        IndexQuery<IIndexedRow, TKey> IIndexQueryable<IIndexedRow, TKey>.Query(in TKey key)
             => Config._index.Query(key);
 
         IEntityIndex IEntityStateMachine.Index => Config._index;

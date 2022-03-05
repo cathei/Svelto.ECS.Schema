@@ -8,8 +8,18 @@ namespace Svelto.ECS.Schema.Tests
     {
         public interface IHaveEGID : ISelectorRow<EGIDComponent> { }
 
-        public interface IIndexedItemOwner : IIndexedRow<int, IIndexedItemOwner.Tag>
-        { public struct Tag : ITag {} }
+        public struct ItemOwner : IIndexKey<ItemOwner>
+        {
+            private int key;
+
+            public static implicit operator ItemOwner(int key)
+                => new ItemOwner { key = key };
+
+            public bool KeyEquals(in ItemOwner other)
+                => key.Equals(other.key);
+        }
+
+        public interface IIndexedItemOwner : IIndexedRow<ItemOwner>, ISelectorRow<Indexed<ItemOwner>> {}
 
         // rows
         public class CharacterRow : DescriptorRow<CharacterRow>, IHaveEGID {}
@@ -22,7 +32,7 @@ namespace Svelto.ECS.Schema.Tests
             public readonly Table<CharacterRow> Character = new Table<CharacterRow>();
             public readonly Table<ItemRow> Item = new Table<ItemRow>();
 
-            public readonly IIndexedItemOwner.Index ItemOwner = new IIndexedItemOwner.Index();
+            public readonly Index<ItemOwner> ItemOwner = new Index<ItemOwner>();
         }
 
         public class TestSchema : IEntitySchema
@@ -30,7 +40,7 @@ namespace Svelto.ECS.Schema.Tests
             public readonly PlayerSchema AI = new PlayerSchema();
             public readonly Ranged<PlayerSchema> Players = new Ranged<PlayerSchema>(10);
 
-            public readonly IIndexedItemOwner.Index ItemOwner = new IIndexedItemOwner.Index();
+            public readonly Index<ItemOwner> ItemOwner = new Index<ItemOwner>();
 
             public readonly CombinedTables<CharacterRow> AllCharacters;
             public readonly CombinedTables<ItemRow> AllItems;
@@ -50,19 +60,19 @@ namespace Svelto.ECS.Schema.Tests
             for (int i = 0; i < 10; ++i)
             {
                 var itemBuilder = _factory.Build(_schema.AI.Item, itemIdCounter++);
-                itemBuilder.Init(new IIndexedItemOwner.Component(0));
+                itemBuilder.Init(new Indexed<ItemOwner>(0));
             }
 
             for (int i = 0; i < 10; ++i)
             {
                 var itemBuilder = _factory.Build(_schema.Players[0].Item, itemIdCounter++);
-                itemBuilder.Init(new IIndexedItemOwner.Component(0));
+                itemBuilder.Init(new Indexed<ItemOwner>(0));
             }
 
             for (int i = 0; i < 10; ++i)
             {
                 var itemBuilder = _factory.Build(_schema.Players[1].Item, itemIdCounter++);
-                itemBuilder.Init(new IIndexedItemOwner.Component(0));
+                itemBuilder.Init(new Indexed<ItemOwner>(0));
             }
 
             _submissionScheduler.SubmitEntities();
@@ -83,7 +93,7 @@ namespace Svelto.ECS.Schema.Tests
             Assert.Contains(10u, queriedComponents.Select(x => x.ID.entityID));
             Assert.Contains(20u, queriedComponents.Select(x => x.ID.entityID));
 
-            Assert.All(queriedComponents.Select(x => x.Value), x => Assert.Equal(0, x));
+            Assert.All(queriedComponents.Select(x => x.Key), x => Assert.Equal(0, x));
 
             var (owner, count) = _indexedDB.Select<IIndexedItemOwner>().From(_schema.Players[0].Item).Entities();
             for (int i = 0; i < count; ++i)
@@ -126,19 +136,19 @@ namespace Svelto.ECS.Schema.Tests
             for (int i = 0; i < 10; ++i)
             {
                 var itemBuilder = _factory.Build(_schema.AI.Item, itemIdCounter++);
-                itemBuilder.Init(new IIndexedItemOwner.Component(0));
+                itemBuilder.Init(new Indexed<ItemOwner>(0));
             }
 
             for (int i = 0; i < 10; ++i)
             {
                 var itemBuilder = _factory.Build(_schema.Players[0].Item, itemIdCounter++);
-                itemBuilder.Init(new IIndexedItemOwner.Component(0));
+                itemBuilder.Init(new Indexed<ItemOwner>(0));
             }
 
             for (int i = 0; i < 10; ++i)
             {
                 var itemBuilder = _factory.Build(_schema.Players[1].Item, itemIdCounter++);
-                itemBuilder.Init(new IIndexedItemOwner.Component(0));
+                itemBuilder.Init(new Indexed<ItemOwner>(0));
             }
 
             _submissionScheduler.SubmitEntities();
@@ -201,19 +211,19 @@ namespace Svelto.ECS.Schema.Tests
             for (int i = 0; i < 10; ++i)
             {
                 var itemBuilder = _factory.Build(_schema.AI.Item, itemIdCounter++);
-                itemBuilder.Init(new IIndexedItemOwner.Component(i));
+                itemBuilder.Init(new Indexed<ItemOwner>(i));
             }
 
             for (int i = 0; i < 10; ++i)
             {
                 var itemBuilder = _factory.Build(_schema.Players[3].Item, itemIdCounter++);
-                itemBuilder.Init(new IIndexedItemOwner.Component(i));
+                itemBuilder.Init(new Indexed<ItemOwner>(i));
             }
 
             for (int i = 0; i < 10; ++i)
             {
                 var itemBuilder = _factory.Build(_schema.Players[5].Item, itemIdCounter++);
-                itemBuilder.Init(new IIndexedItemOwner.Component(i));
+                itemBuilder.Init(new Indexed<ItemOwner>(i));
             }
 
             _submissionScheduler.SubmitEntities();

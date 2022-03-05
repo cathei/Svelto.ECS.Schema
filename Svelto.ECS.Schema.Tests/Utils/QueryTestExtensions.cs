@@ -8,9 +8,9 @@ namespace Svelto.ECS.Schema.Tests
 {
     public static class QueryTestExtensions
     {
-        public static List<(NB<T1> buffer, IndexedIndices indices, IEntityTable<TR> table)> ToList<TR, TIR, T1> (
+        public static List<(NB<T1> buffer, IndexedIndices indices, IEntityTable<TR> table)> ToList<TR, T1> (
                 this IndexQueryEnumerable<TR, T1> enumerable)
-            where TR : class, IEntityRow<T1>
+            where TR : class, ISelectorRow<T1>
             where T1 : unmanaged, IEntityComponent
         {
             var list = new List<(NB<T1> buffer, IndexedIndices indices, IEntityTable<TR> table)>();

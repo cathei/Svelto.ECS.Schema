@@ -4,12 +4,12 @@ using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema.Definition
 {
-    public partial class StateMachine<TState>
+    public partial class StateMachine<TKey>
     {
         void IEntityStateMachine.AddEngines(EnginesRoot enginesRoot, IndexedDB indexedDB)
         {
             // this is required to handle added or removed entities
-            enginesRoot.AddEngine(new TableIndexingEngine<IIndexedRow, TState, Component>(indexedDB));
+            enginesRoot.AddEngine(new TableIndexingEngine<IIndexedRow, TKey, Component>(indexedDB));
 
             // this is required to validate and change state
             Engine = new TransitionEngine(indexedDB);
@@ -19,7 +19,7 @@ namespace Svelto.ECS.Schema.Definition
 
         internal abstract class StateMachineConfigBase
         {
-            internal readonly FasterDictionary<KeyWrapper<TState>, StateConfig> _states;
+            internal readonly FasterDictionary<KeyWrapper<TKey>, StateConfig> _states;
             internal readonly AnyStateConfig _anyState;
 
             // this will manage filters for state machine
@@ -27,7 +27,7 @@ namespace Svelto.ECS.Schema.Definition
 
             protected StateMachineConfigBase()
             {
-                _states = new FasterDictionary<KeyWrapper<TState>, StateConfig>();
+                _states = new FasterDictionary<KeyWrapper<TKey>, StateConfig>();
                 _anyState = new AnyStateConfig();
                 _index = new Index();
             }
@@ -81,7 +81,7 @@ namespace Svelto.ECS.Schema.Definition
         {
             private readonly IndexedDB _indexedDB;
 
-            public string name { get; } = $"{typeof(StateMachine<TState>).FullName}.TransitionEngine";
+            public string name { get; } = $"{typeof(StateMachine<TKey>).FullName}.TransitionEngine";
 
             internal TransitionEngine(IndexedDB indexedDB)
             {

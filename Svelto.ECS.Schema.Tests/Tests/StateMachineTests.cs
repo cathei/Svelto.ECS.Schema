@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using Svelto.ECS.Schema.Definition;
 using Xunit;
 
@@ -32,10 +33,28 @@ namespace Svelto.ECS.Schema.Tests
 
         public enum CharacterState { Normal, Upset, Angry, Special, MAX }
 
-        public class CharacterFSM : StateMachine<CharacterState, CharacterFSM.Tag>
+        public struct CharacterStateKey : IStateMachineKey<CharacterStateKey>
         {
-            public struct Tag : ITag { }
+            private CharacterState state;
 
+            public static implicit operator CharacterStateKey(CharacterState state)
+                => new CharacterStateKey { state = state };
+
+            public bool KeyEquals(in CharacterStateKey other)
+                => state.Equals(other.state);
+
+            public override bool Equals(object obj)
+                => obj is CharacterStateKey other && KeyEquals(other);
+
+            public override int GetHashCode()
+                => state.GetHashCode();
+
+            public override string ToString()
+                => state.ToString();
+        }
+
+        public class CharacterFSM : StateMachine<CharacterStateKey>
+        {
             public interface IRow : IIndexedRow,
                 IEntityRow<RageComponent>,
                 IEntityRow<TriggerComponent>,
@@ -71,7 +90,7 @@ namespace Svelto.ECS.Schema.Tests
 
                 // any state but special
                 builder.AnyState.AddTransition(stateNormal)
-                    .AddCondition((ref Component self) => self.State != CharacterState.Special)
+                    .AddCondition((ref Component self) => !self.Key.KeyEquals(CharacterState.Special))
                     .AddCondition((ref RageComponent rage) => rage.value < 10);
             }
         }
@@ -104,7 +123,7 @@ namespace Svelto.ECS.Schema.Tests
                 foreach (var i in indices)
                 {
                     // component state must match
-                    Assert.Equal(state, component[i].State);
+                    Assert.Equal(state, component[i].Key);
 
                     ++totalCheckedCount;
                 }
@@ -133,7 +152,7 @@ namespace Svelto.ECS.Schema.Tests
 
             for (int i = 0; i < count; ++i)
             {
-                Assert.Equal(CharacterState.Normal, fsm[i].State);
+                Assert.Equal(CharacterState.Normal, fsm[i].Key);
                 rage[i].value = i * 2;
             }
 
@@ -143,7 +162,7 @@ namespace Svelto.ECS.Schema.Tests
 
             for (int i = 0; i < count; ++i)
             {
-                Assert.Equal(i < 5 ? CharacterState.Normal : CharacterState.Upset, fsm[i].State);
+                Assert.Equal(i < 5 ? CharacterState.Normal : CharacterState.Upset, fsm[i].Key);
             }
         }
 
@@ -165,7 +184,7 @@ namespace Svelto.ECS.Schema.Tests
 
             for (int i = 0; i < count; ++i)
             {
-                Assert.Equal(CharacterState.Normal, fsm[i].State);
+                Assert.Equal(CharacterState.Normal, fsm[i].Key);
             }
 
             _characterFSM.Engine.Step();
@@ -174,7 +193,7 @@ namespace Svelto.ECS.Schema.Tests
 
             for (int i = 0; i < count; ++i)
             {
-                Assert.Equal(CharacterState.Upset, fsm[i].State);
+                Assert.Equal(CharacterState.Upset, fsm[i].Key);
             }
 
             _characterFSM.Engine.Step();
@@ -183,7 +202,7 @@ namespace Svelto.ECS.Schema.Tests
 
             for (int i = 0; i < count; ++i)
             {
-                Assert.Equal(CharacterState.Angry, fsm[i].State);
+                Assert.Equal(CharacterState.Angry, fsm[i].Key);
             }
         }
 
@@ -209,7 +228,7 @@ namespace Svelto.ECS.Schema.Tests
 
             for (int i = 0; i < count; ++i)
             {
-                Assert.Equal(i % 2 == 0 ? CharacterState.Special : CharacterState.Normal, fsm[i].State);
+                Assert.Equal(i % 2 == 0 ? CharacterState.Special : CharacterState.Normal, fsm[i].Key);
 
                 // must assigned when ExecuteOnEnter
                 Assert.False(trigger[i].value);
@@ -225,7 +244,7 @@ namespace Svelto.ECS.Schema.Tests
 
             for (int i = 0; i < count; ++i)
             {
-                Assert.Equal(i % 3 != 0 && i % 2 == 0 ? CharacterState.Special : CharacterState.Normal, fsm[i].State);
+                Assert.Equal(i % 3 != 0 && i % 2 == 0 ? CharacterState.Special : CharacterState.Normal, fsm[i].Key);
 
                 // must assigned when ExecuteOnExit
                 Assert.Equal(i % 3 == 0 && i % 2 == 0 ? 5 : -1, rage[i].value);
@@ -250,7 +269,7 @@ namespace Svelto.ECS.Schema.Tests
 
             for (int i = 0; i < count; ++i)
             {
-                Assert.Equal(CharacterState.Normal, fsm[i].State);
+                Assert.Equal(CharacterState.Normal, fsm[i].Key);
                 rage[i].value = i * 2;
             }
 

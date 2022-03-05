@@ -61,7 +61,7 @@ namespace Svelto.ECS.Schema
             where TC : struct, IIndexableComponent<TK>
         {
             // component updated but key didn't change
-            if (oldKey.Equals(newKey))
+            if (oldKey.KeyEquals(newKey))
                 return;
 
             var indexers = FindIndexers<TK, TC>(keyComponent.ID.groupID);

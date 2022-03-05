@@ -22,10 +22,10 @@ namespace Svelto.ECS.Schema.Definition
     /// <summary>
     /// State machine on Svelto ECS
     /// </summary>
-    /// <typeparam name="TState">Value type representing a state. Usually wraps enum type.</typeparam>
-    public abstract partial class StateMachine<TState> : IEntityStateMachine,
-            IIndexQueryable<StateMachine<TState>.IIndexedRow, TState>
-        where TState : unmanaged, IStateMachineKey<TState>
+    /// <typeparam name="TKey">Value type representing a state. Usually wraps enum type.</typeparam>
+    public abstract partial class StateMachine<TKey> : IEntityStateMachine,
+            IIndexQueryable<StateMachine<TKey>.IIndexedRow, TKey>
+        where TKey : unmanaged, IStateMachineKey<TKey>
     {
         public interface ITag {}
 
@@ -166,10 +166,10 @@ namespace Svelto.ECS.Schema.Definition
 
         internal sealed class TransitionConfig
         {
-            internal readonly TState _next;
+            internal readonly TKey _next;
             internal readonly FasterList<ConditionConfig> _conditions;
 
-            internal TransitionConfig(in TState next)
+            internal TransitionConfig(in TKey next)
             {
                 _next = next;
                 _conditions = new FasterList<ConditionConfig>();
@@ -197,7 +197,7 @@ namespace Svelto.ECS.Schema.Definition
 
         internal sealed class StateConfig
         {
-            internal readonly TState _state;
+            internal readonly TKey _key;
             internal readonly FasterList<TransitionConfig> _transitions;
 
             internal readonly Memo _exitCandidates;
@@ -206,9 +206,9 @@ namespace Svelto.ECS.Schema.Definition
             internal readonly FasterList<CallbackConfig> _onExit;
             internal readonly FasterList<CallbackConfig> _onEnter;
 
-            internal StateConfig(in TState state)
+            internal StateConfig(in TKey state)
             {
-                _state = state;
+                _key = state;
                 _transitions = new FasterList<TransitionConfig>();
 
                 _exitCandidates = new Memo();
@@ -223,7 +223,7 @@ namespace Svelto.ECS.Schema.Definition
                 where TR : class, IIndexedRow
             {
                 var indices = indexedDB
-                    .Select<IIndexedRow>().From(table).Where(config._index, _state).Indices();
+                    .Select<IIndexedRow>().From(table).Where(config._index, _key).Indices();
 
                 // nothing to check
                 if (indices.Count() == 0)
@@ -241,8 +241,8 @@ namespace Svelto.ECS.Schema.Definition
                             continue;
 
                         // register to execute transition
-                        var currentState = new KeyWrapper<TState>(component[index]._state);
-                        var nextState = new KeyWrapper<TState>(_transitions[i]._next);
+                        var currentState = new KeyWrapper<TKey>(component[index]._key);
+                        var nextState = new KeyWrapper<TKey>(_transitions[i]._next);
 
                         indexedDB.Memo(config._states[currentState]._exitCandidates).Add(component[i]);
                         indexedDB.Memo(config._states[nextState]._enterCandidates).Add(component[i]);
@@ -287,15 +287,14 @@ namespace Svelto.ECS.Schema.Definition
                 {
                     // this group will not be visited again in this step
                     // updating indexes
-                    var oldState = component[index]._state;
-                    component[index]._state = _state;
+                    var oldState = component[index]._key;
+                    component[index]._key = _key;
 
-                    indexedDB.NotifyKeyUpdate(ref component[index], oldState, _state);
+                    indexedDB.NotifyKeyUpdate(ref component[index], oldState, _key);
 
                     for (int i = 0; i < _onEnter.count; ++i)
                         _onEnter[i].Invoke(index);
                 }
-
             }
         }
 
@@ -323,8 +322,8 @@ namespace Svelto.ECS.Schema.Definition
                             continue;
 
                         // register to execute transition
-                        var currentState = new KeyWrapper<TState>(component[index]._state);
-                        var nextState = new KeyWrapper<TState>(_transitions[i]._next);
+                        var currentState = new KeyWrapper<TKey>(component[index]._key);
+                        var nextState = new KeyWrapper<TKey>(_transitions[i]._next);
 
                         indexedDB.Memo(config._states[currentState]._exitCandidates).Add(component[i]);
                         indexedDB.Memo(config._states[nextState]._enterCandidates).Add(component[i]);

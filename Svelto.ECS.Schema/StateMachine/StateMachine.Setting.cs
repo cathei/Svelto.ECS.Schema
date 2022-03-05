@@ -7,7 +7,7 @@ using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema.Definition
 {
-    public partial class StateMachine<TState>
+    public partial class StateMachine<TKey>
     {
         protected Builder<TRow> Configure<TRow>()
             where TRow : class, IIndexedRow
@@ -32,16 +32,16 @@ namespace Svelto.ECS.Schema.Definition
 
             public AnyStateBuilder AnyState => new AnyStateBuilder(_config._anyState);
 
-            public StateBuilder AddState(in TState state)
+            public StateBuilder AddState(in TKey key)
             {
-                var wrapper = new KeyWrapper<TState>(state);
+                var wrapper = new KeyWrapper<TKey>(key);
 
                 if (_config._states.ContainsKey(wrapper))
                 {
-                    throw new ECSException($"State {state} already exsists!");
+                    throw new ECSException($"State {key} already exsists!");
                 }
 
-                var stateConfig = new StateConfig(state);
+                var stateConfig = new StateConfig(key);
                 _config._states[wrapper] = stateConfig;
 
                 return new StateBuilder(stateConfig);
@@ -56,7 +56,7 @@ namespace Svelto.ECS.Schema.Definition
                     _state = stateConfig;
                 }
 
-                public TransitionBuilder AddTransition(in TState next)
+                public TransitionBuilder AddTransition(in TKey next)
                 {
                     var transition = new TransitionConfig(next);
                     _state._transitions.Add(transition);
@@ -64,7 +64,7 @@ namespace Svelto.ECS.Schema.Definition
                 }
 
                 public TransitionBuilder AddTransition(in StateBuilder next)
-                    => AddTransition(next._state._state);
+                    => AddTransition(next._state._key);
             }
 
             public readonly ref struct TransitionBuilder
@@ -86,7 +86,7 @@ namespace Svelto.ECS.Schema.Definition
                     _state = stateConfig;
                 }
 
-                public TransitionBuilder AddTransition(in TState next)
+                public TransitionBuilder AddTransition(in TKey next)
                 {
                     var transition = new TransitionConfig(next);
                     _state._transitions.Add(transition);
@@ -94,7 +94,7 @@ namespace Svelto.ECS.Schema.Definition
                 }
 
                 public TransitionBuilder AddTransition(in StateBuilder next)
-                    => AddTransition(next._state._state);
+                    => AddTransition(next._state._key);
             }
         }
     }
