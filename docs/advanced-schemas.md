@@ -3,8 +3,8 @@
 Schema extensions defines few convariant interfaces so users can easily access to abstracted Tables. For example, if `HeroRow` and `EnemyRow` both implements `ICharacterRow`, you can do this.
 ```csharp
 // this should be in schema, actually
-HeroRow.Table heroTable = new Hero.Table();
-EnemyRow.Table enemyTable = new EnemyRow.Table();
+Table<HeroRow> heroTable = new Hero.Table();
+Table<EnemyRow> enemyTable = new Table<EnemyRow>();
 
 // you have common interface, you can treat it as same type of table!
 IEntityTable<ICharacterRow> charcterTable1 = heroTable;
@@ -52,7 +52,7 @@ To calculate Union and Intersection of Indexes, you can use temporary filters ca
 ```csharp
 public class MemoSchema : IEntitySchema
 {
-    public readonly CharacterRow.Table Character = new CharacterRow.Table();
+    public readonly Table<CharacterRow> Character = new Table<CharacterRow>();
 
     public readonly IIndexedController.Index CharacterController = new IIndexedController.Index();
 

@@ -24,7 +24,7 @@ namespace Svelto.ECS.Schema.Internal
     }
 
     public class MemoBase<TRow, TComponent> : MemoBase, IIndexQuery
-        where TRow : class, IEntityRow<TComponent>
+        where TRow : class, ISelectorRow<TComponent>
         where TComponent : unmanaged, IEntityComponent, INeedEGID
     {
         internal MemoBase() { }
@@ -154,7 +154,7 @@ namespace Svelto.ECS.Schema.Definition
 {
     // we have EGIDComponent constraints because it requires INeedEGID
     // it won't be necessary when Svelto update it's filter utility functions
-    public interface IMemorableRow : IEntityRow<EGIDComponent> { }
+    public interface IMemorableRow : ISelectorRow<EGIDComponent> { }
 
     public sealed class Memo<TRow> : MemoBase<TRow, EGIDComponent>
         where TRow : class, IMemorableRow

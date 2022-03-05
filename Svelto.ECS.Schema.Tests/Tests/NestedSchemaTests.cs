@@ -20,10 +20,10 @@ namespace Svelto.ECS.Schema.Tests
 
         public class StateSchema : IEntitySchema
         {
-            public readonly DoofusRow.Table Doofus = new DoofusRow.Table();
+            public readonly Table<DoofusRow> Doofus = new Table<DoofusRow>();
 
-            public readonly FoodRow.Tables<FoodType> Food =
-                new FoodRow.Tables<FoodType>(FoodType.MAX, x => (int)x);
+            public readonly Tables<FoodRow, FoodType> Food =
+                new Tables<FoodRow, FoodType>(FoodType.MAX, x => (int)x);
         }
 
         public class TeamSchema : IEntitySchema

@@ -13,7 +13,7 @@ namespace Svelto.ECS.Schema.Tests
         public interface IIndexedState : IIndexedRow<CharacterState, IIndexedState.Tag>
         { public struct Tag : ITag {} }
 
-        public interface IControllerStateRow : IEntityRow<
+        public interface IControllerStateRow : ISelectorRow<
             IIndexedController.Component, IIndexedState.Component>
         { }
 
@@ -26,7 +26,7 @@ namespace Svelto.ECS.Schema.Tests
 
         public class TestSchema : IEntitySchema
         {
-            public readonly CharacterRow.Tables Characters = new CharacterRow.Tables(5);
+            public readonly Tables<CharacterRow> Characters = new Tables<CharacterRow>(5);
 
             public readonly IIndexedController.Index Controller = new IIndexedController.Index();
             public readonly IIndexedState.Index State = new IIndexedState.Index();

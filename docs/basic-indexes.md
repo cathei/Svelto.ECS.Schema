@@ -22,8 +22,8 @@ Before look how to query with indexes, Let's add `IIndexedController.Index` to o
 ```csharp
 public class IndexedSchema : IEntitySchema
 {
-    public readonly CharacterRow.Table FlyingCharacter = new CharacterRow.Table();
-    public readonly CharacterRow.Table GroundCharacter = new CharacterRow.Table();
+    public readonly Table<CharacterRow> FlyingCharacter = new Table<CharacterRow>();
+    public readonly Table<CharacterRow> GroundCharacter = new Table<CharacterRow>();
 
     public readonly IIndexedController.Index CharacterController = new IIndexedController.Index();
 }

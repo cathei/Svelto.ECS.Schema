@@ -9,7 +9,7 @@ namespace Svelto.ECS.Schema.Generator
     {
         const string IndexQueryEnumerableTemplate = @"
     public readonly ref struct IndexQueryEnumerable<TR, {1}>
-        where TR : IEntityRow<{1}>
+        where TR : ISelectorRow<{1}>
 {2}
     {{
         private readonly IndexedDB _indexedDB;

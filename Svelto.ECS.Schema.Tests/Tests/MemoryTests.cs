@@ -11,18 +11,28 @@ namespace Svelto.ECS.Schema.Tests
     {
         public interface IHaveEGID : IEntityRow<EGIDComponent> { }
 
-        public interface IIndexdItemOwner : IIndexedRow<int, IIndexdItemOwner.Tag>
-        { public struct Tag : ITag { } }
+        public struct ItemOwner : IIndexKey<ItemOwner>
+        {
+            public int ownerID;
+
+            public static implicit operator ItemOwner(int ownerID)
+                => new ItemOwner { ownerID = ownerID };
+
+            public bool KeyEquals(in ItemOwner other)
+                => ownerID == other.ownerID;
+        }
+
+        public interface IIndexedItemOwner : IEntityComponent<Indexed<ItemOwner>> { }
 
         public class CharacterRow : DescriptorRow<CharacterRow>, IHaveEGID { }
-        public class ItemRow : DescriptorRow<ItemRow>, IHaveEGID, IIndexdItemOwner { }
+        public class ItemRow : DescriptorRow<ItemRow>, IHaveEGID, IIndexedRow<ItemOwner> { }
 
         public class TestSchema : IEntitySchema
         {
-            public readonly CharacterRow.Table Character = new CharacterRow.Table();
-            public readonly ItemRow.Tables Items = new ItemRow.Tables(10);
+            public readonly Table<CharacterRow> Character = new Table<CharacterRow>();
+            public readonly Tables<ItemRow> Items = new Tables<ItemRow>(10);
 
-            public readonly IIndexdItemOwner.Index ItemOwner = new IIndexdItemOwner.Index();
+            public readonly Index<ItemOwner> ItemOwner = new Index<ItemOwner>();
         }
 
         public MemoryTests() : base()
@@ -34,7 +44,7 @@ namespace Svelto.ECS.Schema.Tests
                 for (int j = 0; j < 1000; ++j)
                 {
                     var itemBuilder = _factory.Build(_schema.Items[j / 100], (uint)((i * 1000) + j));
-                    itemBuilder.Init(new IIndexdItemOwner.Component(i));
+                    itemBuilder.Init(new Indexed<ItemOwner>(i));
                 }
             }
 
@@ -46,7 +56,7 @@ namespace Svelto.ECS.Schema.Tests
         {
             // warming up
             var (egid, count) = _indexedDB.Select<IHaveEGID>().From(_schema.Character).Entities();
-            var (indexed, count2) = _indexedDB.Select<IIndexdItemOwner>().From(_schema.Items[0]).Entities();
+            var (indexed, count2) = _indexedDB.Select<>().From(_schema.Items[0]).Entities();
 
             long before = GC.GetAllocatedBytesForCurrentThread();
 

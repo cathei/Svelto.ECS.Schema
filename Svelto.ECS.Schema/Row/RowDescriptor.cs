@@ -47,9 +47,10 @@ namespace Svelto.ECS.Schema
                     var genericDefinition = interfaceType.GetGenericTypeDefinition();
 
                     if (genericDefinition == typeof(IEntityRow<>) ||
-                        genericDefinition == typeof(IEntityRow<,>) ||
-                        genericDefinition == typeof(IEntityRow<,,>) ||
-                        genericDefinition == typeof(IEntityRow<,,,>))
+                        genericDefinition == typeof(ISelectorRow<>) ||
+                        genericDefinition == typeof(ISelectorRow<,>) ||
+                        genericDefinition == typeof(ISelectorRow<,,>) ||
+                        genericDefinition == typeof(ISelectorRow<,,,>))
                     {
                         var componentBuildersField = interfaceType.GetField(
                             nameof(IEntityRow<EGIDComponent>.componentBuilders),

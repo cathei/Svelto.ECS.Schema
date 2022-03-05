@@ -14,7 +14,8 @@ namespace Svelto.ECS.Schema.Definition
             Confirmed
         }
 
-        protected internal interface IIndexedRow : IIndexableRow<Component> { }
+        protected internal interface IIndexedRow :
+            IIndexableRow<Component>, ISelectorRow<Component> { }
 
         public struct Component : IIndexableComponent<TState>
         {

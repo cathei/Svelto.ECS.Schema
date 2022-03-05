@@ -7,7 +7,7 @@ namespace Svelto.ECS.Schema
 {
 
     public readonly ref struct IndexQueryEnumerable<TR, T1>
-        where TR : IEntityRow<T1>
+        where TR : ISelectorRow<T1>
                 where T1 : struct, IEntityComponent
     {
         private readonly IndexedDB _indexedDB;
@@ -82,7 +82,7 @@ namespace Svelto.ECS.Schema
     }
 
     public readonly ref struct IndexQueryEnumerable<TR, T1, T2>
-        where TR : IEntityRow<T1, T2>
+        where TR : ISelectorRow<T1, T2>
                 where T1 : struct, IEntityComponent
                 where T2 : struct, IEntityComponent
     {
@@ -158,7 +158,7 @@ namespace Svelto.ECS.Schema
     }
 
     public readonly ref struct IndexQueryEnumerable<TR, T1, T2, T3>
-        where TR : IEntityRow<T1, T2, T3>
+        where TR : ISelectorRow<T1, T2, T3>
                 where T1 : struct, IEntityComponent
                 where T2 : struct, IEntityComponent
                 where T3 : struct, IEntityComponent
@@ -235,7 +235,7 @@ namespace Svelto.ECS.Schema
     }
 
     public readonly ref struct IndexQueryEnumerable<TR, T1, T2, T3, T4>
-        where TR : IEntityRow<T1, T2, T3, T4>
+        where TR : ISelectorRow<T1, T2, T3, T4>
                 where T1 : struct, IEntityComponent
                 where T2 : struct, IEntityComponent
                 where T3 : struct, IEntityComponent

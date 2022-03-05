@@ -14,13 +14,13 @@ And put the Tables in your Schema.
 ```csharp
 public class GameSchema : IEntitySchema
 {
-    public readonly CharacterRow.Table Character = new CharacterRow.Table();
-    public readonly ItemRow.Table Item = new ItemRow.Table();
+    public readonly Table<CharacterRow> Character = new Table<CharacterRow>();
+    public readonly Table<ItemRow> Item = new Table<ItemRow>();
 }
 ```
 `IEntitySchema` is a logical group that can contain Tables and Indexes as their members. I strongly recommend to make every fields in Schema `readonly`. Their values are not meant to be changed.
 
-`DescriptorRow.Table` is a Table that can hold specific Descriptor Row. Since it is exlusive, a Entity will belong in one Group only at the same moment. In Svelto Groups should accept entities using same Descriptor, or else the iteration index will break or mixed. In Schema extension Table tied with Descriptor Row, basically preventing this issue.
+`Table<DescriptorRow>` is a Table that can hold specific Descriptor Row. Since it is exlusive, a Entity will belong in one Group only at the same moment. In Svelto Groups should accept entities using same Descriptor, or else the iteration index will break or mixed. In Schema extension Table tied with Descriptor Row, basically preventing this issue.
 
 ### Using Schema
 Now we defined a schema, we can add it to `EnginesRoot`, do this before any entitiy submission.
@@ -46,7 +46,7 @@ Note that it automatically uses Descriptor from Descriptor Row, compare to origi
 You can call `IEntityFunctions.Remove(Table, entityID)` to remove Entity from Table. You can call `IEntityFunctions.Move(FromTable, entityID).To(ToTable)` to move Entity between Tables.
 
 ### Defining Ranged Table
-Sometimes you'll want many tables of same type, without defining many variables. Simiply use `DescriptorRow.Tables` (aware of 's' in the end), pass the number of group you want to be created, and there are multiple separated tables!
+Sometimes you'll want many tables of same type, without defining many variables. Simiply use `Tables<DescriptorRow>` (aware of 's' in the end), pass the number of group you want to be created, and there are multiple separated tables!
 ```csharp
 public enum ItemType { Potion, Weapon, Armor, MAX };
 
@@ -54,9 +54,9 @@ public class AnotherSchema : IEntitySchema
 {
     public const int MaxPlayerCount = 10;
 
-    public readonly PlayerRow.Tables Players = new PlayerRow.Tables(MaxPlayerCount);
+    public readonly Tables<PlayerRow> Players = new Tables<PlayerRow>(MaxPlayerCount);
 
-    public readonly ItemRow.Tables<ItemType> Items = new ItemRow.Tables<ItemType>(ItemType.MAX, type => (int)type);
+    public readonly Tables<ItemRow, ItemType> Items = new Tables<ItemRow><ItemType>(ItemType.MAX, type => (int)type);
 }
 ```
 Above example shows use case of `Tables` with `int` or `enum`. `Players` has one argument since it is using integer, and `Items` has a mapping function to access inner table easily. Both tables are accessable by `Players[0]` or `Items[0]`. Additionally, item tables are accessible with `ItemType` like `Items[ItemType.Potion]`.
@@ -66,10 +66,10 @@ On the other hand, you will want to make separate group for some related tables,
 ```csharp
 public class PlayerSchema : IEntitySchema
 {
-    public readonly CharacterRow.Table AliveCharacter = new CharacterRow.Table();
-    public readonly CharacterRow.Table DeadCharacter = new CharacterRow.Table();
+    public readonly Table<CharacterRow> AliveCharacter = new Table<CharacterRow>();
+    public readonly Table<CharacterRow> DeadCharacter = new Table<CharacterRow>();
 
-    public readonly ItemRow.Tables<ItemType> Items = new ItemRow.Tables<ItemType>(ItemType.MAX, type => (int)type);
+    public readonly Tables<ItemRow><ItemType> Items = new Tables<ItemRow><ItemType>(ItemType.MAX, type => (int)type);
 }
 
 public enum ItemType { Potion, Weapon, Armor, MAX };
@@ -95,7 +95,7 @@ public class MyGameSchema : IEntitySchema
 ```
 Nice. We defined a child Schema for AI, and 10 child Schemas for players. If you want to access group for player 5's alive characters, use `MyGameSchema.Player[5].AliveCharacter`.
 
-Also note that we added shortcut `CombinedTables<T>` to combine all alive characters from AI and all players. You can use it same as `DescriptorRow.Tables`. You can also use this type to combine Tables share same Interface Rows. For example, you could define `CombindedTables<IStackableRow>`.
+Also note that we added shortcut `CombinedTables<T>` to combine all alive characters from AI and all players. You can use it same as `Tables<DescriptorRow>`. You can also use this type to combine Tables share same Interface Rows. For example, you could define `CombindedTables<IStackableRow>`.
 
 Let's see complete example to fill up your tables with records.
 ```csharp
@@ -121,7 +121,7 @@ public class CompositionRoot
         submissionScheduler.SubmitEntities();
     }
 
-    private void AddCharacter(IEntityFactory entityFactory, CharacterRow.Table table)
+    private void AddCharacter(IEntityFactory entityFactory, Table<CharacterRow> table)
     {
         var builder = entityFactory.Build(table, eidCounter++);
 

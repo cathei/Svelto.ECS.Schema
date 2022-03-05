@@ -21,10 +21,10 @@ namespace Svelto.ECS.Schema.Tests
             public float value;
         }
 
-        public interface IRageCharacterRow : IEntityRow<RageComponent, CharacterFSM.Component>
+        public interface IRageCharacterRow : ISelectorRow<RageComponent, CharacterFSM.Component>
         { }
 
-        public interface IAllFourRow : IEntityRow<RageComponent, TriggerComponent, SpecialTimerComponent, CharacterFSM.Component>
+        public interface IAllFourRow : ISelectorRow<RageComponent, TriggerComponent, SpecialTimerComponent, CharacterFSM.Component>
         { }
 
         public interface ICharacterRow : CharacterFSM.IRow, IRageCharacterRow, IAllFourRow
@@ -80,7 +80,7 @@ namespace Svelto.ECS.Schema.Tests
 
         public class TestSchema : IEntitySchema
         {
-            public readonly CharacterRow.Table Character = new CharacterRow.Table();
+            public readonly Table<CharacterRow> Character = new Table<CharacterRow>();
         }
 
         private readonly CharacterFSM _characterFSM;

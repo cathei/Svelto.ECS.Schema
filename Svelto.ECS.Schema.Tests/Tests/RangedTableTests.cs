@@ -17,13 +17,13 @@ namespace Svelto.ECS.Schema.Tests
 
         public class MerchantSchema : IEntitySchema
         {
-            public readonly ItemRow.Tables Items = new ItemRow.Tables(100);
+            public readonly Tables<ItemRow> Items = new Tables<ItemRow>(100);
         }
 
         public class TestSchema : IEntitySchema
         {
-            public readonly CharacterRow.Tables Characters = new CharacterRow.Tables(100);
-            public readonly CharacterRow.Tables Equipments = new CharacterRow.Tables(30);
+            public readonly Tables<CharacterRow> Characters = new Tables<CharacterRow>(100);
+            public readonly Tables<CharacterRow> Equipments = new Tables<CharacterRow>(30);
 
             public readonly Ranged<MerchantSchema> Merchants = new Ranged<MerchantSchema>(50);
         }

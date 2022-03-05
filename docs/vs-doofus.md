@@ -33,8 +33,8 @@ With Schema extension this would be converted to below.
 ```csharp
 public class StateSchema : IEntitySchema
 {
-    public readonly DoofusRow.Table Doofus = new DoofusRow.Table();
-    public readonly FoodRow.Table Food = new FoodRow.Table();
+    public readonly Table<DoofusRow> Doofus = new Table<DoofusRow>();
+    public readonly Table<FoodRow> Food = new Table<FoodRow>();
 }
 
 public class TeamSchema : IEntitySchema

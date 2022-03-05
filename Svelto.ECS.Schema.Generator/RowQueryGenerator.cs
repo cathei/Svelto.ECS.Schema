@@ -10,8 +10,8 @@ namespace Svelto.ECS.Schema.Generator
         const string RowQueryTemplate = @"
         // Select -> From Table -> Entities
         public static EntityCollection<{1}> Entities<TR, {1}>(
-                this (IndexedDB, IEntityRow<{1}>, IEntityTable<TR>) query)
-            where TR : IEntityRow<{1}>
+                this (IndexedDB, ISelectorRow<{1}>, IEntityTable<TR>) query)
+            where TR : ISelectorRow<{1}>
 {2}
         {{
             return query.Item1.entitiesDB.QueryEntities<{1}>(query.Item3.ExclusiveGroup);
@@ -19,8 +19,8 @@ namespace Svelto.ECS.Schema.Generator
 
         // Select -> From Tables -> Entities
         public static TablesEnumerable<TR, {1}> Entities<TR, {1}>(
-                this (IndexedDB, IEntityRow<{1}>, IEntityTables<TR>) query)
-            where TR : IEntityRow<{1}>
+                this (IndexedDB, ISelectorRow<{1}>, IEntityTables<TR>) query)
+            where TR : ISelectorRow<{1}>
 {2}
         {{
             return new TablesEnumerable<TR, {1}>(query.Item1, query.Item3);
@@ -28,8 +28,8 @@ namespace Svelto.ECS.Schema.Generator
 
         // Select -> From Table -> Where -> Entities
         public static IndexQueryTuple<{1}, IndexedIndices> Entities<TR, TI, {1}>(
-                this (IndexedDB, IEntityRow<{1}>, IEntityTable<TR>, TI) query)
-            where TR : IEntityRow<{1}>
+                this (IndexedDB, ISelectorRow<{1}>, IEntityTable<TR>, TI) query)
+            where TR : ISelectorRow<{1}>
             where TI : IIndexQuery
 {2}
         {{
@@ -39,8 +39,8 @@ namespace Svelto.ECS.Schema.Generator
 
         // Select -> From Tables -> Where -> Entities
         public static IndexQueryEnumerable<TR, {1}> Entities<TR, TI, {1}>(
-                this (IndexedDB, IEntityRow<{1}>, IEntityTables<TR>, TI) query)
-            where TR : IEntityRow<{1}>
+                this (IndexedDB, ISelectorRow<{1}>, IEntityTables<TR>, TI) query)
+            where TR : ISelectorRow<{1}>
             where TI : IIndexQuery
 {2}
         {{

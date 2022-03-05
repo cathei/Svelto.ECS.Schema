@@ -19,8 +19,8 @@ namespace Svelto.ECS.Schema.Tests
         // schemas
         public class PlayerSchema : IEntitySchema
         {
-            public readonly CharacterRow.Table Character = new CharacterRow.Table();
-            public readonly ItemRow.Table Item = new ItemRow.Table();
+            public readonly Table<CharacterRow> Character = new Table<CharacterRow>();
+            public readonly Table<ItemRow> Item = new Table<ItemRow>();
 
             public readonly IIndexedItemOwner.Index ItemOwner = new IIndexedItemOwner.Index();
         }

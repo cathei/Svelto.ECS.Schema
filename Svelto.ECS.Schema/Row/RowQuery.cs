@@ -90,7 +90,7 @@ namespace Svelto.ECS.Schema
                 Where<TR, TTR, TMR, TMC>(this (IndexedDB, TR, IEntityTable<TTR>) query, MemoBase<TMR, TMC> memo)
             where TR : IEntityRow
             where TTR : TR, TMR
-            where TMR : class, IEntityRow<TMC>
+            where TMR : class, ISelectorRow<TMC>
             where TMC : unmanaged, IEntityComponent, INeedEGID
         {
             return (query.Item1, query.Item2, query.Item3, memo);
@@ -102,7 +102,7 @@ namespace Svelto.ECS.Schema
                 Where<TR, TTR, TMR, TMC>(this (IndexedDB, TR, IEntityTables<TTR>) query, MemoBase<TMR, TMC> memo)
             where TR : IEntityRow
             where TTR : TR, TMR
-            where TMR : class, IEntityRow<TMC>
+            where TMR : class, ISelectorRow<TMC>
             where TMC : unmanaged, IEntityComponent, INeedEGID
         {
             return (query.Item1, query.Item2, query.Item3, memo);

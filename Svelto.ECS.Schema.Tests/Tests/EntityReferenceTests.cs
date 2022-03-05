@@ -17,7 +17,7 @@ namespace Svelto.ECS.Schema.Tests
             public uint proof;
         }
 
-        public interface IThiefRow : IEntityRow<EGIDComponent, ThiefCopmonent>
+        public interface IThiefRow : ISelectorRow<EGIDComponent, ThiefCopmonent>
         { }
 
         public sealed class ThiefRow : DescriptorRow<ThiefRow>, IThiefRow
@@ -28,8 +28,8 @@ namespace Svelto.ECS.Schema.Tests
 
         public class TestSchema : IEntitySchema
         {
-            public readonly ThiefRow.Tables Thieves = new ThiefRow.Tables(10);
-            public readonly PoliceRow.Table Police = new PoliceRow.Table();
+            public readonly Tables<ThiefRow> Thieves = new Tables<ThiefRow>(10);
+            public readonly Table<PoliceRow> Police = new Table<PoliceRow>();
         }
 
         [Fact]
