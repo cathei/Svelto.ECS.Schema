@@ -60,28 +60,26 @@ namespace Svelto.ECS.Schema
 
         // Select -> From Table -> Where
         // Table Row must implement both Selector Row and Index Row
-        public static (IndexedDB, TR, IEntityTable<TTR>, IndexQuery<TIR, TIK, TIC>, TIR)
-                Where<TR, TTR, TIR, TIK, TIC>(this (IndexedDB, TR, IEntityTable<TTR>) query,
-                    IIndexQueryable<TIR, TIK, TIC> index, TIK key)
+        public static (IndexedDB, TR, IEntityTable<TTR>, IndexQuery<TIR, TIK>, TIR)
+                Where<TR, TTR, TIR, TIK>(this (IndexedDB, TR, IEntityTable<TTR>) query,
+                    IIndexQueryable<TIR, TIK> index, TIK key)
             where TR : IEntityRow
             where TTR : TR, TIR
-            where TIR : IIndexableRow<TIK, TIC>
+            where TIR : IEntityRow
             where TIK : unmanaged
-            where TIC : unmanaged, IIndexableComponent<TIK>
         {
             return (query.Item1, query.Item2, query.Item3, index.Query(key), default);
         }
 
         // Select -> From Tables -> Where
         // Tables Row must implement both Selector Row and Index Row
-        public static (IndexedDB, TR, IEntityTables<TTR>, IndexQuery<TIR, TIK, TIC>, TIR)
-                Where<TR, TTR, TIR, TIK, TIC>(this (IndexedDB, TR, IEntityTables<TTR>) query,
-                    IIndexQueryable<TIR, TIK, TIC> index, TIK key)
+        public static (IndexedDB, TR, IEntityTables<TTR>, IndexQuery<TIR, TIK>, TIR)
+                Where<TR, TTR, TIR, TIK>(this (IndexedDB, TR, IEntityTables<TTR>) query,
+                    IIndexQueryable<TIR, TIK> index, TIK key)
             where TR : IEntityRow
             where TTR : TR, TIR
-            where TIR : IIndexableRow<TIK, TIC>
+            where TIR : IEntityRow
             where TIK : unmanaged
-            where TIC : unmanaged, IIndexableComponent<TIK>
         {
             return (query.Item1, query.Item2, query.Item3, index.Query(key), default);
         }
@@ -114,10 +112,10 @@ namespace Svelto.ECS.Schema
         internal static IndexedIndices Indices<TR, TI, TIR>(
                 this (IndexedDB, TR, IEntityTable, TI, TIR) query)
             where TR : IEntityRow
-            where TI : IIndexQuery<TIR>
+            where TI : IIndexQuery
             where TIR : IEntityRow
         {
-            var keyData = query.Item4.GetIndexedKeyData(query.Item1);
+            var keyData = query.Item4.GetIndexerKeyData(query.Item1);
             var group = query.Item3.ExclusiveGroup;
 
             if (keyData.groups == null || !group.IsEnabled() ||

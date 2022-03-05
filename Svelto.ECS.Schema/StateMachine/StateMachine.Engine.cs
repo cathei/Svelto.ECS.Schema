@@ -2,9 +2,9 @@ using System;
 using Svelto.DataStructures;
 using Svelto.ECS.Schema.Internal;
 
-namespace Svelto.ECS.Schema
+namespace Svelto.ECS.Schema.Definition
 {
-    public partial class EntityStateMachine<TState, TTag>
+    public partial class StateMachine<TState>
     {
         void IEntityStateMachine.AddEngines(EnginesRoot enginesRoot, IndexedDB indexedDB)
         {
@@ -17,14 +17,7 @@ namespace Svelto.ECS.Schema
             enginesRoot.AddEngine(Engine);
         }
 
-        internal interface IStateMachineConfig
-        {
-            Index Index { get; }
-            void Process(IndexedDB indexedDB);
-        }
-
-        internal sealed class StateMachineConfig<TRow> : IStateMachineConfig
-            where TRow : class, IIndexedRow
+        internal abstract class StateMachineConfigBase
         {
             internal readonly FasterDictionary<KeyWrapper<TState>, StateConfig> _states;
             internal readonly AnyStateConfig _anyState;
@@ -32,16 +25,20 @@ namespace Svelto.ECS.Schema
             // this will manage filters for state machine
             internal readonly Index _index;
 
-            public Index Index => _index;
-
-            public StateMachineConfig()
+            protected StateMachineConfigBase()
             {
                 _states = new FasterDictionary<KeyWrapper<TState>, StateConfig>();
                 _anyState = new AnyStateConfig();
                 _index = new Index();
             }
 
-            public void Process(IndexedDB indexedDB)
+            public abstract void Process(IndexedDB indexedDB);
+        }
+
+        internal sealed class StateMachineConfig<TRow> : StateMachineConfigBase
+            where TRow : class, IIndexedRow
+        {
+            public override void Process(IndexedDB indexedDB)
             {
                 var tables = indexedDB.Select<TRow>().Tables();
                 var states = _states.GetValues(out var stateCount);
@@ -80,11 +77,11 @@ namespace Svelto.ECS.Schema
             }
         }
 
-        public sealed class TransitionEngine : IStepEngine
+        protected sealed class TransitionEngine : IStepEngine
         {
             private readonly IndexedDB _indexedDB;
 
-            public string name { get; } = $"{typeof(TTag).FullName}.TransitionEngine";
+            public string name { get; } = $"{typeof(StateMachine<TState>).FullName}.TransitionEngine";
 
             internal TransitionEngine(IndexedDB indexedDB)
             {

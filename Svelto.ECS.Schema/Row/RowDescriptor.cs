@@ -12,9 +12,16 @@ namespace Svelto.ECS.Schema.Internal
 {
     // empty component that always exists
     internal struct RowIdentityComponent : IEntityComponent { }
+}
 
-    public static class RowDescriptorTemplate<TRow>
-        where TRow : DescriptorRow
+namespace Svelto.ECS.Schema
+{
+    /// <summary>
+    /// Descriptor Rows are not meant to be extended and child classes should be sealed
+    /// Use interface Rows to extend traits!
+    /// </summary>
+    public abstract class DescriptorRow<TSelf> : IEntityRow
+        where TSelf : DescriptorRow<TSelf>
     {
         public class Descriptor : IDynamicEntityDescriptor
         {
@@ -24,7 +31,7 @@ namespace Svelto.ECS.Schema.Internal
             {
                 // reflection time!
                 // for all interface the row implements
-                var interfaceTypes = typeof(TRow).GetInterfaces();
+                var interfaceTypes = typeof(TSelf).GetInterfaces();
                 var componentBuilderDict = new FasterDictionary<RefWrapperType, IComponentBuilder>();
 
                 componentBuilderDict.Add(
@@ -63,12 +70,5 @@ namespace Svelto.ECS.Schema.Internal
                 componentBuilderDict.CopyValuesTo(componentsToBuild);
             }
         }
-    }
-}
-
-namespace Svelto.ECS.Schema
-{
-    public abstract class DescriptorRow : IEntityRow
-    {
     }
 }

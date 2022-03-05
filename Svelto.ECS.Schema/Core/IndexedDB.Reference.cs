@@ -8,6 +8,11 @@ namespace Svelto.ECS.Schema
 {
     public partial class IndexedDB
     {
+        internal IEGIDMapper GetEGIDMapper(IEntityTable table)
+        {
+            return entitiesDB.QueryMappedEntities<RowIdentityComponent>(table.ExclusiveGroup);
+        }
+
         public bool Exists(IEntityTable table, uint entityID)
         {
             return entitiesDB.Exists<RowIdentityComponent>(entityID, table.ExclusiveGroup);
@@ -30,7 +35,7 @@ namespace Svelto.ECS.Schema
 
         public bool TryGetEntityIndex(IEntityTable table, uint entityID, out uint entityIndex)
         {
-            var mapper = entitiesDB.QueryMappedEntities<RowIdentityComponent>(table.ExclusiveGroup);
+            var mapper = GetEGIDMapper(table);
             return mapper.FindIndex(entityID, out entityIndex);
         }
 

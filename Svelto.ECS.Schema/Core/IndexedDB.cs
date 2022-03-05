@@ -18,7 +18,7 @@ namespace Svelto.ECS.Schema
         internal readonly HashSet<RefWrapperType> createdIndexerEngines = new HashSet<RefWrapperType>();
 
         internal readonly FasterDictionary<int, IndexerData> indexers = new FasterDictionary<int, IndexerData>();
-        internal readonly FasterDictionary<int, IMemoData> memos = new FasterDictionary<int, IMemoData>();
+        internal readonly FasterDictionary<int, MemoData> memos = new FasterDictionary<int, MemoData>();
 
         // well... let's have some space for user defined filter
         private int filterIdCounter = 10000;
@@ -58,7 +58,7 @@ namespace Svelto.ECS.Schema
 
         internal void NotifyKeyUpdate<TK, TC>(ref TC keyComponent, in TK oldKey, in TK newKey)
             where TK : unmanaged
-            where TC : struct, IIndexedComponent
+            where TC : struct, IIndexableComponent<TK>
         {
             // component updated but key didn't change
             if (oldKey.Equals(newKey))
@@ -67,9 +67,7 @@ namespace Svelto.ECS.Schema
             var indexers = FindIndexers<TK, TC>(keyComponent.ID.groupID);
 
             foreach (var indexer in indexers)
-            {
-                UpdateFilters<TK, TC>(indexer.IndexerID, ref keyComponent, oldKey, newKey);
-            }
+                UpdateFilters(indexer.IndexerID, ref keyComponent, oldKey, newKey);
         }
 
         public static implicit operator EntitiesDB(IndexedDB indexedDB) => indexedDB.entitiesDB;

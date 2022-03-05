@@ -17,25 +17,23 @@ namespace Svelto.ECS.Schema.Internal
         where TComponent : struct, IEntityViewComponent;
 }
 
-namespace Svelto.ECS.Schema
+namespace Svelto.ECS.Schema.Definition
 {
     /// <summary>
     /// State machine on Svelto ECS
     /// </summary>
-    /// <typeparam name="TState">Value type representing a state. Usually enum type.</typeparam>
-    /// <typeparam name="TTag">Type to ensure uniqueness. It can be done with TSelf, but IsUnmanagedEx is on the way</typeparam>
-    public abstract partial class EntityStateMachine<TState, TTag> : IEntityStateMachine,
-            IIndexQueryable<EntityStateMachine<TState, TTag>.IIndexedRow, TState, EntityStateMachine<TState, TTag>.Component>
-        where TState : unmanaged
-        where TTag : unmanaged, EntityStateMachine<TState, TTag>.ITag
+    /// <typeparam name="TState">Value type representing a state. Usually wraps enum type.</typeparam>
+    public abstract partial class StateMachine<TState> : IEntityStateMachine,
+            IIndexQueryable<StateMachine<TState>.IIndexedRow, TState>
+        where TState : unmanaged, IStateMachineKey<TState>
     {
         public interface ITag {}
 
-        internal static IStateMachineConfig Config = null;
+        internal static StateMachineConfigBase Config = null;
 
-        public TransitionEngine Engine { get; internal set; }
+        public IStepEngine Engine { get; internal set; }
 
-        protected EntityStateMachine()
+        protected StateMachine()
         {
             if (Config != null)
                 return;
@@ -58,10 +56,9 @@ namespace Svelto.ECS.Schema
         {
             internal ConditionConfig() { }
 
-            internal abstract void Evaluate<TEnum, TIter>(EntitiesDB entitiesDB,
-                    NB<Component> component, in TEnum indexedIndices, in ExclusiveGroupStruct groupID)
-                where TEnum : struct, IIndicesEnumerable<TIter>
-                where TIter : struct, IIndicesEnumerator;
+            internal abstract void Ready(EntitiesDB entitiesDB, in ExclusiveGroupStruct groupID);
+
+            internal abstract bool Evaluate(uint index);
         }
 
         internal sealed class ConditionConfigNative<TComponent> : ConditionConfig
@@ -69,28 +66,22 @@ namespace Svelto.ECS.Schema
         {
             internal readonly PredicateNative<TComponent> _predicate;
 
+            private NB<TComponent> _target;
+
             public ConditionConfigNative(PredicateNative<TComponent> predicate)
             {
                 _predicate = predicate;
             }
 
-            internal override void Evaluate<TEnum, TIter>(EntitiesDB entitiesDB,
-                NB<Component> component, in TEnum indices, in ExclusiveGroupStruct groupID)
+            internal override void Ready(EntitiesDB entitiesDB, in ExclusiveGroupStruct groupID)
             {
                 // this is calling per group here, for this condition
-                var (target, _) = entitiesDB.QueryEntities<TComponent>(groupID);
+                (_target, _) = entitiesDB.QueryEntities<TComponent>(groupID);
+            }
 
-                // rather loop through indexes multiple times.
-                // should be better than fetching buffers per entity.
-                foreach (int i in indices)
-                {
-                    // just skip any component that is not available
-                    if (component[i].transitionState != TransitionState.Available)
-                        continue;
-
-                    if (!_predicate(ref target[i]))
-                        component[i].transitionState = TransitionState.Aborted;
-                }
+            internal override bool Evaluate(uint index)
+            {
+                return _predicate(ref _target[index]);
             }
         }
 
@@ -99,28 +90,22 @@ namespace Svelto.ECS.Schema
         {
             internal readonly PredicateManaged<TComponent> _predicate;
 
+            private MB<TComponent> _target;
+
             public ConditionConfigManaged(PredicateManaged<TComponent> predicate)
             {
                 _predicate = predicate;
             }
 
-            internal override void Evaluate<TEnum, TIter>(EntitiesDB entitiesDB,
-                NB<Component> component, in TEnum indices, in ExclusiveGroupStruct groupID)
+            internal override void Ready(EntitiesDB entitiesDB, in ExclusiveGroupStruct groupID)
             {
                 // this is calling per group here, for this condition
-                var (target, _) = entitiesDB.QueryEntities<TComponent>(groupID);
+                (_target, _) = entitiesDB.QueryEntities<TComponent>(groupID);
+            }
 
-                // rather loop through indexes multiple times.
-                // should be better than fetching buffers per entity.
-                foreach (int i in indices)
-                {
-                    // just skip any component that is not available
-                    if (component[i].transitionState != TransitionState.Available)
-                        continue;
-
-                    if (!_predicate(ref target[i]))
-                        component[i].transitionState = TransitionState.Aborted;
-                }
+            internal override bool Evaluate(uint index)
+            {
+                return _predicate(ref _target[index]);
             }
         }
 
@@ -128,8 +113,9 @@ namespace Svelto.ECS.Schema
         {
             internal CallbackConfig() { }
 
-            internal abstract void Invoke(EntitiesDB entitiesDB,
-                IndexedIndices indexedIndices, in ExclusiveGroupStruct groupID);
+            internal abstract void Ready(EntitiesDB entitiesDB, in ExclusiveGroupStruct groupID);
+
+            internal abstract void Invoke(uint index);
         }
 
         internal sealed class CallbackConfigNative<TComponent> : CallbackConfig
@@ -137,21 +123,21 @@ namespace Svelto.ECS.Schema
         {
             internal readonly CallbackNative<TComponent> _callback;
 
+            private NB<TComponent> _target;
+
             public CallbackConfigNative(CallbackNative<TComponent> callback)
             {
                 _callback = callback;
             }
 
-            internal override void Invoke(EntitiesDB entitiesDB,
-                IndexedIndices indexedIndices, in ExclusiveGroupStruct groupID)
+            internal override void Ready(EntitiesDB entitiesDB, in ExclusiveGroupStruct groupID)
             {
-                // this is calling per group here, for this callback
-                var (target, _) = entitiesDB.QueryEntities<TComponent>(groupID);
+                (_target, _) = entitiesDB.QueryEntities<TComponent>(groupID);
+            }
 
-                foreach (int i in indexedIndices)
-                {
-                    _callback(ref target[i]);
-                }
+            internal override void Invoke(uint index)
+            {
+                _callback(ref _target[index]);
             }
         }
 
@@ -160,21 +146,21 @@ namespace Svelto.ECS.Schema
         {
             internal readonly CallbackManaged<TComponent> _callback;
 
+            private MB<TComponent> _target;
+
             public CallbackConfigManaged(CallbackManaged<TComponent> callback)
             {
                 _callback = callback;
             }
 
-            internal override void Invoke(EntitiesDB entitiesDB,
-                IndexedIndices indexedIndices, in ExclusiveGroupStruct groupID)
+            internal override void Ready(EntitiesDB entitiesDB, in ExclusiveGroupStruct groupID)
             {
-                // this is calling per group here, for this callback
-                var (target, _) = entitiesDB.QueryEntities<TComponent>(groupID);
+                (_target, _) = entitiesDB.QueryEntities<TComponent>(groupID);
+            }
 
-                foreach (int i in indexedIndices)
-                {
-                    _callback(ref target[i]);
-                }
+            internal override void Invoke(uint index)
+            {
+                _callback(ref _target[index]);
             }
         }
 
@@ -189,40 +175,23 @@ namespace Svelto.ECS.Schema
                 _conditions = new FasterList<ConditionConfig>();
             }
 
-            internal void Evaluate<TEnum, TIter, TR>(StateMachineConfig<TR> config,
-                    IndexedDB indexedDB, NB<Component> component, in TEnum indices, in ExclusiveGroupStruct groupID)
-                where TEnum : struct, IIndicesEnumerable<TIter>
-                where TIter : struct, IIndicesEnumerator
-                where TR : class, IIndexedRow
+            public void Ready(EntitiesDB entitiesDB, in ExclusiveGroupStruct groupID)
             {
-                // rather loop through indexes multiple times.
-                // should be better than fetching buffers per entity.
-                foreach (int i in indices)
-                {
-                    if (component[i].transitionState == TransitionState.Aborted)
-                        component[i].transitionState = TransitionState.Available;
-                }
+                for (int i = 0; i < _conditions.count; ++i)
+                    _conditions[i].Ready(entitiesDB, groupID);
+            }
 
-                // evaluate each condition, they will check with components
+            internal bool Evaluate(uint index)
+            {
+                // evaluate each condition, fail if any of them fails
                 for (int i = 0; i < _conditions.count; ++i)
                 {
-                    _conditions[i].Evaluate<TEnum, TIter>(indexedDB, component, indices, groupID);
+                    if (!_conditions[i].Evaluate(index))
+                        return false;
                 }
 
-                // now if transitionState is still available, this transition is selected
-                foreach (int i in indices)
-                {
-                    if (component[i].transitionState == TransitionState.Available)
-                    {
-                        component[i].transitionState = TransitionState.Confirmed;
-
-                        var currentState = new KeyWrapper<TState>(component[i].State);
-                        var nextState = new KeyWrapper<TState>(_next);
-
-                        indexedDB.Memo(config._states[currentState]._exitCandidates).Add(component[i]);
-                        indexedDB.Memo(config._states[nextState]._enterCandidates).Add(component[i]);
-                    }
-                }
+                // success, execute transition
+                return true;
             }
         }
 
@@ -256,11 +225,29 @@ namespace Svelto.ECS.Schema
                 var indices = indexedDB
                     .Select<IIndexedRow>().From(table).Where(config._index, _state).Indices();
 
-                // higher priority if added first
+                // nothing to check
+                if (indices.Count() == 0)
+                    return;
+
                 for (int i = 0; i < _transitions.count; ++i)
+                    _transitions[i].Ready(indexedDB.entitiesDB, table.ExclusiveGroup);
+
+                foreach (uint index in indices)
                 {
-                    _transitions[i].Evaluate<IndexedIndices, IndexedIndicesEnumerator, TR>
-                        (config, indexedDB, component, indices, table.ExclusiveGroup);
+                    // transition has higher priority if added first
+                    for (int i = 0; i < _transitions.count; ++i)
+                    {
+                        if (!_transitions[i].Evaluate(index))
+                            continue;
+
+                        // register to execute transition
+                        var currentState = new KeyWrapper<TState>(component[index]._state);
+                        var nextState = new KeyWrapper<TState>(_transitions[i]._next);
+
+                        indexedDB.Memo(config._states[currentState]._exitCandidates).Add(component[i]);
+                        indexedDB.Memo(config._states[nextState]._enterCandidates).Add(component[i]);
+                        break;
+                    }
                 }
             }
 
@@ -276,8 +263,12 @@ namespace Svelto.ECS.Schema
                     return;
 
                 for (int i = 0; i < _onExit.count; ++i)
+                    _onExit[i].Ready(indexedDB.entitiesDB, table.ExclusiveGroup);
+
+                foreach (uint index in indices)
                 {
-                    _onExit[i].Invoke(indexedDB.entitiesDB, indices, table.ExclusiveGroup);
+                    for (int i = 0; i < _onExit.count; ++i)
+                        _onExit[i].Invoke(index);
                 }
             }
 
@@ -289,24 +280,22 @@ namespace Svelto.ECS.Schema
                 if (indices.Count() == 0)
                     return;
 
-                foreach (int i in indices)
+                for (int i = 0; i < _onEnter.count; ++i)
+                    _onEnter[i].Ready(indexedDB.entitiesDB, table.ExclusiveGroup);
+
+                foreach (uint index in indices)
                 {
                     // this group will not be visited again in this step
-                    // see you next step
-                    component[i].transitionState = TransitionState.Available;
-
                     // updating indexes
-                    var oldState = component[i]._state;
-                    component[i]._state = _state;
+                    var oldState = component[index]._state;
+                    component[index]._state = _state;
 
-                    indexedDB.NotifyKeyUpdate<IIndexedRow, TState, Component>(
-                        ref component[i], oldState, _state);
+                    indexedDB.NotifyKeyUpdate(ref component[index], oldState, _state);
+
+                    for (int i = 0; i < _onEnter.count; ++i)
+                        _onEnter[i].Invoke(index);
                 }
 
-                for (int i = 0; i < _onEnter.count; ++i)
-                {
-                    _onEnter[i].Invoke(indexedDB.entitiesDB, indices, table.ExclusiveGroup);
-                }
             }
         }
 
@@ -320,15 +309,27 @@ namespace Svelto.ECS.Schema
             }
 
             internal void Evaluate<TR>(StateMachineConfig<TR> config, IndexedDB indexedDB,
-                    NB<Component> state, int count, IEntityTable<TR> table)
+                    NB<Component> component, int count, IEntityTable<TR> table)
                 where TR : class, IIndexedRow
             {
-                var indices = new RangeIndiceEnumerable(count);
-
                 for (int i = 0; i < _transitions.count; ++i)
+                    _transitions[i].Ready(indexedDB.entitiesDB, table.ExclusiveGroup);
+
+                for (uint index = 0; index < count; ++index)
                 {
-                    _transitions[i].Evaluate<RangeIndiceEnumerable, RangeIndicesEnumerator, TR>
-                        (config, indexedDB, state, indices, table.ExclusiveGroup);
+                    for (int i = 0; i < _transitions.count; ++i)
+                    {
+                        if (!_transitions[i].Evaluate(index))
+                            continue;
+
+                        // register to execute transition
+                        var currentState = new KeyWrapper<TState>(component[index]._state);
+                        var nextState = new KeyWrapper<TState>(_transitions[i]._next);
+
+                        indexedDB.Memo(config._states[currentState]._exitCandidates).Add(component[i]);
+                        indexedDB.Memo(config._states[nextState]._enterCandidates).Add(component[i]);
+                        break;
+                    }
                 }
             }
         }

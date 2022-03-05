@@ -5,9 +5,9 @@ using Svelto.DataStructures;
 using Svelto.ECS.Hybrid;
 using Svelto.ECS.Schema.Internal;
 
-namespace Svelto.ECS.Schema
+namespace Svelto.ECS.Schema.Definition
 {
-    public partial class EntityStateMachine<TState, TTag>
+    public partial class StateMachine<TState>
     {
         protected Builder<TRow> Configure<TRow>()
             where TRow : class, IIndexedRow
@@ -21,11 +21,11 @@ namespace Svelto.ECS.Schema
         }
 
         public readonly ref struct Builder<TRow>
-            where TRow : class, IIndexedRow
+            where TRow : class, IEntityRow<Component>
         {
-            private readonly StateMachineConfig<TRow> _config;
+            private readonly StateMachineConfigBase _config;
 
-            internal Builder(StateMachineConfig<TRow> config)
+            internal Builder(StateMachineConfigBase config)
             {
                 _config = config;
             }
@@ -101,80 +101,74 @@ namespace Svelto.ECS.Schema
 
     public static class StateMachineConfigExtensions
     {
-        public static EntityStateMachine<TS, TT>.Builder<TR>.TransitionBuilder AddCondition<TS, TT, TR, TC>(
-                this EntityStateMachine<TS, TT>.Builder<TR>.TransitionBuilder builder,
+        public static StateMachine<TS>.Builder<TR>.TransitionBuilder AddCondition<TS, TR, TC>(
+                this StateMachine<TS>.Builder<TR>.TransitionBuilder builder,
                 PredicateNative<TC> preciate)
-            where TT : unmanaged, EntityStateMachine<TS, TT>.ITag
-            where TS : unmanaged
-            where TR : class, EntityStateMachine<TS, TT>.IIndexedRow, IEntityRow<TC>
+            where TS : unmanaged, IStateMachineKey<TS>
+            where TR : class, IEntityRow<TC>, IEntityRow<StateMachine<TS>.Component>
             where TC : unmanaged, IEntityComponent
         {
-            var condition = new EntityStateMachine<TS, TT>.ConditionConfigNative<TC>(preciate);
+            var condition = new StateMachine<TS>.ConditionConfigNative<TC>(preciate);
             builder._transition._conditions.Add(condition);
             return builder;
         }
 
-        public static EntityStateMachine<TS, TT>.Builder<TR>.TransitionBuilder AddCondition<TS, TT, TR, TC>(
-                this EntityStateMachine<TS, TT>.Builder<TR>.TransitionBuilder builder,
+        public static StateMachine<TS>.Builder<TR>.TransitionBuilder AddCondition<TS, TR, TC>(
+                this StateMachine<TS>.Builder<TR>.TransitionBuilder builder,
                 PredicateManaged<TC> preciate)
-            where TS : unmanaged
-            where TT : unmanaged, EntityStateMachine<TS, TT>.ITag
-            where TR : class, EntityStateMachine<TS, TT>.IIndexedRow, IEntityRow<TC>
+            where TS : unmanaged, IStateMachineKey<TS>
+            where TR : class, IEntityRow<TC>, IEntityRow<StateMachine<TS>.Component>
             where TC : struct, IEntityViewComponent
         {
-            var condition = new EntityStateMachine<TS, TT>.ConditionConfigManaged<TC>(preciate);
+            var condition = new StateMachine<TS>.ConditionConfigManaged<TC>(preciate);
             builder._transition._conditions.Add(condition);
             return builder;
         }
 
-        public static EntityStateMachine<TS, TT>.Builder<TR>.StateBuilder ExecuteOnExit<TS, TT, TR, TC>(
-                this EntityStateMachine<TS, TT>.Builder<TR>.StateBuilder builder,
+        public static StateMachine<TS>.Builder<TR>.StateBuilder ExecuteOnExit<TS, TR, TC>(
+                this StateMachine<TS>.Builder<TR>.StateBuilder builder,
                 CallbackNative<TC> callback)
-            where TS : unmanaged
-            where TT : unmanaged, EntityStateMachine<TS, TT>.ITag
-            where TR : class, EntityStateMachine<TS, TT>.IIndexedRow, IEntityRow<TC>
+            where TS : unmanaged, IStateMachineKey<TS>
+            where TR : class, IEntityRow<TC>, IEntityRow<StateMachine<TS>.Component>
             where TC : unmanaged, IEntityComponent
         {
-            var config = new EntityStateMachine<TS, TT>.CallbackConfigNative<TC>(callback);
+            var config = new StateMachine<TS>.CallbackConfigNative<TC>(callback);
             builder._state._onExit.Add(config);
             return builder;
         }
 
-        public static EntityStateMachine<TS, TT>.Builder<TR>.StateBuilder ExecuteOnExit<TS, TT, TR, TC>(
-                this EntityStateMachine<TS, TT>.Builder<TR>.StateBuilder builder,
+        public static StateMachine<TS>.Builder<TR>.StateBuilder ExecuteOnExit<TS, TR, TC>(
+                this StateMachine<TS>.Builder<TR>.StateBuilder builder,
                 CallbackManaged<TC> callback)
-            where TS : unmanaged
-            where TT : unmanaged, EntityStateMachine<TS, TT>.ITag
-            where TR : class, EntityStateMachine<TS, TT>.IIndexedRow, IEntityRow<TC>
+            where TS : unmanaged, IStateMachineKey<TS>
+            where TR : class, IEntityRow<TC>, IEntityRow<StateMachine<TS>.Component>
             where TC : struct, IEntityViewComponent
         {
-            var config = new EntityStateMachine<TS, TT>.CallbackConfigManaged<TC>(callback);
+            var config = new StateMachine<TS>.CallbackConfigManaged<TC>(callback);
             builder._state._onExit.Add(config);
             return builder;
         }
 
-        public static EntityStateMachine<TS, TT>.Builder<TR>.StateBuilder ExecuteOnEnter<TS, TT, TR, TC>(
-                this EntityStateMachine<TS, TT>.Builder<TR>.StateBuilder builder,
+        public static StateMachine<TS>.Builder<TR>.StateBuilder ExecuteOnEnter<TS, TR, TC>(
+                this StateMachine<TS>.Builder<TR>.StateBuilder builder,
                 CallbackNative<TC> callback)
-            where TS : unmanaged
-            where TT : unmanaged, EntityStateMachine<TS, TT>.ITag
-            where TR : class, EntityStateMachine<TS, TT>.IIndexedRow, IEntityRow<TC>
+            where TS : unmanaged, IStateMachineKey<TS>
+            where TR : class, IEntityRow<TC>, IEntityRow<StateMachine<TS>.Component>
             where TC : unmanaged, IEntityComponent
         {
-            var config = new EntityStateMachine<TS, TT>.CallbackConfigNative<TC>(callback);
+            var config = new StateMachine<TS>.CallbackConfigNative<TC>(callback);
             builder._state._onEnter.Add(config);
             return builder;
         }
 
-        public static EntityStateMachine<TS, TT>.Builder<TR>.StateBuilder ExecuteOnEnter<TS, TT, TR, TC>(
-                this EntityStateMachine<TS, TT>.Builder<TR>.StateBuilder builder,
+        public static StateMachine<TS>.Builder<TR>.StateBuilder ExecuteOnEnter<TS, TR, TC>(
+                this StateMachine<TS>.Builder<TR>.StateBuilder builder,
                 CallbackManaged<TC> callback)
-            where TS : unmanaged
-            where TT : unmanaged, EntityStateMachine<TS, TT>.ITag
-            where TR : class, EntityStateMachine<TS, TT>.IIndexedRow, IEntityRow<TC>
+            where TS : unmanaged, IStateMachineKey<TS>
+            where TR : class, IEntityRow<TC>, IEntityRow<StateMachine<TS>.Component>
             where TC : struct, IEntityViewComponent
         {
-            var config = new EntityStateMachine<TS, TT>.CallbackConfigManaged<TC>(callback);
+            var config = new StateMachine<TS>.CallbackConfigManaged<TC>(callback);
             builder._state._onEnter.Add(config);
             return builder;
         }

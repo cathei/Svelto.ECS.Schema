@@ -158,7 +158,5 @@ namespace Svelto.ECS.Schema.Definition
 
     public sealed class Memo<TRow> : MemoBase<TRow, EGIDComponent>
         where TRow : class, IMemorableRow
-    {
-
-    }
+    { }
 }

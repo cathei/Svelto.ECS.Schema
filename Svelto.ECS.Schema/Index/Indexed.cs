@@ -2,32 +2,43 @@ using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema.Internal
 {
-    public interface IIndexedData { }
+    public interface IIndexableComponent : IEntityComponent, INeedEGID { }
 
-    public interface IIndexedComponent : IEntityComponent, INeedEGID { }
+    public interface IIndexableComponent<TKey> : IIndexableComponent
+    {
+        TKey Key { get; }
+    }
+
+    public interface IKeyEquatable<TSelf>
+        where TSelf : IKeyEquatable<TSelf>
+    {
+        bool KeyEquals(in TSelf other);
+    }
 }
 
 namespace Svelto.ECS.Schema
 {
-    public interface IIndexedData<TKey> : IIndexedData
-    {
-        TKey Key { get; set; }
-    }
+    public interface IIndexKey<TSelf> : IKeyEquatable<TSelf>
+        where TSelf : IIndexKey<TSelf>
+    { }
 
-    public struct Indexed<TData> : IIndexedComponent
-        where TData : unmanaged, IIndexedData
+    public struct Indexed<TKey> : IIndexableComponent<TKey>
+        where TKey : unmanaged, IIndexKey<TKey>
     {
         public EGID ID { get; set; }
 
-        internal TData _data;
+        internal TKey _key;
 
-        public TData Data => _data;
+        public TKey Key => _key;
 
         // should be only called for initialization
-        public Indexed(in TData data) : this()
+        public Indexed(in TKey key) : this()
         {
-            _data = data;
+            _key = key;
         }
-
     }
+
+    public interface IIndexedRow<TKey> : IIndexableRow<Indexed<TKey>>
+        where TKey : unmanaged, IIndexKey<TKey>
+    { }
 }

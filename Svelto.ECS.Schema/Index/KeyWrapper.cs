@@ -11,10 +11,8 @@ namespace Svelto.ECS.Schema.Internal
 {
     // it is forced to used this becuase FasterDictionary requires IEquatable<T>
     internal readonly struct KeyWrapper<T> : IEquatable<KeyWrapper<T>>
-        where T : unmanaged
+        where T : unmanaged, IKeyEquatable<T>
     {
-        public static EqualityComparer<T> Comparer = EqualityComparer<T>.Default;
-
         private readonly T _value;
         private readonly int _hashcode;
 
@@ -24,7 +22,7 @@ namespace Svelto.ECS.Schema.Internal
             _hashcode = _value.GetHashCode();
         }
 
-        public bool Equals(KeyWrapper<T> other) => Comparer.Equals(_value, other._value);
+        public bool Equals(KeyWrapper<T> other) => _value.KeyEquals(other._value);
 
         public override bool Equals(object obj) => obj is KeyWrapper<T> other && Equals(other);
 

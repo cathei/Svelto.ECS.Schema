@@ -73,7 +73,7 @@ namespace Svelto.ECS.Schema
 
         private void UpdateFilters<TK, TC>(int indexerId, ref TC keyComponent, in TK oldKey, in TK newKey)
             where TK : unmanaged
-            where TC : struct, IIndexedComponent
+            where TC : struct, IIndexableComponent<TK>
         {
             var table = FindTable<IIndexableRow<TC>>(keyComponent.ID.groupID);
 

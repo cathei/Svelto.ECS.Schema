@@ -8,18 +8,13 @@ namespace Svelto.ECS.Schema.Internal
     // TODO: if apply new filter system, we can remove handling for 'MovedTo' and 'Remove'
     // but we still need 'Add' to make sure new entities are included in index
     internal class TableIndexingEngine<TR, TK, TC> : ReactToRowEngine<TR, TC>
-        where TR : class, IIndexableRow<TC>
+        where TR : class, IReactiveRow<TC>
         where TK : unmanaged
-        where TC : unmanaged, IIndexedComponent
+        where TC : unmanaged, IIndexableComponent<TK>
     {
         private readonly HashSet<IndexerGroupData> _groupsToRebuild = new HashSet<IndexerGroupData>();
 
-        private readonly Func<TC, TK> _keyGetter;
-
-        public TableIndexingEngine(IndexedDB indexedDB, Func<TC, TK> keyGetter) : base(indexedDB)
-        {
-            _keyGetter = keyGetter;
-        }
+        public TableIndexingEngine(IndexedDB indexedDB) : base(indexedDB) { }
 
         public override void Add(ref TC component, IEntityTable<TR> table, uint entityID)
         {
@@ -59,18 +54,16 @@ namespace Svelto.ECS.Schema.Internal
 
         private void AddToFilter(int indexerID, ref TC keyComponent, IEntityTable<TR> table)
         {
-            ref var groupData = ref indexedDB.CreateOrGetIndexedGroupData(
-                indexerID, _keyGetter(keyComponent), table);
+            ref var groupData = ref indexedDB.CreateOrGetIndexedGroupData(indexerID, keyComponent.Key, table);
 
-            var mapper = indexedDB.entitiesDB.QueryMappedEntities<RowIdentityComponent>(table.ExclusiveGroup);
+            var mapper = indexedDB.GetEGIDMapper(table);
 
             groupData.filter.Add(keyComponent.ID.entityID, mapper);
         }
 
         private void RemoveFromFilter(int indexerID, ref TC keyComponent, IEntityTable<TR> table)
         {
-            ref var groupData = ref indexedDB.CreateOrGetIndexedGroupData(
-                indexerID, _keyGetter(keyComponent), table);
+            ref var groupData = ref indexedDB.CreateOrGetIndexedGroupData(indexerID, keyComponent.Key, table);
 
             groupData.filter.TryRemove(keyComponent.ID.entityID);
 

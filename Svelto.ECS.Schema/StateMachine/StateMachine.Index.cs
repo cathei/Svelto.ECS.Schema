@@ -2,9 +2,9 @@ using System;
 using Svelto.ECS.Schema.Definition;
 using Svelto.ECS.Schema.Internal;
 
-namespace Svelto.ECS.Schema
+namespace Svelto.ECS.Schema.Definition
 {
-    public partial class EntityStateMachine<TState, TTag>
+    public partial class StateMachine<TState>
     {
         // 'available' has to be default (0)
         internal enum TransitionState
@@ -14,20 +14,15 @@ namespace Svelto.ECS.Schema
             Confirmed
         }
 
-        // user should implement this Row Interface
-        public interface IIndexedRow :
-            IIndexableRow<TState, Component>, IReactiveRow<Component> { }
+        protected internal interface IIndexedRow : IIndexableRow<Component> { }
 
         public struct Component : IIndexableComponent<TState>
         {
             public EGID ID { get; set; }
 
-            internal TransitionState transitionState;
-
             internal TState _state;
-            public TState State => _state;
 
-            TState IIndexableComponent<TState>.Value => _state;
+            public TState Key => _state;
 
             // constructors should be only called when building entity
             public Component(in TState state) : this()
@@ -36,13 +31,13 @@ namespace Svelto.ECS.Schema
             }
         }
 
-        public sealed class Index : IndexBase<IIndexedRow, TState, Component> { }
+        protected internal sealed class Index : IndexBase<IIndexedRow, TState, Component> { }
 
-        public sealed class Memo : MemoBase<IIndexedRow, Component> { }
+        protected internal sealed class Memo : MemoBase<IIndexedRow, Component> { }
 
-        IndexQuery<IIndexedRow, TState, Component> IIndexQueryable<IIndexedRow, TState, Component>.Query(in TState key)
-            => Config.Index.Query(key);
+        IndexQuery<IIndexedRow, TState> IIndexQueryable<IIndexedRow, TState>.Query(in TState key)
+            => Config._index.Query(key);
 
-        IEntityIndex IEntityStateMachine.Index => Config.Index;
+        IEntityIndex IEntityStateMachine.Index => Config._index;
     }
 }

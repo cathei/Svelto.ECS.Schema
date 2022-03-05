@@ -10,7 +10,7 @@ namespace Svelto.ECS.Schema.Internal
     {
         bool MoveNext();
         void Reset();
-        int Current { get; }
+        uint Current { get; }
     }
 
     public interface IIndicesEnumerable<TIter>
@@ -45,7 +45,7 @@ namespace Svelto.ECS.Schema
 
         public void Dispose() { }
 
-        public int Current => (int)_indices[_index];
+        public uint Current => _indices[_index];
     }
 
     // To iterate over FilteredIndices with foreach
