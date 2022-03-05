@@ -7,7 +7,7 @@ using Svelto.ECS.Schema.Internal;
 namespace Svelto.ECS.Schema.Internal
 {
     public interface IIndexQueryable<TRow, TKey>
-        where TRow : IEntityRow
+        where TRow : class, IEntityRow
         where TKey : unmanaged, IKeyEquatable<TKey>
     {
         IndexQuery<TRow, TKey> Query(in TKey key);
@@ -19,7 +19,7 @@ namespace Svelto.ECS.Schema.Internal
     }
 
     public readonly struct IndexQuery<TRow, TKey> : IIndexQuery
-        where TRow : IEntityRow
+        where TRow : class, IEntityRow
         where TKey : unmanaged, IKeyEquatable<TKey>
     {
         private readonly int _indexerId;

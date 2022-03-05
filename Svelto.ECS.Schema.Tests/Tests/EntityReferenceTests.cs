@@ -23,7 +23,7 @@ namespace Svelto.ECS.Schema.Tests
         public sealed class ThiefRow : DescriptorRow<ThiefRow>, IThiefRow
         { }
 
-        public sealed class PoliceRow : DescriptorRow<PoliceRow>, IEntityRow<PoliceComponent>
+        public sealed class PoliceRow : DescriptorRow<PoliceRow>, ISelectorRow<PoliceComponent>
         { }
 
         public class TestSchema : IEntitySchema

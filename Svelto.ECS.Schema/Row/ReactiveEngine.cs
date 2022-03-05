@@ -4,7 +4,7 @@ using Svelto.ECS.Schema.Internal;
 namespace Svelto.ECS.Schema.Internal
 {
     public interface IReactRowAddAndRemove<in TR, TC> : IEngine
-        where TR : IEntityRow<TC>
+        where TR : class, IEntityRow<TC>
         where TC : struct, IEntityComponent
     {
         void Add(ref TC entityComponent, IEntityTable<TR> table, uint entityID);
@@ -12,14 +12,14 @@ namespace Svelto.ECS.Schema.Internal
     }
 
     public interface IReactRowSwap<in TR, TC> : IEngine
-        where TR : IEntityRow<TC>
+        where TR : class, IEntityRow<TC>
         where TC : struct, IEntityComponent
     {
         void MovedTo(ref TC entityComponent, IEntityTable<TR> previousTable, IEntityTable<TR> table, uint entityID);
     }
 
     public abstract class ReactiveEngineBase<TR, TC>
-        where TR : IEntityRow<TC>
+        where TR : class, IEntityRow<TC>
         where TC : struct, IEntityComponent
     {
         protected readonly IndexedDB indexedDB;

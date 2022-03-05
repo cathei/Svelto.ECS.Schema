@@ -11,7 +11,7 @@ using Svelto.ECS.Schema.Internal;
 namespace Svelto.ECS.Schema.Internal
 {
     public interface IEntityTablesBuilder<out TRow>
-        where TRow : IEntityRow
+        where TRow : class, IEntityRow
     {
         IEnumerable<IEntityTable<TRow>> Tables { get; }
     }
@@ -20,7 +20,7 @@ namespace Svelto.ECS.Schema.Internal
 namespace Svelto.ECS.Schema
 {
     public readonly struct TablesBuilder<TRow> : IEntityTablesBuilder<TRow>
-        where TRow : IEntityRow
+        where TRow : class, IEntityRow
     {
         internal readonly IEnumerable<IEntityTable<TRow>> _tables;
 
@@ -37,7 +37,7 @@ namespace Svelto.ECS.Schema
     {
         public static TablesBuilder<TRow> Append<TRow>(
                 this IEntityTablesBuilder<TRow> a, IEntityTablesBuilder<TRow> b)
-            where TRow : IEntityRow
+            where TRow : class, IEntityRow
         {
             return new TablesBuilder<TRow>(a.Tables.Concat(b.Tables));
         }

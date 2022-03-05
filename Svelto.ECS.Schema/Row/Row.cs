@@ -1,9 +1,7 @@
 using Svelto.ECS.Schema.Internal;
 
-namespace Svelto.ECS.Schema
+namespace Svelto.ECS.Schema.Internal
 {
-    public interface IEntityRow {}
-
     // this includes T component, but does not impact for your selector row
     public interface IEntityRow<T> : IEntityRow
         where T : struct, IEntityComponent
@@ -12,6 +10,12 @@ namespace Svelto.ECS.Schema
             new ComponentBuilder<T>(),
         };
     }
+}
+
+namespace Svelto.ECS.Schema
+{
+    // common parent of all rows
+    public interface IEntityRow {}
 
     // We only have 4 variant of ISelectorRow becase that is the most we can query
     // I might write code to fetch more from EntitiesDB

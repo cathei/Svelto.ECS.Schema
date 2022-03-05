@@ -6,7 +6,7 @@ namespace Svelto.ECS.Schema.Tests
 {
     public class IndexingTests : SchemaTestsBase<IndexingTests.TestSchema>
     {
-        public interface IHaveEGID : IEntityRow<EGIDComponent> { }
+        public interface IHaveEGID : ISelectorRow<EGIDComponent> { }
 
         public interface IIndexedItemOwner : IIndexedRow<int, IIndexedItemOwner.Tag>
         { public struct Tag : ITag {} }

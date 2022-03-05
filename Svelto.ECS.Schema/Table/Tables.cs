@@ -9,7 +9,7 @@ using Svelto.ECS.Schema.Internal;
 namespace Svelto.ECS.Schema.Internal
 {
     public abstract class TablesBase<TRow> : IEntityTables<TRow>, IEntityTablesBuilder<TRow>
-        where TRow : IEntityRow
+        where TRow : class, IEntityRow
     {
         internal readonly IEntityTable<TRow>[] _tables;
         internal FasterList<ExclusiveGroupStruct> _groups;
@@ -59,7 +59,7 @@ namespace Svelto.ECS.Schema.Internal
 namespace Svelto.ECS.Schema.Definition
 {
     public sealed class CombinedTables<TRow> : TablesBase<TRow>
-        where TRow : IEntityRow
+        where TRow : class, IEntityRow
     {
         internal CombinedTables(IEnumerable<IEntityTable<TRow>> tables) : base(tables.ToArray(), true) { }
         internal CombinedTables(FasterList<IEntityTable<TRow>> tables) : base(tables.ToArray(), true) { }

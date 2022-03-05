@@ -30,7 +30,7 @@ namespace Svelto.ECS.Schema.Generator
 
         const string IndexQueryGroupTupleTemplate = @"
     public readonly ref struct IndexQueryTableTuple<TR, {1}>
-        where TR : IEntityRow
+        where TR : class, IEntityRow
 {2}
     {{
         private readonly EntityCollection<{1}> _collection;

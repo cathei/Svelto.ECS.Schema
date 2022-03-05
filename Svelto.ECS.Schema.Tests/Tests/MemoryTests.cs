@@ -9,7 +9,7 @@ namespace Svelto.ECS.Schema.Tests
     // just to make sure it does not take excessive memory
     public class MemoryTests : SchemaTestsBase<MemoryTests.TestSchema>
     {
-        public interface IHaveEGID : IEntityRow<EGIDComponent> { }
+        public interface IHaveEGID : ISelectorRow<EGIDComponent> { }
 
         public struct ItemOwner : IIndexKey<ItemOwner>
         {
@@ -22,7 +22,7 @@ namespace Svelto.ECS.Schema.Tests
                 => ownerID == other.ownerID;
         }
 
-        public interface IIndexedItemOwner : IEntityComponent<Indexed<ItemOwner>> { }
+        public interface IIndexedItemOwner : IIndexedRow<ItemOwner> { }
 
         public class CharacterRow : DescriptorRow<CharacterRow>, IHaveEGID { }
         public class ItemRow : DescriptorRow<ItemRow>, IHaveEGID, IIndexedRow<ItemOwner> { }

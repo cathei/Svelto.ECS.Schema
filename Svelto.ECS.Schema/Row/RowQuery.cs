@@ -15,7 +15,7 @@ namespace Svelto.ECS.Schema
         // query entrypoint Select -> Groups
         // query entrypoint Select -> Tables
         public static (IndexedDB, TR) Select<TR>(this IndexedDB indexedDB)
-            where TR : IEntityRow
+            where TR : class, IEntityRow
         {
             return (indexedDB, default);
         }
@@ -32,8 +32,8 @@ namespace Svelto.ECS.Schema
         // Select -> From Table
         public static (IndexedDB, TR, IEntityTable<TTR>) From<TR, TTR>(
                 this (IndexedDB, TR) query, IEntityTable<TTR> table)
-            where TR : IEntityRow
-            where TTR : TR
+            where TR : class, IEntityRow
+            where TTR : class, TR
         {
             return (query.Item1, query.Item2, table);
         }
@@ -41,8 +41,8 @@ namespace Svelto.ECS.Schema
         // Select -> From Tables
         public static (IndexedDB, TR, IEntityTables<TTR>) From<TR, TTR>(
                 this (IndexedDB, TR) query, IEntityTables<TTR> tables)
-            where TR : IEntityRow
-            where TTR : TR
+            where TR : class, IEntityRow
+            where TTR : class, TR
         {
             return (query.Item1, query.Item2, tables);
         }
@@ -63,9 +63,9 @@ namespace Svelto.ECS.Schema
         public static (IndexedDB, TR, IEntityTable<TTR>, IndexQuery<TIR, TIK>)
                 Where<TR, TTR, TIR, TIK>(this (IndexedDB, TR, IEntityTable<TTR>) query,
                     IIndexQueryable<TIR, TIK> index, TIK key)
-            where TR : IEntityRow
-            where TTR : TR, TIR
-            where TIR : IEntityRow
+            where TR : class, IEntityRow
+            where TTR : class, TR, TIR
+            where TIR : class, IEntityRow
             where TIK : unmanaged, IKeyEquatable<TIK>
         {
             return (query.Item1, query.Item2, query.Item3, index.Query(key));
@@ -76,9 +76,9 @@ namespace Svelto.ECS.Schema
         public static (IndexedDB, TR, IEntityTables<TTR>, IndexQuery<TIR, TIK>)
                 Where<TR, TTR, TIR, TIK>(this (IndexedDB, TR, IEntityTables<TTR>) query,
                     IIndexQueryable<TIR, TIK> index, TIK key)
-            where TR : IEntityRow
-            where TTR : TR, TIR
-            where TIR : IEntityRow
+            where TR : class, IEntityRow
+            where TTR : class, TR, TIR
+            where TIR : class, IEntityRow
             where TIK : unmanaged, IKeyEquatable<TIK>
         {
             return (query.Item1, query.Item2, query.Item3, index.Query(key));
@@ -88,8 +88,8 @@ namespace Svelto.ECS.Schema
         // Table Row must implement both Selector Row and Index Row
         public static (IndexedDB, TR, IEntityTable<TTR>, MemoBase<TMR, TMC>)
                 Where<TR, TTR, TMR, TMC>(this (IndexedDB, TR, IEntityTable<TTR>) query, MemoBase<TMR, TMC> memo)
-            where TR : IEntityRow
-            where TTR : TR, TMR
+            where TR : class, IEntityRow
+            where TTR : class, TR, TMR
             where TMR : class, ISelectorRow<TMC>
             where TMC : unmanaged, IEntityComponent, INeedEGID
         {
@@ -100,8 +100,8 @@ namespace Svelto.ECS.Schema
         // Tables Row must implement both Selector Row and Index Row
         public static (IndexedDB, TR, IEntityTables<TTR>, MemoBase<TMR, TMC>)
                 Where<TR, TTR, TMR, TMC>(this (IndexedDB, TR, IEntityTables<TTR>) query, MemoBase<TMR, TMC> memo)
-            where TR : IEntityRow
-            where TTR : TR, TMR
+            where TR : class, IEntityRow
+            where TTR : class, TR, TMR
             where TMR : class, ISelectorRow<TMC>
             where TMC : unmanaged, IEntityComponent, INeedEGID
         {
@@ -111,7 +111,7 @@ namespace Svelto.ECS.Schema
         // Select -> From Table -> Where -> Indices
         internal static IndexedIndices Indices<TR, TI>(
                 this (IndexedDB, TR, IEntityTable, TI) query)
-            where TR : IEntityRow
+            where TR : class, IEntityRow
             where TI : IIndexQuery
         {
             var keyData = query.Item4.GetIndexerKeyData(query.Item1);

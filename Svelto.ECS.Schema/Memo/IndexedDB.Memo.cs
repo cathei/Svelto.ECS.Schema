@@ -42,7 +42,7 @@ namespace Svelto.ECS.Schema
         }
 
         internal ref IndexerGroupData CreateOrGetMemoGroup<TR>(int memoID, IEntityTable<TR> table)
-            where TR : IEntityRow
+            where TR : class, IEntityRow
         {
             var memoData = memos.GetOrCreate(memoID, () => new MemoData());
 

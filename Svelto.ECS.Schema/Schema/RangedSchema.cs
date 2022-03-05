@@ -28,14 +28,14 @@ namespace Svelto.ECS.Schema
 
             public TablesBuilder<TRow> Combine<TRow>(
                     Func<TSchema, IEntityTablesBuilder<TRow>> selector)
-                where TRow : IEntityRow
+                where TRow : class, IEntityRow
             {
                 return Combine(Enumerable.Range(0, _range), selector);
             }
 
             public TablesBuilder<TRow> Combine<TRow>(
                     IEnumerable<int> indexes, Func<TSchema, IEntityTablesBuilder<TRow>> selector)
-                where TRow : IEntityRow
+                where TRow : class, IEntityRow
             {
                 return new TablesBuilder<TRow>(indexes.SelectMany(i => selector(_schemas[i]).Tables));
             }
@@ -66,7 +66,7 @@ namespace Svelto.ECS.Schema
 
             public TablesBuilder<TRow> Combine<TRow>(
                     IEnumerable<TIndex> indexes, Func<TSchema, IEntityTablesBuilder<TRow>> selector)
-                where TRow : IEntityRow
+                where TRow : class, IEntityRow
             {
                 return Combine(indexes.Select(_mapper), selector);
             }
