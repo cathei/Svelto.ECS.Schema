@@ -27,7 +27,7 @@ namespace Svelto.ECS.Schema.Internal
         public (IndexedDB, TRow, IEntityTables<TTableRow>) All<TTableRow>()
             where TTableRow : class, TRow
         {
-            return (Item1, null, Item1.FindTables<TTableRow>());
+            return (Item1, default, Item1.FindTables<TTableRow>());
         }
     }
 }

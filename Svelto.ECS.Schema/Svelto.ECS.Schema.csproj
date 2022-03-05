@@ -14,7 +14,7 @@
 
   <PropertyGroup>
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
-    <!-- <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)\GeneratedFiles</CompilerGeneratedFilesOutputPath> -->
+    <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)GeneratedFiles</CompilerGeneratedFilesOutputPath>
   </PropertyGroup>
 
   <ItemGroup>
@@ -31,7 +31,7 @@
   
   <Target Name="CopyGeneratedFiles" AfterTargets="AfterBuild">
     <PropertyGroup>
-      <GeneratedOutputPath>$(IntermediateOutputPath)generated\Svelto.ECS.Schema.Generator\</GeneratedOutputPath>
+      <GeneratedOutputPath>$(BaseIntermediateOutputPath)GeneratedFiles\Svelto.ECS.Schema.Generator\</GeneratedOutputPath>
     </PropertyGroup>
     <ItemGroup>
       <GeneratedFiles Include="$(GeneratedOutputPath)*\*" />

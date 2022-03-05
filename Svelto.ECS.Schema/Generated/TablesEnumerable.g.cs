@@ -65,6 +65,8 @@ namespace Svelto.ECS.Schema
 
             public void Reset() { _indexValue = -1; }
 
+            public void Dispose() { }
+
             public RefCurrent Current => new RefCurrent(_collection, _tables.GetTable(_indexValue));
 
             public readonly ref struct RefCurrent
@@ -146,6 +148,8 @@ namespace Svelto.ECS.Schema
             }
 
             public void Reset() { _indexValue = -1; }
+
+            public void Dispose() { }
 
             public RefCurrent Current => new RefCurrent(_collection, _tables.GetTable(_indexValue));
 
@@ -230,6 +234,8 @@ namespace Svelto.ECS.Schema
 
             public void Reset() { _indexValue = -1; }
 
+            public void Dispose() { }
+
             public RefCurrent Current => new RefCurrent(_collection, _tables.GetTable(_indexValue));
 
             public readonly ref struct RefCurrent
@@ -313,6 +319,8 @@ namespace Svelto.ECS.Schema
             }
 
             public void Reset() { _indexValue = -1; }
+
+            public void Dispose() { }
 
             public RefCurrent Current => new RefCurrent(_collection, _tables.GetTable(_indexValue));
 

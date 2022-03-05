@@ -76,6 +76,8 @@ namespace Svelto.ECS.Schema
 
             public void Reset() { _indexValue = -1; }
 
+            public void Dispose() { }
+
             public IndexQueryTableTuple<TR, T1> Current => new IndexQueryTableTuple<TR, T1>(
                 _collection, new IndexedIndices(_indices), _tables.GetTable(_indexValue));
         }
@@ -151,6 +153,8 @@ namespace Svelto.ECS.Schema
             }
 
             public void Reset() { _indexValue = -1; }
+
+            public void Dispose() { }
 
             public IndexQueryTableTuple<TR, T1, T2> Current => new IndexQueryTableTuple<TR, T1, T2>(
                 _collection, new IndexedIndices(_indices), _tables.GetTable(_indexValue));
@@ -229,6 +233,8 @@ namespace Svelto.ECS.Schema
 
             public void Reset() { _indexValue = -1; }
 
+            public void Dispose() { }
+
             public IndexQueryTableTuple<TR, T1, T2, T3> Current => new IndexQueryTableTuple<TR, T1, T2, T3>(
                 _collection, new IndexedIndices(_indices), _tables.GetTable(_indexValue));
         }
@@ -306,6 +312,8 @@ namespace Svelto.ECS.Schema
             }
 
             public void Reset() { _indexValue = -1; }
+
+            public void Dispose() { }
 
             public IndexQueryTableTuple<TR, T1, T2, T3, T4> Current => new IndexQueryTableTuple<TR, T1, T2, T3, T4>(
                 _collection, new IndexedIndices(_indices), _tables.GetTable(_indexValue));
