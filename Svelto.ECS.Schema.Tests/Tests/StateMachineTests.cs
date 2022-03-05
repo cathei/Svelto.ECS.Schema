@@ -56,9 +56,9 @@ namespace Svelto.ECS.Schema.Tests
         public class CharacterFSM : StateMachine<CharacterStateKey>
         {
             public interface IRow : IIndexedRow,
-                IEntityRow<RageComponent>,
-                IEntityRow<TriggerComponent>,
-                IEntityRow<SpecialTimerComponent>
+                ISelectorRow<RageComponent>,
+                ISelectorRow<TriggerComponent>,
+                ISelectorRow<SpecialTimerComponent>
             { }
 
             protected override void OnConfigure()

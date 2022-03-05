@@ -9,7 +9,7 @@ namespace Svelto.ECS.Schema.Tests
 {
     public class RangedTableTests : SchemaTestsBase<RangedTableTests.TestSchema>
     {
-        public interface ISimpleRow : IEntityRow<EGIDComponent> {}
+        public interface ISimpleRow : ISelectorRow<EGIDComponent> {}
 
         public class CharacterRow : DescriptorRow<CharacterRow>, ISimpleRow {}
         public class EquipmentRow : DescriptorRow<EquipmentRow>, ISimpleRow {}

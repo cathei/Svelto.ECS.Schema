@@ -9,7 +9,7 @@ namespace Svelto.ECS.Schema.Tests
 {
     public class NestedSchemaTests : SchemaTestsBase<NestedSchemaTests.TestSchema>
     {
-        public interface IHaveEGID : IEntityRow<EGIDComponent> { }
+        public interface IHaveEGID : ISelectorRow<EGIDComponent> { }
 
         public class DoofusRow : DescriptorRow<DoofusRow>, IHaveEGID { }
         public class FoodRow : DescriptorRow<FoodRow>, IHaveEGID { }
