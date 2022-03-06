@@ -13,10 +13,19 @@ namespace Svelto.ECS.Schema.Tests
         public class HealthReactiveEngine : ReactToRowEngine<IHealthRow, HealthComponent>
         {
             public HealthReactiveEngine(IndexedDB indexedDB) : base(indexedDB) { }
+
+            public override void Add(ref HealthComponent component, IEntityTable<IHealthRow> table, uint entityID)
+            {
+            }
+
+            public override void MovedTo(ref HealthComponent component, IEntityTable<IHealthRow> previousTable, IEntityTable<IHealthRow> table, uint entityID)
+            {
+            }
+
+            public override void Remove(ref HealthComponent component, IEntityTable<IHealthRow> table, uint entityID)
+            {
+            }
         }
-
-
-
 
         public class TestSchema : IEntitySchema
         {

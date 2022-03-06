@@ -27,13 +27,13 @@ namespace Svelto.ECS.Schema.Generator
         }}
 
         // Select -> From Table -> Where -> Entities
-        public static IndexQueryTuple<{1}, IndexedIndices> Entities<TR, TI, {1}>(
+        public static IndexQueryTuple<{1}> Entities<TR, TI, {1}>(
                 this (IndexedDB, ISelectorRow<{1}>, IEntityTable<TR>, TI) query)
             where TR : class, ISelectorRow<{1}>
             where TI : IIndexQuery
 {2}
         {{
-            return new IndexQueryTuple<{1}, IndexedIndices>(
+            return new IndexQueryTuple<{1}>(
                 (query.Item1, query.Item2, query.Item3).Entities(), query.Indices());
         }}
 

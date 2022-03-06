@@ -1,28 +1,9 @@
 using System;
 using Svelto.ECS.Schema.Internal;
 
-namespace Svelto.ECS.Schema.Internal
-{
-    // IDisposable is required here to ensure zero-allocation
-    // Because compiler has to be able to see Dispose() method
-    // https://ericlippert.com/2011/03/14/to-box-or-not-to-box/
-    public interface IIndicesEnumerator : IDisposable
-    {
-        bool MoveNext();
-        void Reset();
-        uint Current { get; }
-    }
-
-    public interface IIndicesEnumerable<TIter>
-        where TIter : struct, IIndicesEnumerator
-    {
-        TIter GetEnumerator();
-    }
-}
-
 namespace Svelto.ECS.Schema
 {
-    public struct IndexedIndicesEnumerator : IIndicesEnumerator
+    public ref struct IndexedIndicesEnumerator
     {
         private readonly FilteredIndices _indices;
         private int _index;
@@ -49,9 +30,9 @@ namespace Svelto.ECS.Schema
     }
 
     // To iterate over FilteredIndices with foreach
-    public readonly struct IndexedIndices : IIndicesEnumerable<IndexedIndicesEnumerator>
+    public readonly ref struct IndexedIndices
     {
-        private readonly FilteredIndices _indices;
+        internal readonly FilteredIndices _indices;
 
         public int Count() => _indices.Count();
 

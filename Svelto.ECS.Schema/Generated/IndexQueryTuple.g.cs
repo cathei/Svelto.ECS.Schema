@@ -5,85 +5,85 @@ using Svelto.DataStructures;
 namespace Svelto.ECS.Schema.Internal
 {
 
-    public readonly ref struct IndexQueryTuple<T1, TExtra>
+    public readonly ref struct IndexQueryTuple<T1>
                 where T1 : struct, IEntityComponent
     {
         private readonly EntityCollection<T1> _collection;
-        private readonly TExtra _extra;
+        private readonly IndexedIndices _indices;
 
-        public IndexQueryTuple(in EntityCollection<T1> collection, in TExtra extra)
+        public IndexQueryTuple(in EntityCollection<T1> collection, in IndexedIndices indices)
         {
             _collection = collection;
-            _extra = extra;
+            _indices = indices;
         }
 
-        public void Deconstruct(out EntityCollection<T1> collection, out TExtra extra)
+        public void Deconstruct(out EntityCollection<T1> collection, out IndexedIndices indices)
         {
             collection = _collection;
-            extra = _extra;
+            indices = _indices;
         }
     }
 
-    public readonly ref struct IndexQueryTuple<T1, T2, TExtra>
+    public readonly ref struct IndexQueryTuple<T1, T2>
                 where T1 : struct, IEntityComponent
                 where T2 : struct, IEntityComponent
     {
         private readonly EntityCollection<T1, T2> _collection;
-        private readonly TExtra _extra;
+        private readonly IndexedIndices _indices;
 
-        public IndexQueryTuple(in EntityCollection<T1, T2> collection, in TExtra extra)
+        public IndexQueryTuple(in EntityCollection<T1, T2> collection, in IndexedIndices indices)
         {
             _collection = collection;
-            _extra = extra;
+            _indices = indices;
         }
 
-        public void Deconstruct(out EntityCollection<T1, T2> collection, out TExtra extra)
+        public void Deconstruct(out EntityCollection<T1, T2> collection, out IndexedIndices indices)
         {
             collection = _collection;
-            extra = _extra;
+            indices = _indices;
         }
     }
 
-    public readonly ref struct IndexQueryTuple<T1, T2, T3, TExtra>
+    public readonly ref struct IndexQueryTuple<T1, T2, T3>
                 where T1 : struct, IEntityComponent
                 where T2 : struct, IEntityComponent
                 where T3 : struct, IEntityComponent
     {
         private readonly EntityCollection<T1, T2, T3> _collection;
-        private readonly TExtra _extra;
+        private readonly IndexedIndices _indices;
 
-        public IndexQueryTuple(in EntityCollection<T1, T2, T3> collection, in TExtra extra)
+        public IndexQueryTuple(in EntityCollection<T1, T2, T3> collection, in IndexedIndices indices)
         {
             _collection = collection;
-            _extra = extra;
+            _indices = indices;
         }
 
-        public void Deconstruct(out EntityCollection<T1, T2, T3> collection, out TExtra extra)
+        public void Deconstruct(out EntityCollection<T1, T2, T3> collection, out IndexedIndices indices)
         {
             collection = _collection;
-            extra = _extra;
+            indices = _indices;
         }
     }
 
-    public readonly ref struct IndexQueryTuple<T1, T2, T3, T4, TExtra>
+    public readonly ref struct IndexQueryTuple<T1, T2, T3, T4>
                 where T1 : struct, IEntityComponent
                 where T2 : struct, IEntityComponent
                 where T3 : struct, IEntityComponent
                 where T4 : struct, IEntityComponent
     {
         private readonly EntityCollection<T1, T2, T3, T4> _collection;
-        private readonly TExtra _extra;
+        private readonly IndexedIndices _indices;
 
-        public IndexQueryTuple(in EntityCollection<T1, T2, T3, T4> collection, in TExtra extra)
+        public IndexQueryTuple(in EntityCollection<T1, T2, T3, T4> collection, in IndexedIndices indices)
         {
             _collection = collection;
-            _extra = extra;
+            _indices = indices;
         }
 
-        public void Deconstruct(out EntityCollection<T1, T2, T3, T4> collection, out TExtra extra)
+        public void Deconstruct(out EntityCollection<T1, T2, T3, T4> collection, out IndexedIndices indices)
         {
             collection = _collection;
-            extra = _extra;
+            indices = _indices;
         }
     }
 

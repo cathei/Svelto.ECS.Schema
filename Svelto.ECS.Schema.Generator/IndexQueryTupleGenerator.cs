@@ -8,22 +8,22 @@ namespace Svelto.ECS.Schema.Generator
     public class IndexQueryTupleGenerator : ISourceGenerator
     {
         const string IndexQueryTupleTemplate = @"
-    public readonly ref struct IndexQueryTuple<{1}, TExtra>
+    public readonly ref struct IndexQueryTuple<{1}>
 {2}
     {{
         private readonly EntityCollection<{1}> _collection;
-        private readonly TExtra _extra;
+        private readonly IndexedIndices _indices;
 
-        public IndexQueryTuple(in EntityCollection<{1}> collection, in TExtra extra)
+        public IndexQueryTuple(in EntityCollection<{1}> collection, in IndexedIndices indices)
         {{
             _collection = collection;
-            _extra = extra;
+            _indices = indices;
         }}
 
-        public void Deconstruct(out EntityCollection<{1}> collection, out TExtra extra)
+        public void Deconstruct(out EntityCollection<{1}> collection, out IndexedIndices indices)
         {{
             collection = _collection;
-            extra = _extra;
+            indices = _indices;
         }}
     }}
 ";

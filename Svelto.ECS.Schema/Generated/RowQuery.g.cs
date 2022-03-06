@@ -28,13 +28,13 @@ namespace Svelto.ECS.Schema
         }
 
         // Select -> From Table -> Where -> Entities
-        public static IndexQueryTuple<T1, IndexedIndices> Entities<TR, TI, T1>(
+        public static IndexQueryTuple<T1> Entities<TR, TI, T1>(
                 this (IndexedDB, ISelectorRow<T1>, IEntityTable<TR>, TI) query)
             where TR : class, ISelectorRow<T1>
             where TI : IIndexQuery
                 where T1 : struct, IEntityComponent
         {
-            return new IndexQueryTuple<T1, IndexedIndices>(
+            return new IndexQueryTuple<T1>(
                 (query.Item1, query.Item2, query.Item3).Entities(), query.Indices());
         }
 
@@ -70,14 +70,14 @@ namespace Svelto.ECS.Schema
         }
 
         // Select -> From Table -> Where -> Entities
-        public static IndexQueryTuple<T1, T2, IndexedIndices> Entities<TR, TI, T1, T2>(
+        public static IndexQueryTuple<T1, T2> Entities<TR, TI, T1, T2>(
                 this (IndexedDB, ISelectorRow<T1, T2>, IEntityTable<TR>, TI) query)
             where TR : class, ISelectorRow<T1, T2>
             where TI : IIndexQuery
                 where T1 : struct, IEntityComponent
                 where T2 : struct, IEntityComponent
         {
-            return new IndexQueryTuple<T1, T2, IndexedIndices>(
+            return new IndexQueryTuple<T1, T2>(
                 (query.Item1, query.Item2, query.Item3).Entities(), query.Indices());
         }
 
@@ -116,7 +116,7 @@ namespace Svelto.ECS.Schema
         }
 
         // Select -> From Table -> Where -> Entities
-        public static IndexQueryTuple<T1, T2, T3, IndexedIndices> Entities<TR, TI, T1, T2, T3>(
+        public static IndexQueryTuple<T1, T2, T3> Entities<TR, TI, T1, T2, T3>(
                 this (IndexedDB, ISelectorRow<T1, T2, T3>, IEntityTable<TR>, TI) query)
             where TR : class, ISelectorRow<T1, T2, T3>
             where TI : IIndexQuery
@@ -124,7 +124,7 @@ namespace Svelto.ECS.Schema
                 where T2 : struct, IEntityComponent
                 where T3 : struct, IEntityComponent
         {
-            return new IndexQueryTuple<T1, T2, T3, IndexedIndices>(
+            return new IndexQueryTuple<T1, T2, T3>(
                 (query.Item1, query.Item2, query.Item3).Entities(), query.Indices());
         }
 
@@ -166,7 +166,7 @@ namespace Svelto.ECS.Schema
         }
 
         // Select -> From Table -> Where -> Entities
-        public static IndexQueryTuple<T1, T2, T3, T4, IndexedIndices> Entities<TR, TI, T1, T2, T3, T4>(
+        public static IndexQueryTuple<T1, T2, T3, T4> Entities<TR, TI, T1, T2, T3, T4>(
                 this (IndexedDB, ISelectorRow<T1, T2, T3, T4>, IEntityTable<TR>, TI) query)
             where TR : class, ISelectorRow<T1, T2, T3, T4>
             where TI : IIndexQuery
@@ -175,7 +175,7 @@ namespace Svelto.ECS.Schema
                 where T3 : struct, IEntityComponent
                 where T4 : struct, IEntityComponent
         {
-            return new IndexQueryTuple<T1, T2, T3, T4, IndexedIndices>(
+            return new IndexQueryTuple<T1, T2, T3, T4>(
                 (query.Item1, query.Item2, query.Item3).Entities(), query.Indices());
         }
 
