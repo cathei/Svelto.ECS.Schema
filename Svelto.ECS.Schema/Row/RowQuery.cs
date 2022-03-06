@@ -18,13 +18,13 @@ namespace Svelto.ECS.Schema.Internal
             Item1 = indexedDB;
         }
 
-        public (IndexedDB, TRow, IEntityTables<TRow>) All() => All<TRow>();
+        public (IndexedDB, TRow, IEntityTables<TRow>) FromAll() => FromAll<TRow>();
 
         // Select -> All
         /// <summary>
         /// This is shortcut for `indexedDB.Select<TR>().From(indexedDB.Select<TTR>().Tables());
         /// </summary>
-        public (IndexedDB, TRow, IEntityTables<TTableRow>) All<TTableRow>()
+        public (IndexedDB, TRow, IEntityTables<TTableRow>) FromAll<TTableRow>()
             where TTableRow : class, TRow
         {
             return (Item1, default, Item1.FindTables<TTableRow>());

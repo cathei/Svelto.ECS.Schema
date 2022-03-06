@@ -12,17 +12,18 @@ public readonly struct CharacterStateKey : IStateMachineKey<CharacterStateKey>
 
     public CharacterStateKey(CharacterState state) => this.state = state;
 
-    public static implicit operator CharacterStateKey(CharacterState state)
-        => new CharacterStateKey(state);
+    public static implicit operator CharacterStateKey(CharacterState state) => new CharacterStateKey(state);
+
+    public bool KeyEquals(in CharacterStateKey other) => _controllerID == other._controllerID;
+
+    public int KeyHashCode() => _controllerID.GetHashCode();
 }
 ```
 
 Now you can define FSM class, inherit `EntityStateMachine<TState, TUnique>`.
 ```csharp
-public class CharacterFSM : StateMachine<CharacterState, CharacterFSM.Tag>
+public class CharacterFSM : StateMachine<CharacterStateKey>
 {
-    public struct Tag : ITag {}
-
     public interface IRow : IIndexedRow {}
 
     protected override void OnConfigure()
@@ -35,7 +36,7 @@ public class CharacterFSM : StateMachine<CharacterState, CharacterFSM.Tag>
     }
 }
 ```
-Same manner as `IIndexedRow`, `EntityStateMachine` has two type parameter. First type is value type represents State of Component. Second type is to ensure uniqueness of generic types.
+Same manner as `Index`, `StateMachine` accepts `StateMachineKey`.
 
 Also define Interface Row `IRow` to represent the Rows using State Machine. `OnConfigure` method is used to configure your State Machine. Call `Configure<IRow>` to get a builder for State Machine. By calling `AddState` you can add State.
 
@@ -44,29 +45,34 @@ Now you have states of State Machine, but it won't have any effect until you add
 ### Adding Transitions
 Transition describes how State changes. In `OnConfigure` you can add Transition and Conditions.
 ```csharp
-public interface IRow : IIndexedRow,
-    IEntityRow<RageComponent>, IEntityRow<TriggerComponent> {}
-
-protected override void OnConfigure()
+public class CharacterFSM : StateMachine<CharacterStateKey>
 {
-    var config = Configure<IRow>();
+    public interface IRow : IIndexedRow,
+        ISeletorRow<RageComponent>,
+        ISeletorRow<TriggerComponent>
+    {}
 
-    var stateNormal = config.AddState(CharacterState.Normal);
-    var stateAngry = config.AddState(CharacterState.Angry);
-    var stateFever = config.AddState(CharacterState.Fever);
+    protected override void OnConfigure()
+    {
+        var config = Configure<IRow>();
 
-    stateNormal.AddTransition(stateAngry)
-        .AddCondition((ref RageComponent rage) => rage.value >= 30);
+        var stateNormal = config.AddState(CharacterState.Normal);
+        var stateAngry = config.AddState(CharacterState.Angry);
+        var stateFever = config.AddState(CharacterState.Fever);
 
-    stateAngry.AddTransition(stateNormal)
-        .AddCondition((ref RageComponent rage) => rage.value < 20);
+        stateNormal.AddTransition(stateAngry)
+            .AddCondition((ref RageComponent rage) => rage.value >= 30);
 
-    stateNormal.AddTransition(stateFever)
-        .AddCondition((ref RageComponent rage) => rage.value < 10)
-        .AddCondition((ref TriggerComponent trigger) => trigger.value);
+        stateAngry.AddTransition(stateNormal)
+            .AddCondition((ref RageComponent rage) => rage.value < 20);
+
+        stateNormal.AddTransition(stateFever)
+            .AddCondition((ref RageComponent rage) => rage.value < 10)
+            .AddCondition((ref TriggerComponent trigger) => trigger.value);
+    }
 }
 ```
-Note that here, IRow implements `IEntityRow`s to use in Transitions and Conditions. It is important to manually do this, so you can ensure any Rows using State Machine will have all those Components.
+Note that here, IRow must include inner `IIndexedRow` and `ISelectorRow<T>`s to use in Transitions and Conditions. It is important to manually do this, so you can ensure any Rows using State Machine will have all those Components.
 
 By calling `FromState.AddTransition(ToState)` you define a Transition. You also should add Condition for Transition to happen, by calling `AddCondition`. Conditions take a lambda with single `ref IEntityComponent` parameter and `bool` return value.
 
@@ -75,7 +81,7 @@ All Conditions must return `true` for the Transition to be executed. If you want
 You can also use special `config.AnyState` property to define Transition from any States.
 
 ### Adding Callbacks
-If you want to set Component values when Transition happens, you can define `ExecuteOnEnter` and `ExecuteOnExit` Callbacks. Also remember to add `IEntityRow<Component>` to your `IRow`, for each Component you'll use.
+If you want to set Component values when Transition happens, you can define `ExecuteOnEnter` and `ExecuteOnExit` Callbacks. Also remember to add `ISelectorRow<Component>` to your `IRow`, for each Component you'll use.
 ```csharp
 stateSpecial
     .ExecuteOnEnter((ref TriggerComponent trigger) => trigger.value = false)
@@ -85,7 +91,7 @@ stateSpecial
 Callbacks receive same parameter as Conditions, but without return value.
 
 ### Using State Machine
-To use State Machine, first add `StateMachine.IRow` to your Row. That means all other components you used for Conditions and Callbacks will automatically included to your Row as well. This also means when spec has changed, you don't have to edit all Entities. You only edit `StateMachine.IRow` and it will propagate to all Rows that uses it.
+To use State Machine, first add `StateMachine.IRow` to your Row. That means all other components you used for Conditions and Callbacks will automatically included to your Row as well. This also means when spec has changed, you don't have to edit all Entities. You only edit `StateMachine.IRow` and it will add all Rows that uses it.
 ```csharp
 public sealed class CharacterRow : DescriptorRow<CharacterRow>, IRageRow, CharacterFSM.IRow { }
 ```

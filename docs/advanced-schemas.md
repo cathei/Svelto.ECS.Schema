@@ -54,9 +54,9 @@ public class MemoSchema : IEntitySchema
 {
     public readonly Table<CharacterRow> Character = new Table<CharacterRow>();
 
-    public readonly IIndexedController.Index CharacterController = new IIndexedController.Index();
+    public readonly Index<CharacterController> CharacterController = new Index<CharacterController>();
 
-    public readonly IIndexedCharacterState.Index CharacterState = new IIndexedCharacterState.Index();
+    public readonly Index<CharacterEmotion> CharacterEmotion = new Index<CharacterEmition>();
 
     public readonly Memo<ICharacterRow> Memo = new Memo<ICharacterRow>();
 }
@@ -69,9 +69,9 @@ _indexedDB.Memo(_schema.Memo).Union(_schema.CharaterController, 0);
 _indexedDB.Memo(_schema.Memo).Union(_schema.CharaterController, 3);
 _indexedDB.Memo(_schema.Memo).Union(_schema.CharaterController, 6);
 
-_indexedDB.Memo(_schema.Memo).Intersect(_schema.CharacterState, CharacterState.Happy);
+_indexedDB.Memo(_schema.Memo).Intersect(_schema.CharacterEmotion, Emotion.Happy);
 
 var ((controller, count), indices) = _indexedDB
-    .Select<IIndexedController>().From(_schema.Character).Where(_schema.Memo).Entities();
+    .Select<ICharacterControllerSelector>().From(_schema.Character).Where(_schema.Memo).Entities();
 ```
 Note that you have to clear `Memo<T>` before you reuse it! `Memo<T>` does not have any guarantee to have valid indices after entity submission.

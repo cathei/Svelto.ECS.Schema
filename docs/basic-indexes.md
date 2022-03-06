@@ -2,35 +2,47 @@
 Index is wrapper of Filter in Svelto, but works like indexes in RDBMS. Filters are used to have subset from a group. Indexes are to collect entities by specific key, from a child or entire schema. Let's take a look.
 
 ### Defining Index
-To define a Index, first define a `IIndexedRow<,>`.
+To define a Index, first define a `IIndexKey<TSelf>`.
 
 ```csharp
-public interface IIndexedController : IIndexedRow<int, IIndexedController.Tag>
+public readonly struct CharacterController : IIndexKey<CharacterController>
 {
-    public struct Tag : ITag {}
+    public readonly int _controllerID;
+
+    public CharacterController(int controllerID) => _controllerID = controllerID;
+
+    public static implicit operator CharacterController(int controllerID) => new CharacterController(controllerID);
+
+    public bool KeyEquals(in CharacterController other) => _controllerID == other._controllerID;
+
+    public int KeyHashCode() => _controllerID.GetHashCode();
 }
 ```
-IIndexedRow represent a indexable trait of a Entity. First type parameter is equatable value type that will be used as key of Index. Second type parameter is to ensure uniqueness of the generic class members (We have to define `struct` to pass as type parameter, we cannot pass `class` or `interface` due to Svelto and Unity Burst Compiler limitation).
+IIndexKey represent a indexable key of a Entity. With it, you can access `Indexed<TKey>` and `IIndexedRow<TKey>`. It is recommended to define as readonly struct. For convenience, we defined implicit operator from inner `int` to `CharacterController`.
 
-`IIndexedRow` has nested types of `Component` and `Index`. Now, let's add `IIndexedController` to your Descriptor Row.
+Now, let's add `IIndexedRow<TKey>` to your Descriptor Row, so Index can propery recognize your Table.
 ```csharp
-public sealed class CharacterRow : DescriptorRow<CharacterRow>, IDamagableRow, IIndexedController { }
+public sealed class CharacterRow :
+    DescriptorRow<CharacterRow>,
+    IIndexedRow<CharacterController>,
+    IDamagableRow
+{ }
 ```
-`IIndexedRow.Component` is a special component holds the `Value` to index, and ensures that indexes are up-to-date. It has the first type parameter of `IIndexedRow`, which is `int` here, as member `Value`, but you cannot change the `Value` directly. Instead you need to call `IndexedDB.Update(ref Component, TValue)`.
+`Indexed<TKey>` is a special component holds the `TKey Key` property for index, and ensures that indexes are up-to-date. It has the first type parameter of `IIndexedRow`, which is `int` here, as member `Value`, but you cannot change the `Value` directly. Instead you need to call `IndexedDB.Update(ref Indexed<TKey>, TKey)`.
 
-Before look how to query with indexes, Let's add `IIndexedController.Index` to our schema.
+Before look how to query with indexes, Let's add `Index<TKey>` to our schema.
 ```csharp
 public class IndexedSchema : IEntitySchema
 {
     public readonly Table<CharacterRow> FlyingCharacter = new Table<CharacterRow>();
     public readonly Table<CharacterRow> GroundCharacter = new Table<CharacterRow>();
 
-    public readonly IIndexedController.Index CharacterController = new IIndexedController.Index();
+    public readonly Index<CharacterController> CharacterController = new Index<CharacterController>();
 }
 ```
-`IIndexedController.Index` will index paired `IIndexedController` in any tables within declared Schema. Any child Schema will be indexed as well. Since `CharacterController` Index is defined in root Schema, any Tables with `IIndexedController` will be indexed. In this example both `FlyingCharacter` and `GroundCharacter` Tables will be indexed. If you want to index specific Tables only, define a child Schema.
+`Index<TKey>` will index paired `IndexedRow<TKey>` in any tables within declared Schema. Any child Schema will be indexed as well. Since `CharacterController` Index is defined in root Schema, any Tables with `IndexedRow<TKey>` will be indexed. In this example both `FlyingCharacter` and `GroundCharacter` Tables will be indexed. If you want to index specific Tables only, define a child Schema.
 
-Also, you can share `IIndexedController` across different descriptors. Index will handle them well.
+It is safe to share `IndexedRow<TKey>` across different Descriptor Rows. Index will handle them well.
 
 ### Querying Indexes from Single Table
 Now, finally you can iterate over entities with `IIndexedController`. You can do this by adding `Where(Index, Value)` to your Query, just like how you will do in SQL. For example below will query Entites where `IIndexedController.Component.Value` is 3.
@@ -48,14 +60,12 @@ foreach (var i in indices)
     health[i].current += 10;
 }
 ```
-Also the group you provieded have to implement both `IDamagableRow` and `IIndexedController`. Otherwise the Query will emit compile-time error.
+Also the Table you provieded have to implement both `IDamagableRow` and `IndexedRow<CharacterController>`. Otherwise the Query will emit compile-time error.
 
 ### Querying Indexes from all Tables
-Same as other Queries, you could pass Tables or CombinedTables to `From()`.
+Same as other Queries, you could pass Tables or CombinedTables to `From()`, or use `FromAll<T>`. In this case you must specify `TRow`, common decendent of `IDamagableRow` and `IndexedRow<CharacterController>`.
 ```csharp
-var tables = indexedDB.Select<CharacterRow>().Tables();
-
-foreach (var ((health, position, count), indices, table) in indexedDB.Select<IDamagableRow>().From(tables).Where(schema.CharacterController, 3).Entities())
+foreach (var ((health, position, count), indices, table) in indexedDB.Select<IDamagableRow>().FromAll<CharacterRow>().Where(schema.CharacterController, 3).Entities())
 {
     foreach (var i in indices)
     {

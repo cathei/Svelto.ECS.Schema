@@ -45,7 +45,7 @@ namespace Svelto.ECS.Schema.Tests
 
             uint policeCount = 0;
 
-            foreach (var ((egid, thief, count), table) in _indexedDB.Select<ThiefRow>().All().Entities())
+            foreach (var ((egid, thief, count), table) in _indexedDB.Select<ThiefRow>().FromAll().Entities())
             {
                 for (uint i = 0 ; i < count; ++i)
                 {

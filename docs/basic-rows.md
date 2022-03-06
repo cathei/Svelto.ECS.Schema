@@ -10,13 +10,13 @@ var (component1, component2, component3, count) = entitiesDB.QueryEntities<Compo
 ```
 In Schema Extensions, you should first define Seletor Row and then you can query.
 ```csharp
-public interface ISelectorRow : IEntityRow<Component1, Component2, Component3> {}
+public interface ISelect123Row : ISelectorRow<Component1, Component2, Component3> {}
 
 // yes, the return value is exactly same as when you're using plain Svelto
-var (component1, component2, component3, count) = indexedDB.Select<ISelectorRow>().From(characterTable).Entities();
+var (component1, component2, component3, count) = indexedDB.Select<ISelect123Row>().From(characterTable).Entities();
 
 // below is valid, but not recommended at all. Always define as own selector row that has meaning.
-// var (component1, component2, component3, count) = indexedDB.Select<IEntityRow<Component1, Component2, Component3>>().From(characterTable).Entities();
+// var (component1, component2, component3, count) = indexedDB.Select<ISelectorRow<Component1, Component2, Component3>>().From(characterTable).Entities();
 ```
 Fundametally, it helps writing 'good code' because the set of components you query always should have meanings. You'll always have to define how Engines should see Entities, and what they know about Entities.
 
@@ -28,8 +28,8 @@ public class CharacterDescriptor : GenericEntityDescriptor<PositionComponent, Sp
 In Schema extensions, Descriptor Rows are defined like this. Note than only one PositionComponent will be included in CharacterRow since they are same type.
 ```csharp
 // selector rows
-public interface IMovableRow : IEntityRow<PositionComponent, SpeedComponent> {}
-public interface IDamagableRow : IEntityRow<PositionComponent, HealthComponent> {}
+public interface IMovableRow : ISelectorRow<PositionComponent, SpeedComponent> {}
+public interface IDamagableRow : ISelectorRow<PositionComponent, HealthComponent> {}
 
 // descriptor row implements multiple selector rows
 // a entity from this descriptor row will have PositionComponent, SpeedComponent, HealthComponent

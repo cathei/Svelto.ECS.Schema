@@ -20,9 +20,9 @@ foreach (var ((health, defense, count), table) in _indexedDB.Select<IDamagableRo
 Note that you'll iterate it over foreach, and `Table` variable is included as iteration variable.
 
 ### Basic Query from all Table
-Simply, if you want to query from all Tables, call `All()` instead of `From()`.
+Simply, if you want to query from all Tables, call `FromAll()` instead of `From()`.
 ```csharp
-foreach (var ((health, defense, count), table) in _indexedDB.Select<IDamagableRow>().All().Entities())
+foreach (var ((health, defense, count), table) in _indexedDB.Select<IDamagableRow>().FromAll().Entities())
 ```
 In this case, you'll iterate any `Table` in your schema that their Row implementing `IDamagableRow`. Important note: If the their Row does not implements `IDamagableRow`, then that Table does not included in result of this query. **Even though Row has both `HealthComponent` and `DefenseComponent`.** This is important because it is different behavour from Svelto or other ECS frameworks. **In Schema extensions Rows define behaviours, not the Components.**
 
@@ -34,6 +34,11 @@ var tables = _indexedDB.Select<CharacterRow>().Tables();
 foreach (var ((health, defense, count), table) in _indexedDB.Select<IDamagableRow>().From(tables).Entities())
 ```
 You query Tables of `CharacterRow`, and pass it to `From()`. You can find Tables with any Rows including Interface Rows and Descriptor Rows.
+
+There is also shortcut for above code, using `FromAll<T>()`.
+```csharp
+foreach (var ((health, defense, count), table) in _indexedDB.Select<IDamagableRow>().FromAll<CharacterRow>().Entities())
+```
 
 ### Summary
 We saw how to select Entities with Queries. In [Next Document](basic-indexes.md), we'll see how to define Index, and how to select Entities having specific value in a Component.
