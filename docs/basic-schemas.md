@@ -4,8 +4,8 @@ Using Schema, we can define hierarchical structure of Entities in our game.
 ### Defining Schema
 Let's define simplest Schema. You'll need to define Rows first.
 ```csharp
-public interface IDamagableRow : IEntityRow<HealthComponent, DefenseComponent> { }
-public interface IStackableRow : IEntityRow<AmountComponent> { }
+public interface IDamagableRow : ISelectorRow<HealthComponent, DefenseComponent> { }
+public interface IStackableRow : ISelectorRow<AmountComponent> { }
 
 public sealed class CharacterRow : DescriptorRow<CharacterRow>, IDamagableRow {}
 public sealed class ItemRow : DescriptorRow<ItemRow>, IStackableRow {}
