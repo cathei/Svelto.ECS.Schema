@@ -18,22 +18,43 @@ namespace Svelto.ECS.Schema.Internal
             Item1 = indexedDB;
         }
 
-        public (IndexedDB, TRow, IEntityTables<TRow>) FromAll() => FromAll<TRow>();
+        public (IndexedDB, IMagicRowHolder<TRow, TRow, TRow>, IEntityTables<TRow>) FromAll() => FromAll<TRow>();
 
         // Select -> All
         /// <summary>
         /// This is shortcut for `indexedDB.Select<TR>().From(indexedDB.Select<TTR>().Tables());
         /// </summary>
-        public (IndexedDB, TRow, IEntityTables<TTableRow>) FromAll<TTableRow>()
+        public (IndexedDB, IMagicRowHolder<TRow, TRow, TRow>, IEntityTables<TTableRow>) FromAll<TTableRow>()
             where TTableRow : class, TRow
         {
             return (Item1, default, Item1.FindTables<TTableRow>());
         }
     }
+
+    // magic for type inference ! they can be used for whatever I want :)
+    public interface IMagicRowHolder<out T1, out T2, out T3> { }
+
+    public interface IMagicTupleFactory<TInput, TOutput>
+    {
+        public TOutput Convert(in TInput tuple);
+    }
+
+    // TInput and TOutput are exactly same type
+    // I know it is stupid but we can assign tuple names like this
+    // bypassic c#'s restrictions
+    public struct MagicTupleFactory<TTuple> : IMagicTupleFactory<TTuple, TTuple>
+    {
+        public TTuple Convert(in TTuple tuple) => tuple;
+    }
 }
 
 namespace Svelto.ECS.Schema
 {
+    /// <summary>
+    /// We need some notes about why this extensions use tuples
+    /// Tuple supports Covariance by deconstructive assignment,
+    /// so we can chain extension methods properly with Value type query.
+    /// </summary>
     public static partial class RowQueryExtensions
     {
         // query entrypoint Select -> (From ->) (Where ->) Entities
@@ -74,9 +95,8 @@ namespace Svelto.ECS.Schema
 
         // Select -> From Table -> Where
         // Table Row must implement both Selector Row and Index Row
-        public static (IndexedDB, TR, IEntityTable<TTR>, IndexQuery<TIR, TIK>)
-                Where<TR, TTR, TIR, TIK>(this (IndexedDB, TR, IEntityTable<TTR>) query,
-                    IIndexQueryable<TIR, TIK> index, TIK key)
+        public static (IndexedDB, TR, IEntityTable<TTR>, IndexQuery<TIR, TIK>) Where<TR, TTR, TIR, TIK>(
+                this in (IndexedDB, TR, IEntityTable<TTR>) query, IIndexQueryable<TIR, TIK> index, TIK key)
             where TR : class, IEntityRow
             where TTR : class, TR, TIR
             where TIR : class, IEntityRow
@@ -87,9 +107,8 @@ namespace Svelto.ECS.Schema
 
         // Select -> From Tables -> Where
         // Tables Row must implement both Selector Row and Index Row
-        public static (IndexedDB, TR, IEntityTables<TTR>, IndexQuery<TIR, TIK>)
-                Where<TR, TTR, TIR, TIK>(this (IndexedDB, TR, IEntityTables<TTR>) query,
-                    IIndexQueryable<TIR, TIK> index, TIK key)
+        public static (IndexedDB, TR, IEntityTables<TTR>, IndexQuery<TIR, TIK>) Where<TR, TTR, TIR, TIK>(
+                this in (IndexedDB, TR, IEntityTables<TTR>) query, IIndexQueryable<TIR, TIK> index, TIK key)
             where TR : class, IEntityRow
             where TTR : class, TR, TIR
             where TIR : class, IEntityRow
@@ -100,8 +119,8 @@ namespace Svelto.ECS.Schema
 
         // Select -> From Table -> Where
         // Table Row must implement both Selector Row and Index Row
-        public static (IndexedDB, TR, IEntityTable<TTR>, MemoBase<TMR, TMC>)
-                Where<TR, TTR, TMR, TMC>(this (IndexedDB, TR, IEntityTable<TTR>) query, MemoBase<TMR, TMC> memo)
+        public static (IndexedDB, TR, IEntityTable<TTR>, MemoBase<TMR, TMC>) Where<TR, TTR, TMR, TMC>(
+                this in (IndexedDB, TR, IEntityTable<TTR>) query, MemoBase<TMR, TMC> memo)
             where TR : class, IEntityRow
             where TTR : class, TR, TMR
             where TMR : class, ISelectorRow<TMC>
@@ -112,8 +131,8 @@ namespace Svelto.ECS.Schema
 
         // Select -> From Tables -> Where
         // Tables Row must implement both Selector Row and Index Row
-        public static (IndexedDB, TR, IEntityTables<TTR>, MemoBase<TMR, TMC>)
-                Where<TR, TTR, TMR, TMC>(this (IndexedDB, TR, IEntityTables<TTR>) query, MemoBase<TMR, TMC> memo)
+        public static (IndexedDB, TR, IEntityTables<TTR>, MemoBase<TMR, TMC>) Where<TR, TTR, TMR, TMC>(
+                this in (IndexedDB, TR, IEntityTables<TTR>) query, MemoBase<TMR, TMC> memo)
             where TR : class, IEntityRow
             where TTR : class, TR, TMR
             where TMR : class, ISelectorRow<TMC>
@@ -124,7 +143,7 @@ namespace Svelto.ECS.Schema
 
         // Select -> From Table -> Where -> Indices
         internal static IndexedIndices Indices<TR, TI>(
-                this (IndexedDB, TR, IEntityTable, TI) query)
+                this in (IndexedDB, TR, IEntityTable, TI) query)
             where TR : class, IEntityRow
             where TI : IIndexQuery
         {

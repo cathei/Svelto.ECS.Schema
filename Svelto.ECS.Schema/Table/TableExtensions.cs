@@ -62,7 +62,7 @@ namespace Svelto.ECS.Schema
         }
 
         /// <summary>
-        /// Query entrypoint Move -> To
+        /// Query entrypoint MoveAll -> To
         /// No entity id means it will move whole group
         /// </summary>
         public static (IEntityFunctions, IEntityTable<TRow>) MoveAll<TRow>(
