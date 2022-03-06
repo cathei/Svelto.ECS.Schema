@@ -10,7 +10,7 @@ using Svelto.ECS.Schema.Internal;
 namespace Svelto.ECS.Schema.Internal
 {
     // it is forced to used this becuase FasterDictionary requires IEquatable<T>
-    internal readonly struct KeyWrapper<T> : IEquatable<KeyWrapper<T>>
+    internal readonly struct KeyWrapper<T> : IEquatable<KeyWrapper<T>>, IEquatable<T>
         where T : unmanaged, IKeyEquatable<T>
     {
         private readonly T _value;
@@ -23,6 +23,7 @@ namespace Svelto.ECS.Schema.Internal
         }
 
         public bool Equals(KeyWrapper<T> other) => _value.KeyEquals(other._value);
+        public bool Equals(T other) => _value.KeyEquals(other);
 
         public override bool Equals(object obj) => obj is KeyWrapper<T> other && Equals(other);
 

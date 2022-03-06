@@ -31,7 +31,7 @@ namespace Svelto.ECS.Schema.Internal
             _key = key;
         }
 
-        IndexerKeyData IIndexQuery.GetIndexerKeyData(IndexedDB indexedDB)
+        internal IndexerKeyData GetIndexerKeyData(IndexedDB indexedDB)
         {
             if (!indexedDB.indexers.ContainsKey(_indexerId))
                 return default;
@@ -40,6 +40,9 @@ namespace Svelto.ECS.Schema.Internal
             indexerData.TryGetValue(_key, out var result);
             return result;
         }
+
+        IndexerKeyData IIndexQuery.GetIndexerKeyData(IndexedDB indexedDB)
+            => GetIndexerKeyData(indexedDB);
     }
 }
 

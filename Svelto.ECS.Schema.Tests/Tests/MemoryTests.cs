@@ -61,8 +61,11 @@ namespace Svelto.ECS.Schema.Tests
 
             long before = GC.GetAllocatedBytesForCurrentThread();
 
-            (egid, count) = _indexedDB.Select<IHaveEGID>().From(_schema.Character).Entities();
-            (indexed, count2) = _indexedDB.Select<IIndexedItemOwner>().From(_schema.Items[0]).Entities();
+            for (int i = 0; i < 100; ++i)
+            {
+                (egid, count) = _indexedDB.Select<IHaveEGID>().From(_schema.Character).Entities();
+                (indexed, count2) = _indexedDB.Select<IIndexedItemOwner>().From(_schema.Items[0]).Entities();
+            }
 
             Assert.True(before + 50 > GC.GetAllocatedBytesForCurrentThread());
         }
@@ -87,10 +90,13 @@ namespace Svelto.ECS.Schema.Tests
 
             long before = GC.GetAllocatedBytesForCurrentThread();
 
-            foreach (var ((indexed, count), table) in
-                _indexedDB.Select<IIndexedItemOwner>().From(_schema.Items).Entities())
+            for (int i = 0; i < 100; ++i)
             {
-                ++loop;
+                foreach (var ((indexed, count), table) in
+                    _indexedDB.Select<IIndexedItemOwner>().From(_schema.Items).Entities())
+                {
+                    ++loop;
+                }
             }
 
             Assert.True(before + 50 > GC.GetAllocatedBytesForCurrentThread());
@@ -118,10 +124,13 @@ namespace Svelto.ECS.Schema.Tests
 
             long before = GC.GetAllocatedBytesForCurrentThread();
 
-            foreach (var ((indexed, count), indices, group) in _indexedDB
-                .Select<IIndexedItemOwner>().FromAll().Where(_schema.ItemOwner, 0).Entities())
+            for (int i = 0; i < 100; ++i)
             {
-                ++loop;
+                foreach (var ((indexed, count), indices, group) in _indexedDB
+                    .Select<IIndexedItemOwner>().FromAll().Where(_schema.ItemOwner, 0).Entities())
+                {
+                    ++loop;
+                }
             }
 
             Assert.True(before + 50 > GC.GetAllocatedBytesForCurrentThread());

@@ -221,7 +221,7 @@ namespace Svelto.ECS.Schema.Definition
             }
 
             internal void Evaluate<TR>(
-                    IndexedDB indexedDB, NB<Component> component, IEntityTable<TR> table)
+                    IndexedDB indexedDB, NB<Component> components, IEntityTable<TR> table)
                 where TR : class, IIndexedRow
             {
                 var indices = indexedDB
@@ -239,15 +239,19 @@ namespace Svelto.ECS.Schema.Definition
                     // transition has higher priority if added first
                     for (int i = 0; i < _transitions.count; ++i)
                     {
-                        if (!_transitions[i].Evaluate(index))
+                        var transition = _transitions[i];
+
+                        if (!transition.Evaluate(index))
                             continue;
 
-                        // register to execute transition
-                        var currentState = new KeyWrapper<TKey>(component[index]._key);
-                        var nextState = new KeyWrapper<TKey>(_transitions[i]._next);
+                        ref var current = ref components[index];
 
-                        indexedDB.Memo(_config._states[currentState]._exitCandidates).Add(component[index]);
-                        indexedDB.Memo(_config._states[nextState]._enterCandidates).Add(component[index]);
+                        // register to execute transition
+                        var currentState = new KeyWrapper<TKey>(current._key);
+                        var nextState = new KeyWrapper<TKey>(transition._next);
+
+                        indexedDB.Memo(_config._states[currentState]._exitCandidates).Add(current);
+                        indexedDB.Memo(_config._states[nextState]._enterCandidates).Add(current);
                         break;
                     }
                 }
@@ -274,7 +278,7 @@ namespace Svelto.ECS.Schema.Definition
                 }
             }
 
-            internal void ProcessEnter(IndexedDB indexedDB, NB<Component> component, IEntityTable<IIndexedRow> table)
+            internal void ProcessEnter(IndexedDB indexedDB, NB<Component> components, IEntityTable<IIndexedRow> table)
             {
                 var indices = indexedDB
                     .Select<IIndexedRow>().From(table).Where(_enterCandidates).Indices();
@@ -287,12 +291,14 @@ namespace Svelto.ECS.Schema.Definition
 
                 foreach (uint index in indices)
                 {
+                    ref var current = ref components[index];
+
                     // this group will not be visited again in this step
                     // updating indexes
-                    var oldKey = component[index]._key;
-                    component[index]._key = _key;
+                    var oldKey = current._key;
+                    current._key = _key;
 
-                    indexedDB.NotifyKeyUpdate(ref component[index], oldKey, _key);
+                    indexedDB.NotifyKeyUpdate(ref current, oldKey, _key);
 
                     for (int i = 0; i < _onEnter.count; ++i)
                         _onEnter[i].Invoke(index);
@@ -312,7 +318,7 @@ namespace Svelto.ECS.Schema.Definition
             }
 
             internal void Evaluate<TR>(
-                    IndexedDB indexedDB, NB<Component> component, int count, IEntityTable<TR> table)
+                    IndexedDB indexedDB, NB<Component> components, int count, IEntityTable<TR> table)
                 where TR : class, IIndexedRow
             {
                 for (int i = 0; i < _transitions.count; ++i)
@@ -322,15 +328,22 @@ namespace Svelto.ECS.Schema.Definition
                 {
                     for (int i = 0; i < _transitions.count; ++i)
                     {
-                        if (!_transitions[i].Evaluate(index))
+                        var transition = _transitions[i];
+                        ref var current = ref components[index];
+
+                        // component is already in this state
+                        if (current.Key.KeyEquals(transition._next))
+                            continue;
+
+                        if (!transition.Evaluate(index))
                             continue;
 
                         // register to execute transition
-                        var currentState = new KeyWrapper<TKey>(component[index]._key);
-                        var nextState = new KeyWrapper<TKey>(_transitions[i]._next);
+                        var currentState = new KeyWrapper<TKey>(current._key);
+                        var nextState = new KeyWrapper<TKey>(transition._next);
 
-                        indexedDB.Memo(_config._states[currentState]._exitCandidates).Add(component[index]);
-                        indexedDB.Memo(_config._states[nextState]._enterCandidates).Add(component[index]);
+                        indexedDB.Memo(_config._states[currentState]._exitCandidates).Add(current);
+                        indexedDB.Memo(_config._states[nextState]._enterCandidates).Add(current);
                         break;
                     }
                 }

@@ -33,18 +33,17 @@ namespace Svelto.ECS.Schema.Tests
 
         public enum CharacterState { Normal, Upset, Angry, Special, MAX }
 
-        public struct CharacterStateKey : IStateMachineKey<CharacterStateKey>
+        public readonly struct CharacterFSMState : IStateMachineKey<CharacterFSMState>
         {
-            private CharacterState state;
+            private readonly CharacterState state;
 
-            public static implicit operator CharacterStateKey(CharacterState state)
-                => new CharacterStateKey { state = state };
+            public CharacterFSMState(CharacterState state) { this.state = state; }
 
-            public bool KeyEquals(in CharacterStateKey other)
-                => state.Equals(other.state);
+            public static implicit operator CharacterFSMState(CharacterState state) => new CharacterFSMState(state);
 
-            public override bool Equals(object obj)
-                => obj is CharacterStateKey other && KeyEquals(other);
+            public bool KeyEquals(in CharacterFSMState other) => state == other.state;
+
+            public override bool Equals(object obj) => obj is CharacterFSMState other && KeyEquals(other);
 
             public int KeyHashCode() => state.GetHashCode();
 
@@ -53,7 +52,7 @@ namespace Svelto.ECS.Schema.Tests
             public override string ToString() => state.ToString();
         }
 
-        public class CharacterFSM : StateMachine<CharacterStateKey>
+        public class CharacterFSM : StateMachine<CharacterFSMState>
         {
             public interface IRow : IIndexedRow,
                 ISelectorRow<RageComponent>,
@@ -280,9 +279,14 @@ namespace Svelto.ECS.Schema.Tests
                 rage[i].value = 0;
             }
 
+            _characterFSM.Engine.Step();
+
             long before = GC.GetAllocatedBytesForCurrentThread();
 
-            _characterFSM.Engine.Step();
+            for (int i = 0; i < 100; ++i)
+            {
+                _characterFSM.Engine.Step();
+            }
 
             Assert.True(before + 50 > GC.GetAllocatedBytesForCurrentThread());
         }

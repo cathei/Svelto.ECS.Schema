@@ -8,7 +8,8 @@ namespace Svelto.ECS.Schema
 {
     public partial class IndexedDB
     {
-        internal IEGIDMapper GetEGIDMapper(IEntityTable table)
+        // EGIDMapper is struct
+        internal EGIDMapper<RowIdentityComponent> GetEGIDMapper(IEntityTable table)
         {
             return entitiesDB.QueryMappedEntities<RowIdentityComponent>(table.ExclusiveGroup);
         }

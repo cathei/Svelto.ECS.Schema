@@ -38,7 +38,6 @@ namespace Svelto.ECS.Schema
     {
         // query entrypoint Select -> (From ->) (Where ->) Entities
         // query entrypoint Select -> From Table -> Where -> Indices
-        // query entrypoint Select -> Groups
         // query entrypoint Select -> Tables
         public static SelectQuery<TR> Select<TR>(this IndexedDB indexedDB)
             where TR : class, IEntityRow

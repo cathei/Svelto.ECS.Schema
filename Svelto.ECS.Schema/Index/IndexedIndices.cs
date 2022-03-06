@@ -41,7 +41,7 @@ namespace Svelto.ECS.Schema
 
         public uint Get(uint index) => _indices[index];
 
-        public IndexedIndices(FilteredIndices indices)
+        public IndexedIndices(in FilteredIndices indices)
         {
             _indices = indices;
         }

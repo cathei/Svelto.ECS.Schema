@@ -6,23 +6,24 @@ public enum CharacterState { Normal, Angry, Fever, MAX }
 ```
 And StateMachineKey class to ensure uniquness of State Machine you create.
 ```csharp
-public readonly struct CharacterStateKey : IStateMachineKey<CharacterStateKey>
+public readonly struct CharacterFSMState : IStateMachineKey<CharacterFSMState>
 {
-    public readonly CharacterState state;
+    public readonly CharacterState _state;
 
-    public CharacterStateKey(CharacterState state) => this.state = state;
+    public CharacterFSMState(CharacterState state) => _state = state;
 
-    public static implicit operator CharacterStateKey(CharacterState state) => new CharacterStateKey(state);
+    public static implicit operator CharacterFSMState(CharacterState state) => new CharacterFSMState(state);
 
-    public bool KeyEquals(in CharacterStateKey other) => _controllerID == other._controllerID;
+    public bool KeyEquals(in CharacterFSMState other) => _state == other._state;
 
-    public int KeyHashCode() => _controllerID.GetHashCode();
+    public int KeyHashCode() => _state.GetHashCode();
 }
 ```
+Since it is `enum`, be careful to not call `Equals` on it, that will cause boxing. In future when C# 10.0 comes to Unity this can be replaced by `record struct`.
 
-Now you can define FSM class, inherit `EntityStateMachine<TState, TUnique>`.
+Now you can define FSM class, inherit `EntityStateMachine<TKey>`.
 ```csharp
-public class CharacterFSM : StateMachine<CharacterStateKey>
+public class CharacterFSM : StateMachine<CharacterFSMState>
 {
     public interface IRow : IIndexedRow {}
 
@@ -45,7 +46,7 @@ Now you have states of State Machine, but it won't have any effect until you add
 ### Adding Transitions
 Transition describes how State changes. In `OnConfigure` you can add Transition and Conditions.
 ```csharp
-public class CharacterFSM : StateMachine<CharacterStateKey>
+public class CharacterFSM : StateMachine<CharacterFSMState>
 {
     public interface IRow : IIndexedRow,
         ISeletorRow<RageComponent>,
