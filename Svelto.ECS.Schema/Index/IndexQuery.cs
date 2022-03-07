@@ -6,11 +6,21 @@ using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema.Internal
 {
-    public interface IIndexQueryable<TRow, TKey>
+    public interface IIndexQueryable<TRow, TComponent>
         where TRow : class, IEntityRow
-        where TKey : unmanaged, IEquatable<TKey>
+        where TComponent : unmanaged, IEntityComponent
     {
-        IndexQuery<TRow, TKey> Query(in TKey key);
+        public int IndexerID { get; }
+    }
+
+    public readonly ref struct IndexQuery
+    {
+        internal readonly IndexerKeyData _keyData;
+
+        internal IndexQuery(IndexerKeyData keyData)
+        {
+            _keyData = keyData;
+        }
     }
 
     public interface IIndexQuery

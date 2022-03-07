@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Svelto.DataStructures;
+using Svelto.DataStructures.Native;
 using Svelto.ECS.Internal;
 using Svelto.ECS.Schema.Internal;
 
@@ -54,20 +55,6 @@ namespace Svelto.ECS.Schema
                 createdIndexerEngines.Add(componentType);
                 stateMachine.AddEngines(enginesRoot, this);
             }
-        }
-
-        internal void NotifyKeyUpdate<TK, TC>(ref TC keyComponent, in TK oldKey, in TK newKey)
-            where TK : unmanaged, Internal.IEquatable<TK>
-            where TC : unmanaged, IIndexableComponent<TK>
-        {
-            // component updated but key didn't change
-            if (oldKey.KeyEquals(newKey))
-                return;
-
-            var indexers = FindIndexers<TK, TC>(keyComponent.ID.groupID);
-
-            foreach (var indexer in indexers)
-                UpdateFilters(indexer.IndexerID, ref keyComponent, oldKey, newKey);
         }
 
         public static implicit operator EntitiesDB(IndexedDB indexedDB) => indexedDB.entitiesDB;

@@ -14,7 +14,7 @@ namespace Svelto.ECS.Schema
         internal readonly FasterDictionary<RefWrapperType, IEntityTables> _rowToTables
             = new FasterDictionary<RefWrapperType, IEntityTables>();
 
-        internal IEntityTable<TR> FindTable<TR>(in ExclusiveGroupStruct groupID)
+        public IEntityTable<TR> FindTable<TR>(in ExclusiveGroupStruct groupID)
             where TR : class, IEntityRow
         {
             if (!_groupToTable.TryGetValue(groupID, out var table))

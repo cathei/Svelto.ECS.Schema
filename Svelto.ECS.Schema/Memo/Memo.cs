@@ -64,12 +64,12 @@ namespace Svelto.ECS.Schema.Internal
                 var mapper = indexedDB.GetEGIDMapper(table);
 
                 // TODO: change group to table!
-                var (components, _) = indexedDB.Select<IndexableResultSet<TComponent>>().From(table).Entities();
+                var result = indexedDB.Select<IndexableResultSet<TComponent>>().From(table).Entities();
 
                 ref var originalGroupData = ref indexedDB.CreateOrGetMemoGroup(_memoID, table);
 
                 foreach (var i in new IndexedIndices(queryGroupData.filter.filteredIndices))
-                    originalGroupData.filter.Add(components[i].ID.entityID, mapper);
+                    originalGroupData.filter.Add(result.set.component[i].ID.entityID, mapper);
             }
         }
 
@@ -118,7 +118,7 @@ namespace Svelto.ECS.Schema.Internal
                     continue;
                 }
 
-                var (components, _) = indexedDB.Select<IndexableResultSet<TComponent>>().From(table).Entities();
+                var result = indexedDB.Select<IndexableResultSet<TComponent>>().From(table).Entities();
 
                 // ugh I have to check what to delete
                 // since I cannot change filter while iteration
@@ -127,8 +127,10 @@ namespace Svelto.ECS.Schema.Internal
 
                 foreach (uint i in new IndexedIndices(originalGroupData.filter.filteredIndices))
                 {
-                    if (!queryGroupData.filter.Exists(components[i].ID.entityID))
-                        entityIDsToDelete.Add(components[i].ID.entityID);
+                    ref var component = ref result.set.component[i];
+
+                    if (!queryGroupData.filter.Exists(component.ID.entityID))
+                        entityIDsToDelete.Add(component.ID.entityID);
                 }
 
                 for (int i = 0; i < entityIDsToDelete.count; ++i)

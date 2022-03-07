@@ -56,22 +56,22 @@ namespace Svelto.ECS.Schema.Definition
                 {
                     for (int i = 0; i < stateCount; ++i)
                     {
-                        states[i].Evaluate(indexedDB, component, table);
+                        states[i].Evaluate(indexedDB, result.set.component, result.table);
                     }
 
                     // any state transition has lower priority
-                    _anyState.Evaluate(indexedDB, component, count, table);
+                    _anyState.Evaluate(indexedDB, result.set.component, result.set.count, result.table);
 
                     // check for exit candidates
                     for (int i = 0; i < stateCount; ++i)
                     {
-                        states[i].ProcessExit(indexedDB, table);
+                        states[i].ProcessExit(indexedDB, result.table);
                     }
 
                     // check for enter candidates
                     for (int i = 0; i < stateCount; ++i)
                     {
-                        states[i].ProcessEnter(indexedDB, component, table);
+                        states[i].ProcessEnter(indexedDB, result.set.component, result.table);
                     }
                 }
             }

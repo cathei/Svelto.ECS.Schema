@@ -1,3 +1,4 @@
+using System;
 using Svelto.ECS.Schema.Definition;
 using Svelto.ECS.Schema.Internal;
 
@@ -5,15 +6,20 @@ namespace Svelto.ECS.Schema
 {
     public static class IndexExtensions
     {
-        public static void Update<TKey>(
-                this IndexedDB indexedDB, ref Indexed<TKey> component, in TKey key)
-            where TKey : unmanaged, IIndexKey<TKey>
+        public static void Update<TC>(
+                this IndexedDB indexedDB, ref TC component)
+            where TC : unmanaged, IIndexableComponent
         {
-            var oldKey = component._key;
-            component._key = key;
+            component.UpdateIndex<TC>(indexedDB);
+        }
 
-            // propagate to indexes
-            indexedDB.NotifyKeyUpdate(ref component, oldKey, key);
+        public static void Update<TC, TK>(
+                this IndexedDB indexedDB, ref TC component, in TK key)
+            where TC : unmanaged, IIndexableComponent<TK>
+            where TK : unmanaged, IEquatable<TK>
+        {
+            component.key = key;
+            component.UpdateIndex<TC>(indexedDB);
         }
     }
 }

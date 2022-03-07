@@ -25,15 +25,15 @@ namespace Svelto.ECS.Schema.Internal
                 IEntityTable<TTableRow> table)
             where TTableRow : class, TRow
         {
-            return new SelectFromTableQuery<TRow, TResult, TTableRow>(query.Item1, table);
+            return new SelectFromTableQuery<TRow, TResult, TTableRow>(Item1, table);
         }
 
         // Select -> From Tables
-        public static SelectFromTablesQuery<TRow, TResult, TTableRow> From<TTableRow>(
+        public SelectFromTablesQuery<TRow, TResult, TTableRow> From<TTableRow>(
                 IEntityTables<TTableRow> tables)
             where TTableRow : class, TRow
         {
-            return new SelectFromTablesQuery<TRow, TResult, TTableRow>(query.Item1, tables);
+            return new SelectFromTablesQuery<TRow, TResult, TTableRow>(Item1, tables);
         }
 
         public SelectFromTablesQuery<TRow, TResult, TRow> FromAll() => FromAll<TRow>();
@@ -166,6 +166,22 @@ namespace Svelto.ECS.Schema
     /// </summary>
     public static partial class RowQueryExtensions
     {
+        internal static IndexQuery IndexQuery<TRow, TComponent, TKey>(
+                this IndexedDB indexedDB, IIndexQueryable<TRow, TComponent> index, TKey key)
+            where TRow : class, IReactiveRow<TComponent>
+            where TComponent : unmanaged, IIndexableComponent<TKey>
+            where TKey : unmanaged, IEquatable<TKey>
+        {
+            var indexerID = index.IndexerID;
+            if (!indexedDB.indexers.ContainsKey(indexerID))
+                return default;
+
+            var indexerData = (IndexerData<TKey>)indexedDB.indexers[indexerID];
+            indexerData.TryGetValue(key, out var result);
+            return new IndexQuery(result);
+        }
+
+
         // query entrypoint Select -> (From ->) (Where ->) Entities
         // query entrypoint Select -> From Table -> Where -> Indices
         // query entrypoint Select -> Tables

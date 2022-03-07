@@ -28,7 +28,7 @@ namespace Svelto.ECS.Schema.Tests
             _factory = _enginesRoot.GenerateEntityFactory();
             _functions = _enginesRoot.GenerateEntityFunctions();
 
-            _indexedDB = _enginesRoot.GenerateIndexesDB();
+            _indexedDB = _enginesRoot.GenerateIndexedDB();
             _schema = _enginesRoot.AddSchema<T>(_indexedDB);
         }
 

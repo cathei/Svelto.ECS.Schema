@@ -63,7 +63,7 @@ namespace Svelto.ECS.Schema
             return stateMachine;
         }
 
-        public static IndexedDB GenerateIndexesDB(this EnginesRoot enginesRoot)
+        public static IndexedDB GenerateIndexedDB(this EnginesRoot enginesRoot)
         {
             var indexedDB = new IndexedDB();
 

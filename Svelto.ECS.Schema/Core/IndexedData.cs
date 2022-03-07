@@ -1,17 +1,18 @@
 using System;
 using System.Collections.Generic;
 using Svelto.DataStructures;
+using Svelto.DataStructures.Native;
 using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema.Internal
 {
     internal struct IndexerGroupData : IEquatable<IndexerGroupData>
     {
-        public IEntityTable table;
+        public ExclusiveGroupStruct groupID;
         public FilterGroup filter;
 
-        public bool Equals(IndexerGroupData other) => table == other.table;
-        public override int GetHashCode() => table.ExclusiveGroup.GetHashCode();
+        public bool Equals(IndexerGroupData other) => groupID == other.groupID;
+        public override int GetHashCode() => groupID.GetHashCode();
     }
 
     public struct IndexerKeyData
@@ -31,17 +32,24 @@ namespace Svelto.ECS.Schema.Internal
         }
     }
 
+    internal struct IndexerEntityData<TKey>
+        where TKey : unmanaged, IEquatable<TKey>
+    {
+        public EGID previousEGID;
+        public TKey previousKey;
+    }
+
     internal abstract class IndexerData { }
 
     internal sealed class IndexerData<TKey> : IndexerData
         where TKey : unmanaged, IEquatable<TKey>
     {
-        private readonly FasterDictionary<KeyWrapper<TKey>, IndexerKeyData> keyToGroups
-            = new FasterDictionary<KeyWrapper<TKey>, IndexerKeyData>();
+        private readonly FasterDictionary<TKey, IndexerKeyData> keyToGroups
+            = new FasterDictionary<TKey, IndexerKeyData>();
 
         public ref IndexerKeyData CreateOrGet(in TKey key)
         {
-            return ref keyToGroups.GetOrCreate(new KeyWrapper<TKey>(key), () => new IndexerKeyData
+            return ref keyToGroups.GetOrCreate(key, () => new IndexerKeyData
             {
                 groups = new FasterDictionary<ExclusiveGroupStruct, IndexerGroupData>()
             });
@@ -49,7 +57,7 @@ namespace Svelto.ECS.Schema.Internal
 
         public bool TryGetValue(in TKey key, out IndexerKeyData result)
         {
-            return keyToGroups.TryGetValue(new KeyWrapper<TKey>(key), out result);
+            return keyToGroups.TryGetValue(key, out result);
         }
     }
 

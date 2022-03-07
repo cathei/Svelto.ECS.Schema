@@ -14,6 +14,8 @@ Schema and State Machine extensions for [Svelto.ECS](https://github.com/sebas77/
 ## Getting Started
 Currently it is alpha stage. You can clone this repository, or reference with [NuGet](https://www.nuget.org/packages/Svelto.ECS.Schema/). While I don't recommend to use it on production, feel free to try it and please share me the experience!
 
+Svelto.ECS.Schema's minimum C# version is 8. (It requires default interfaces implementation)
+
 ## Need help?
 If you need help or want to give feedback, you can either join [my Discord Channel](https://discord.gg/Dvak3QMj3n) or ping @cathei from [Svelto's Official Discord Channel](https://discord.gg/3qAdjDb).
 
