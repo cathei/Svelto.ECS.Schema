@@ -35,7 +35,10 @@ namespace Svelto.ECS.Schema
             return table as IEntityTable<TR>;
         }
 
-        internal IEntityTables<TR> FindTables<TR>()
+        /// <summary>
+        /// This will find all Tables containing Row type TR
+        /// </summary>
+        public IEntityTables<TR> FindTables<TR>()
             where TR : class, IEntityRow
         {
             if (!_rowToTables.TryGetValue(TypeRefWrapper<TR>.wrapper, out var tables))

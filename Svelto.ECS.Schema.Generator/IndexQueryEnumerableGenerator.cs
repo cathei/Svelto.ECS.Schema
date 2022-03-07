@@ -8,16 +8,17 @@ namespace Svelto.ECS.Schema.Generator
     public class IndexQueryEnumerableGenerator : ISourceGenerator
     {
         const string IndexQueryEnumerableTemplate = @"
-    public readonly ref struct IndexQueryEnumerable<TR, {1}>
-        where TR : class, ISelectorRow<{1}>
+    public readonly ref struct IndexQueryEnumerable<TResult, TRow, {1}>
+        where TResult : struct, IResultSet<{1}>
+        where TRow : class, IQueryableRow<TResult>
 {2}
     {{
         private readonly IndexedDB _indexedDB;
-        private readonly IEntityTables<TR> _tables;
+        private readonly IEntityTables<TRow> _tables;
         private readonly FasterDictionary<ExclusiveGroupStruct, IndexerGroupData> _dict;
 
         internal IndexQueryEnumerable(IndexedDB indexedDB,
-            IEntityTables<TR> tables,
+            IEntityTables<TRow> tables,
             FasterDictionary<ExclusiveGroupStruct, IndexerGroupData> dict)
         {{
             _indexedDB = indexedDB;
@@ -30,15 +31,16 @@ namespace Svelto.ECS.Schema.Generator
         public ref struct RefIterator
         {{
             private readonly IndexedDB _indexedDB;
-            private readonly IEntityTables<TR> _tables;
+            private readonly IEntityTables<TRow> _tables;
             private readonly FasterDictionary<ExclusiveGroupStruct, IndexerGroupData> _dict;
 
-            private EntityCollection<{1}> _collection;
+            private TResult _result;
             private FilteredIndices _indices;
+            private IEntityTable<TRow> _table;
             private int _indexValue;
 
             internal RefIterator(IndexedDB indexedDB,
-                IEntityTables<TR> tables,
+                IEntityTables<TRow> tables,
                 FasterDictionary<ExclusiveGroupStruct, IndexerGroupData> dict) : this()
             {{
                 _indexedDB = indexedDB;
@@ -54,17 +56,19 @@ namespace Svelto.ECS.Schema.Generator
 
                 while (++_indexValue < _tables.Range)
                 {{
-                    var table = _tables.GetTable(_indexValue);
+                    _table = _tables.GetTable(_indexValue);
 
-                    if (!_dict.TryGetValue(table.ExclusiveGroup, out var groupData))
+                    if (!_dict.TryGetValue(_table.ExclusiveGroup, out var groupData))
                         continue;
 
                     _indices = groupData.filter.filteredIndices;
 
-                    if (!table.ExclusiveGroup.IsEnabled() || _indices.Count() == 0)
+                    if (!_table.ExclusiveGroup.IsEnabled() || _indices.Count() == 0)
                         continue;
 
-                    _collection = _indexedDB.Select<TR>().From(table).Entities();
+                    var collection = _indexedDB.entitiesDB.QueryEntities<{1}>(_table.ExclusiveGroup);
+
+                    _result.Init(collection);
                     break;
                 }}
 
@@ -80,8 +84,8 @@ namespace Svelto.ECS.Schema.Generator
 
             public void Dispose() {{ }}
 
-            public IndexQueryTableTuple<TR, {1}> Current => new IndexQueryTableTuple<TR, {1}>(
-                _collection, new IndexedIndices(_indices), _tables.GetTable(_indexValue));
+            public IndexedQueryResult<TResult, TRow> Current =>
+                new IndexedQueryResult<TResult, TRow>(_result, _indices, _table);
         }}
     }}
 ";

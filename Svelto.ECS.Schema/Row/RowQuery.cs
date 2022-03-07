@@ -60,20 +60,20 @@ namespace Svelto.ECS.Schema
         // query entrypoint Select -> (From ->) (Where ->) Entities
         // query entrypoint Select -> From Table -> Where -> Indices
         // query entrypoint Select -> Tables
-        public static SelectQuery<TR> Select<TR>(this IndexedDB indexedDB)
-            where TR : class, IEntityRow
+        public static SelectQuery<IQueryableRow<TResult>> Select<TResult>(this IndexedDB indexedDB)
+            where TResult : struct, IResultSet
         {
-            return new SelectQuery<TR>(indexedDB);
+            return new SelectQuery<IQueryableRow<TResult>>(indexedDB);
         }
 
-        /// <summary>
-        /// This will find all Tables containing Row type TR
-        /// </summary>
-        public static IEntityTables<TR> Tables<TR>(this in SelectQuery<TR> query)
-            where TR : class, IEntityRow
-        {
-            return query.Item1.FindTables<TR>();
-        }
+        // /// <summary>
+        // /// This will find all Tables containing Row type TR
+        // /// </summary>
+        // public static IEntityTables<TR> Tables<TR>(this in SelectQuery<TR> query)
+        //     where TR : class, IEntityRow
+        // {
+        //     return query.Item1.FindTables<TR>();
+        // }
 
         // Select -> From Table
         public static (IndexedDB, TR, IEntityTable<TTR>) From<TR, TTR>(

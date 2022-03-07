@@ -8,14 +8,15 @@ namespace Svelto.ECS.Schema.Generator
     public class TablesEnumerableGenerator : ISourceGenerator
     {
         const string TablesEnumerableTemplate = @"
-    public readonly ref struct TablesEnumerable<TR, {1}>
-        where TR : class, ISelectorRow<{1}>
+    public readonly ref struct TablesEnumerable<TResult, TRow, {1}>
+        where TResult : struct, IResultSet<{1}>
+        where TRow : class, IQueryableRow<TResult>
 {2}
     {{
         private readonly IndexedDB _indexedDB;
-        private readonly IEntityTables<TR> _tables;
+        private readonly IEntityTables<TRow> _tables;
 
-        internal TablesEnumerable(IndexedDB indexedDB, in IEntityTables<TR> tables)
+        internal TablesEnumerable(IndexedDB indexedDB, in IEntityTables<TRow> tables)
         {{
             _indexedDB = indexedDB;
             _tables = tables;
@@ -26,12 +27,13 @@ namespace Svelto.ECS.Schema.Generator
         public ref struct RefIterator
         {{
             private readonly IndexedDB _indexedDB;
-            private readonly IEntityTables<TR> _tables;
+            private readonly IEntityTables<TRow> _tables;
 
-            private EntityCollection<{1}> _collection;
+            private TResult _result;
+            private IEntityTable<TRow> _table;
             private int _indexValue;
 
-            internal RefIterator(IndexedDB indexedDB, in IEntityTables<TR> tables) : this()
+            internal RefIterator(IndexedDB indexedDB, in IEntityTables<TRow> tables) : this()
             {{
                 _indexedDB = indexedDB;
                 _tables = tables;
@@ -42,18 +44,18 @@ namespace Svelto.ECS.Schema.Generator
             {{
                 while (++_indexValue < _tables.Range)
                 {{
-                    var group = _tables.GetTable(_indexValue).ExclusiveGroup;
+                    _table = _tables.GetTable(_indexValue);
 
-                    if (!group.IsEnabled())
+                    if (!_table.ExclusiveGroup.IsEnabled())
                         continue;
 
-                    var collection = _indexedDB.entitiesDB.QueryEntities<{1}>(group);
+                    var collection = _indexedDB.entitiesDB.QueryEntities<{1}>(_table.ExclusiveGroup);
 
                     // cannot do this due because count is internal...
                     // if (collection.count == 0)
                     //     continue;
 
-                    _collection = collection;
+                    _result.Init(collection);
                     break;
                 }}
 
@@ -69,25 +71,8 @@ namespace Svelto.ECS.Schema.Generator
 
             public void Dispose() {{ }}
 
-            public RefCurrent Current => new RefCurrent(_collection, _tables.GetTable(_indexValue));
-
-            public readonly ref struct RefCurrent
-            {{
-                public readonly EntityCollection<{1}> _buffers;
-                public readonly IEntityTable<TR> _table;
-
-                public RefCurrent(in EntityCollection<{1}> buffers, IEntityTable<TR> table)
-                {{
-                    _buffers = buffers;
-                    _table = table;
-                }}
-
-                public void Deconstruct(out EntityCollection<{1}> buffers, out IEntityTable<TR> table)
-                {{
-                    buffers = _buffers;
-                    table = _table;
-                }}
-            }}
+            public QueryResult<TResult, TRow> Current =>
+                new QueryResult<TResult, TRow>(_result, b);
         }}
     }}
 ";
