@@ -57,8 +57,8 @@ namespace Svelto.ECS.Schema
         }
 
         internal void NotifyKeyUpdate<TK, TC>(ref TC keyComponent, in TK oldKey, in TK newKey)
-            where TK : unmanaged, IKeyEquatable<TK>
-            where TC : struct, IIndexableComponent<TK>
+            where TK : unmanaged, Internal.IEquatable<TK>
+            where TC : unmanaged, IIndexableComponent<TK>
         {
             // component updated but key didn't change
             if (oldKey.KeyEquals(newKey))

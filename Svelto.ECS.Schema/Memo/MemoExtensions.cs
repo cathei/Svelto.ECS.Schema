@@ -11,7 +11,7 @@ namespace Svelto.ECS.Schema
         }
 
         public static void Add<TR, TC>(this (IndexedDB, MemoBase<TR, TC>) query, TC component)
-            where TR : class, ISelectorRow<TC>
+            where TR : class, IIndexableRow<TC>
             where TC : unmanaged, IEntityComponent, INeedEGID
         {
             var table = query.Item1.FindTable<TR>(component.ID.groupID);
@@ -19,7 +19,7 @@ namespace Svelto.ECS.Schema
         }
 
         public static void Remove<TR, TC>(this (IndexedDB, MemoBase<TR, TC>) query, TC component)
-            where TR : class, ISelectorRow<TC>
+            where TR : class, IIndexableRow<TC>
             where TC : unmanaged, IEntityComponent, INeedEGID
         {
             var table = query.Item1.FindTable<TR>(component.ID.groupID);
@@ -32,27 +32,27 @@ namespace Svelto.ECS.Schema
         }
 
         public static void Set<TR, TC, TMR, TMC>(this (IndexedDB, MemoBase<TR, TC>) query, MemoBase<TMR, TMC> memo)
-            where TR : class, ISelectorRow<TC>, TMR
+            where TR : class, IIndexableRow<TC>, TMR
             where TC : unmanaged, IEntityComponent, INeedEGID
-            where TMR : class, ISelectorRow<TMC>
+            where TMR : class, IIndexableRow<TMC>
             where TMC : unmanaged, IEntityComponent, INeedEGID
         {
             query.Item2.Set(query.Item1, memo);
         }
 
         public static void Union<TR, TC, TMR, TMC>(this (IndexedDB, MemoBase<TR, TC>) query, MemoBase<TMR, TMC> memo)
-            where TR : class, ISelectorRow<TC>, TMR
+            where TR : class, IIndexableRow<TC>, TMR
             where TC : unmanaged, IEntityComponent, INeedEGID
-            where TMR : class, ISelectorRow<TMC>
+            where TMR : class, IIndexableRow<TMC>
             where TMC : unmanaged, IEntityComponent, INeedEGID
         {
             query.Item2.Union(query.Item1, memo);
         }
 
         public static void Intersect<TR, TC, TMR, TMC>(this (IndexedDB, MemoBase<TR, TC>) query, MemoBase<TMR, TMC> memo)
-            where TR : class, ISelectorRow<TC>, TMR
+            where TR : class, IIndexableRow<TC>, TMR
             where TC : unmanaged, IEntityComponent, INeedEGID
-            where TMR : class, ISelectorRow<TMC>
+            where TMR : class, IIndexableRow<TMC>
             where TMC : unmanaged, IEntityComponent, INeedEGID
         {
             query.Item2.Intersect(query.Item1, memo);
@@ -60,30 +60,30 @@ namespace Svelto.ECS.Schema
 
         public static void Set<TR, TC, TIR, TIK>(this (IndexedDB, MemoBase<TR, TC>) query,
                 IIndexQueryable<TIR, TIK> index, in TIK key)
-            where TR : class, ISelectorRow<TC>, TIR
+            where TR : class, IIndexableRow<TC>, TIR
             where TC : unmanaged, IEntityComponent, INeedEGID
             where TIR : class, IEntityRow
-            where TIK : unmanaged, IKeyEquatable<TIK>
+            where TIK : unmanaged, IEquatable<TIK>
         {
             query.Item2.Set(query.Item1, index.Query(key));
         }
 
         public static void Union<TR, TC, TIR, TIK>(this (IndexedDB, MemoBase<TR, TC>) query,
                 IIndexQueryable<TIR, TIK> index, in TIK key)
-            where TR : class, ISelectorRow<TC>, TIR
+            where TR : class, IIndexableRow<TC>, TIR
             where TC : unmanaged, IEntityComponent, INeedEGID
             where TIR : class, IEntityRow
-            where TIK : unmanaged, IKeyEquatable<TIK>
+            where TIK : unmanaged, IEquatable<TIK>
         {
             query.Item2.Union(query.Item1, index.Query(key));
         }
 
         public static void Intersect<TR, TC, TIR, TIK>(this (IndexedDB, MemoBase<TR, TC>) query,
                 IIndexQueryable<TIR, TIK> index, in TIK key)
-            where TR : class, ISelectorRow<TC>, TIR
+            where TR : class, IIndexableRow<TC>, TIR
             where TC : unmanaged, IEntityComponent, INeedEGID
             where TIR : class, IEntityRow
-            where TIK : unmanaged, IKeyEquatable<TIK>
+            where TIK : unmanaged, IEquatable<TIK>
         {
             query.Item2.Intersect(query.Item1, index.Query(key));
         }

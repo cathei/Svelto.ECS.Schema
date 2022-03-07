@@ -72,8 +72,8 @@ namespace Svelto.ECS.Schema
         }
 
         private void UpdateFilters<TK, TC>(int indexerId, ref TC keyComponent, in TK oldKey, in TK newKey)
-            where TK : unmanaged, IKeyEquatable<TK>
-            where TC : struct, IIndexableComponent<TK>
+            where TK : unmanaged, Internal.IEquatable<TK>
+            where TC : unmanaged, IIndexableComponent<TK>
         {
             var table = FindTable<IIndexableRow<TC>>(keyComponent.ID.groupID);
 
@@ -90,7 +90,7 @@ namespace Svelto.ECS.Schema
         }
 
         internal ref IndexerGroupData CreateOrGetIndexedGroupData<TK>(int indexerID, in TK key, IEntityTable table)
-            where TK : unmanaged, IKeyEquatable<TK>
+            where TK : unmanaged, Internal.IEquatable<TK>
         {
             var indexerData = CreateOrGetIndexedData<TK>(indexerID);
 
@@ -110,7 +110,7 @@ namespace Svelto.ECS.Schema
         }
 
         private IndexerData<TK> CreateOrGetIndexedData<TK>(int indexerId)
-            where TK : unmanaged, IKeyEquatable<TK>
+            where TK : unmanaged, Internal.IEquatable<TK>
         {
             IndexerData<TK> indexerData;
 

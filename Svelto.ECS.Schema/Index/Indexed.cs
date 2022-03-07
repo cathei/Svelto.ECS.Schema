@@ -1,26 +1,48 @@
+using System;
+using Svelto.DataStructures;
 using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema.Internal
 {
+    // we need EGID constraints because it requires INeedEGID
+    // it won't be necessary when Svelto update it's filter utility functions
     public interface IIndexableComponent : IEntityComponent, INeedEGID { }
+
+    public struct IndexableResultSet<T> : IResultSet<T>
+        where T : unmanaged, IEntityComponent, INeedEGID
+    {
+        public int count { get; set; }
+
+        public NB<T> component;
+
+        public void Init(in EntityCollection<T> buffers)
+        {
+            (component, count) = buffers;
+        }
+    }
+
+    public interface IIndexableRow<TComponent> :
+            IReactiveRow<TComponent>,
+            IQueryableRow<IndexableResultSet<TComponent>>
+        where TComponent : unmanaged, IEntityComponent, INeedEGID
+    { }
 
     public interface IIndexableComponent<TKey> : IIndexableComponent
     {
         TKey Key { get; }
     }
 
-    public interface IKeyEquatable<TSelf>
-        where TSelf : unmanaged, IKeyEquatable<TSelf>
+    public interface IKeyEquatable<TKey>
+        where TKey : unmanaged, IEquatable<TKey>
     {
-        bool KeyEquals(in TSelf other);
-        int KeyHashCode();
+        TKey Key { get; set; }
     }
 }
 
 namespace Svelto.ECS.Schema
 {
-    public interface IIndexKey<TSelf> : IKeyEquatable<TSelf>
-        where TSelf : unmanaged, IIndexKey<TSelf>
+    public interface IIndexKey<TTag> : IKeyEquatable<TKey>
+        where TKey : unmanaged, IEquatable<TKey>
     { }
 
     public struct Indexed<TKey> : IIndexableComponent<TKey>

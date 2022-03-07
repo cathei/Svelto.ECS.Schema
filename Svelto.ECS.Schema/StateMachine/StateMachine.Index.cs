@@ -1,4 +1,5 @@
 using System;
+using Svelto.DataStructures;
 using Svelto.ECS.Schema.Definition;
 using Svelto.ECS.Schema.Internal;
 
@@ -14,8 +15,20 @@ namespace Svelto.ECS.Schema.Definition
             Confirmed
         }
 
+        public struct ResultSet : IResultSet<Component>
+        {
+            public NB<Component> state;
+
+            public int count { get; set; }
+
+            public void Init(in EntityCollection<Component> buffers)
+            {
+                (state, count) = buffers;
+            }
+        }
+
         public interface IIndexedRow :
-            IIndexableRow<Component>, ISelectorRow<Component> { }
+            IIndexableRow<Component>, IQueryableRow<ResultSet> { }
 
         public struct Component : IIndexableComponent<TKey>
         {

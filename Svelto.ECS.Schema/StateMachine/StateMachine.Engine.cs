@@ -40,7 +40,7 @@ namespace Svelto.ECS.Schema.Definition
         {
             public override void Process(IndexedDB indexedDB)
             {
-                var tables = indexedDB.Select<TRow>().Tables();
+                var tables = indexedDB.FindTables<TRow>();
                 var states = _states.GetValues(out var stateCount);
 
                 // clear all filters before proceed
@@ -52,8 +52,7 @@ namespace Svelto.ECS.Schema.Definition
                     indexedDB.Memo(states[i]._enterCandidates).Clear();
                 }
 
-                foreach (var ((component, count), table) in
-                    indexedDB.Select<TRow>().From(tables).Entities())
+                foreach (var result in indexedDB.Select<IndexableResultSet<Component>>().From(tables).Entities())
                 {
                     for (int i = 0; i < stateCount; ++i)
                     {

@@ -16,7 +16,7 @@ namespace Svelto.ECS.Schema.Tests
                 => new CharacterController { key = key };
 
             public bool KeyEquals(in CharacterController other)
-                => key.Equals(other.key);
+                => key == other.key;
 
             public int KeyHashCode() => key.GetHashCode();
         }
@@ -29,11 +29,10 @@ namespace Svelto.ECS.Schema.Tests
                 => new CharacterStateKey { key = key };
 
             public bool KeyEquals(in CharacterStateKey other)
-                => key.Equals(other.key);
+                => key == other.key;
 
             public int KeyHashCode() => key.GetHashCode();
         }
-
 
         public interface IIndexedController : IIndexedRow<CharacterController>
         { }

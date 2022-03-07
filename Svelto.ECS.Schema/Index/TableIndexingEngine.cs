@@ -9,7 +9,7 @@ namespace Svelto.ECS.Schema.Internal
     // but we still need 'Add' to make sure new entities are included in index
     internal class TableIndexingEngine<TR, TK, TC> : ReactToRowEngine<TR, TC>
         where TR : class, IReactiveRow<TC>
-        where TK : unmanaged, IKeyEquatable<TK>
+        where TK : unmanaged, IEquatable<TK>
         where TC : unmanaged, IIndexableComponent<TK>
     {
         private readonly HashSet<IndexerGroupData> _groupsToRebuild = new HashSet<IndexerGroupData>();

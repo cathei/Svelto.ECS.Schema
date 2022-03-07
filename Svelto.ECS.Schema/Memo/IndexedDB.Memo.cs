@@ -9,7 +9,7 @@ namespace Svelto.ECS.Schema
     public partial class IndexedDB
     {
         internal void AddMemo<TR, TC>(MemoBase<TR, TC> memo, uint entityID, IEntityTable<TR> table)
-            where TR : class, ISelectorRow<TC>
+            where TR : class, IIndexableRow<TC>
             where TC : unmanaged, IEntityComponent, INeedEGID
         {
             var mapper = GetEGIDMapper(table);
@@ -20,7 +20,7 @@ namespace Svelto.ECS.Schema
         }
 
         internal void RemoveMemo<TR, TC>(MemoBase<TR, TC> memo, uint entityID, IEntityTable<TR> table)
-            where TR : class, ISelectorRow<TC>
+            where TR : class, IIndexableRow<TC>
             where TC : unmanaged, IEntityComponent, INeedEGID
         {
             ref var groupData = ref CreateOrGetMemoGroup(memo._memoID, table);

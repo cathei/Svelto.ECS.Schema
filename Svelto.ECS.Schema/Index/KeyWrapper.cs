@@ -11,7 +11,7 @@ namespace Svelto.ECS.Schema.Internal
 {
     // it is forced to used this becuase FasterDictionary requires IEquatable<T>
     internal readonly struct KeyWrapper<T> : IEquatable<KeyWrapper<T>>, IEquatable<T>
-        where T : unmanaged, IKeyEquatable<T>
+        where T : unmanaged, IEquatable<T>
     {
         private readonly T _value;
         private readonly int _hashcode;

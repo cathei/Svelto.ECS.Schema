@@ -9,42 +9,49 @@ namespace Svelto.ECS.Schema.Generator
     {
         const string RowQueryTemplate = @"
         // Select -> From Table -> Entities
-        public static EntityCollection<{1}> Entities<TR, {1}>(
-                this (IndexedDB, ISelectorRow<{1}>, IEntityTable<TR>) query)
-            where TR : class, ISelectorRow<{1}>
+        public static QueryResult<TRS, TR> Entities<TR, TRS, {1}>(
+                this (IndexedDB, IMagicTuple<IQueryableRowBase<IResultSet<{1}>>, TRS>, IEntityTable<TR>) query)
+            where TR : class, IQueryableRow<TRS>
+            where TRS : struct, IResultSet<{1}>
 {2}
         {{
-            return query.Item1.entitiesDB.QueryEntities<{1}>(query.Item3.ExclusiveGroup);
+            TRS result = default;
+            result.Init(query.Item1.entitiesDB.QueryEntities<{1}>(query.Item3.ExclusiveGroup));
+            return new QueryResult<TRS, TR>(result, query.Item3);
         }}
 
         // Select -> From Tables -> Entities
-        public static TablesEnumerable<TR, {1}> Entities<TR, {1}>(
-                this (IndexedDB, ISelectorRow<{1}>, IEntityTables<TR>) query)
-            where TR : class, ISelectorRow<{1}>
+        public static TablesEnumerable<TRS, TR, {1}> Entities<TR, TRS, {1}>(
+                this (IndexedDB, IMagicTuple<IQueryableRowBase<IResultSet<{1}>>, TRS>, IEntityTables<TR>) query)
+            where TR : class, IQueryableRow<TRS>
+            where TRS : struct, IResultSet<{1}>
 {2}
         {{
-            return new TablesEnumerable<TR, {1}>(query.Item1, query.Item3);
+            return new TablesEnumerable<TRS, TR, {1}>(query.Item1, query.Item3);
         }}
 
         // Select -> From Table -> Where -> Entities
-        public static IndexQueryTuple<{1}> Entities<TR, TI, {1}>(
-                this (IndexedDB, ISelectorRow<{1}>, IEntityTable<TR>, TI) query)
-            where TR : class, ISelectorRow<{1}>
+        public static IndexedQueryResult<TRS, TR> Entities<TR, TRS, TI, {1}>(
+                this (IndexedDB, IMagicTuple<IQueryableRowBase<IResultSet<{1}>>, TRS>, IEntityTable<TR>, TI) query)
+            where TR : class, IQueryableRow<TRS>
+            where TRS : struct, IResultSet<{1}>
             where TI : IIndexQuery
 {2}
         {{
-            return new IndexQueryTuple<{1}>(
-                (query.Item1, query.Item2, query.Item3).Entities(), query.Indices());
+            TRS result = default;
+            result.Init(query.Item1.entitiesDB.QueryEntities<{1}>(query.Item3.ExclusiveGroup));
+            return new IndexedQueryResult<TRS, TR>(result, query.Indices(), query.Item3);
         }}
 
         // Select -> From Tables -> Where -> Entities
-        public static IndexQueryEnumerable<TR, {1}> Entities<TR, TI, {1}>(
-                this (IndexedDB, ISelectorRow<{1}>, IEntityTables<TR>, TI) query)
-            where TR : class, ISelectorRow<{1}>
+        public static IndexQueryEnumerable<TRS, TR, {1}> Entities<TR, TRS, TI, {1}>(
+                this (IndexedDB, IMagicTuple<IQueryableRowBase<IResultSet<{1}>>, TRS>, IEntityTables<TR>, TI) query)
+            where TR : class, IQueryableRow<TRS>
+            where TRS : struct, IResultSet<{1}>
             where TI : IIndexQuery
 {2}
         {{
-            return new IndexQueryEnumerable<TR, {1}>(
+            return new IndexQueryEnumerable<TRS, TR, {1}>(
                 query.Item1, query.Item3, query.Item4.GetIndexerKeyData(query.Item1).groups);
         }}
 ";

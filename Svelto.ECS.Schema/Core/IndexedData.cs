@@ -34,7 +34,7 @@ namespace Svelto.ECS.Schema.Internal
     internal abstract class IndexerData { }
 
     internal sealed class IndexerData<TKey> : IndexerData
-        where TKey : unmanaged, IKeyEquatable<TKey>
+        where TKey : unmanaged, IEquatable<TKey>
     {
         private readonly FasterDictionary<KeyWrapper<TKey>, IndexerKeyData> keyToGroups
             = new FasterDictionary<KeyWrapper<TKey>, IndexerKeyData>();

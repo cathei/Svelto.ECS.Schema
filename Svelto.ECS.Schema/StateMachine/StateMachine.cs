@@ -225,7 +225,7 @@ namespace Svelto.ECS.Schema.Definition
                 where TR : class, IIndexedRow
             {
                 var indices = indexedDB
-                    .Select<IIndexedRow>().From(table).Where(_config._index, _key).Indices();
+                    .Select<IndexableResultSet<Component>>().From(table).Where(_config._index, _key).Indices();
 
                 // nothing to check
                 if (indices.Count() == 0)
@@ -263,7 +263,7 @@ namespace Svelto.ECS.Schema.Definition
                     return;
 
                 var indices = indexedDB
-                    .Select<IIndexedRow>().From(table).Where(_exitCandidates).Indices();
+                    .Select<IndexableResultSet<Component>>().From(table).Where(_exitCandidates).Indices();
 
                 if (indices.Count() == 0)
                     return;
@@ -281,7 +281,7 @@ namespace Svelto.ECS.Schema.Definition
             internal void ProcessEnter(IndexedDB indexedDB, NB<Component> components, IEntityTable<IIndexedRow> table)
             {
                 var indices = indexedDB
-                    .Select<IIndexedRow>().From(table).Where(_enterCandidates).Indices();
+                    .Select<IndexableResultSet<Component>>().From(table).Where(_enterCandidates).Indices();
 
                 if (indices.Count() == 0)
                     return;

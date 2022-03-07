@@ -80,12 +80,12 @@ namespace Svelto.ECS.Schema.Generator
                 return moveNext;
             }}
 
-            public void Reset() {{ _indexValue = -1; }}
+            public void Reset() {{ _indexValue = -1; _result = default; }}
 
             public void Dispose() {{ }}
 
             public IndexedQueryResult<TResult, TRow> Current =>
-                new IndexedQueryResult<TResult, TRow>(_result, _indices, _table);
+                new IndexedQueryResult<TResult, TRow>(_result, new IndexedIndices(_indices), _table);
         }}
     }}
 ";

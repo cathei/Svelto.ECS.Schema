@@ -24,7 +24,7 @@ namespace Svelto.ECS.Schema.Internal
     }
 
     public class MemoBase<TRow, TComponent> : MemoBase, IIndexQuery
-        where TRow : class, ISelectorRow<TComponent>
+        where TRow : class, IIndexableRow<TComponent>
         where TComponent : unmanaged, IEntityComponent, INeedEGID
     {
         internal MemoBase() { }
@@ -64,7 +64,7 @@ namespace Svelto.ECS.Schema.Internal
                 var mapper = indexedDB.GetEGIDMapper(table);
 
                 // TODO: change group to table!
-                var (components, _) = indexedDB.Select<TRow>().From(table).Entities();
+                var (components, _) = indexedDB.Select<IndexableResultSet<TComponent>>().From(table).Entities();
 
                 ref var originalGroupData = ref indexedDB.CreateOrGetMemoGroup(_memoID, table);
 
@@ -118,7 +118,7 @@ namespace Svelto.ECS.Schema.Internal
                     continue;
                 }
 
-                var (components, _) = indexedDB.Select<TRow>().From(table).Entities();
+                var (components, _) = indexedDB.Select<IndexableResultSet<TComponent>>().From(table).Entities();
 
                 // ugh I have to check what to delete
                 // since I cannot change filter while iteration
@@ -152,9 +152,7 @@ namespace Svelto.ECS.Schema.Internal
 
 namespace Svelto.ECS.Schema.Definition
 {
-    // we have EGIDComponent constraints because it requires INeedEGID
-    // it won't be necessary when Svelto update it's filter utility functions
-    public interface IMemorableRow : ISelectorRow<EGIDComponent> { }
+    public interface IMemorableRow : IIndexableRow<EGIDComponent> { }
 
     public sealed class Memo<TRow> : MemoBase<TRow, EGIDComponent>
         where TRow : class, IMemorableRow

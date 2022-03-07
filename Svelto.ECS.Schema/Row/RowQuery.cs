@@ -8,8 +8,9 @@ using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema.Internal
 {
-    public readonly ref struct SelectQuery<TRow>
+    public readonly ref struct SelectQuery<TRow, TResult>
         where TRow : class, IEntityRow
+        where TResult : struct, IResultSet
     {
         internal readonly IndexedDB Item1;
 
@@ -18,34 +19,36 @@ namespace Svelto.ECS.Schema.Internal
             Item1 = indexedDB;
         }
 
-        public (IndexedDB, IMagicRowHolder<TRow, TRow, TRow>, IEntityTables<TRow>) FromAll() => FromAll<TRow>();
+        public (IndexedDB, IMagicTuple<TRow, TResult>, IEntityTables<TRow>) FromAll() => FromAll<TRow>();
 
         // Select -> All
         /// <summary>
         /// This is shortcut for `indexedDB.Select<TR>().From(indexedDB.Select<TTR>().Tables());
         /// </summary>
-        public (IndexedDB, IMagicRowHolder<TRow, TRow, TRow>, IEntityTables<TTableRow>) FromAll<TTableRow>()
+        public (IndexedDB, IMagicTuple<TRow, TResult>, IEntityTables<TTableRow>) FromAll<TTableRow>()
             where TTableRow : class, TRow
         {
             return (Item1, default, Item1.FindTables<TTableRow>());
         }
     }
 
+    public readonly ref struct SelectFromTableQuery<TRow, TResult, TTableRow>
+        where TRow : class, IEntityRow
+        where TResult : struct, IResultSet
+        where TTableRow : class, IEntityRow
+    {
+        internal readonly IndexedDB Item1;
+        internal readonly IEntityTable<TTableRow> Item3;
+
+        internal SelectFromTableQuery(IndexedDB indexedDB, IEntityTable<TTableRow> table)
+        {
+            Item1 = indexedDB;
+            Item3 = table;
+        }
+    }
+
     // magic for type inference ! they can be used for whatever I want :)
-    public interface IMagicRowHolder<out T1, out T2, out T3> { }
-
-    public interface IMagicTupleFactory<TInput, TOutput>
-    {
-        public TOutput Convert(in TInput tuple);
-    }
-
-    // TInput and TOutput are exactly same type
-    // I know it is stupid but we can assign tuple names like this
-    // bypassic c#'s restrictions
-    public struct MagicTupleFactory<TTuple> : IMagicTupleFactory<TTuple, TTuple>
-    {
-        public TTuple Convert(in TTuple tuple) => tuple;
-    }
+    public interface IMagicTuple<out T1, out T2> { }
 }
 
 namespace Svelto.ECS.Schema
@@ -53,6 +56,7 @@ namespace Svelto.ECS.Schema
     /// <summary>
     /// We need some notes about why this extensions use tuples
     /// Tuple supports Covariance by deconstructive assignment,
+    /// This is normally only possible with interfaces.
     /// so we can chain extension methods properly with Value type query.
     /// </summary>
     public static partial class RowQueryExtensions
@@ -60,70 +64,63 @@ namespace Svelto.ECS.Schema
         // query entrypoint Select -> (From ->) (Where ->) Entities
         // query entrypoint Select -> From Table -> Where -> Indices
         // query entrypoint Select -> Tables
-        public static SelectQuery<IQueryableRow<TResult>> Select<TResult>(this IndexedDB indexedDB)
+        public static SelectQuery<IQueryableRow<TResult>, TResult> Select<TResult>(this IndexedDB indexedDB)
             where TResult : struct, IResultSet
         {
-            return new SelectQuery<IQueryableRow<TResult>>(indexedDB);
+            return new SelectQuery<IQueryableRow<TResult>, TResult>(indexedDB);
         }
 
-        // /// <summary>
-        // /// This will find all Tables containing Row type TR
-        // /// </summary>
-        // public static IEntityTables<TR> Tables<TR>(this in SelectQuery<TR> query)
-        //     where TR : class, IEntityRow
-        // {
-        //     return query.Item1.FindTables<TR>();
-        // }
-
         // Select -> From Table
-        public static (IndexedDB, TR, IEntityTable<TTR>) From<TR, TTR>(
-                this in SelectQuery<TR> query, IEntityTable<TTR> table)
+        public static (IndexedDB, IMagicTuple<TR, TRS>, IEntityTable<TTR>) From<TR, TRS, TTR>(
+                this in SelectQuery<TR, TRS> query, IEntityTable<TTR> table)
             where TR : class, IEntityRow
+            where TRS : struct, IResultSet
             where TTR : class, TR
         {
-            return (query.Item1, null, table);
+            return (query.Item1, default, table);
         }
 
         // Select -> From Tables
-        public static (IndexedDB, TR, IEntityTables<TTR>) From<TR, TTR>(
-                this in SelectQuery<TR> query, IEntityTables<TTR> tables)
+        public static (IndexedDB, IMagicTuple<TR, TRS>, IEntityTables<TTR>) From<TR, TRS, TTR>(
+                this in SelectQuery<TR, TRS> query, IEntityTables<TTR> tables)
             where TR : class, IEntityRow
+            where TRS : struct, IResultSet
             where TTR : class, TR
         {
-            return (query.Item1, null, tables);
+            return (query.Item1, default, tables);
         }
 
         // Select -> From Table -> Where
         // Table Row must implement both Selector Row and Index Row
-        public static (IndexedDB, TR, IEntityTable<TTR>, IndexQuery<TIR, TIK>) Where<TR, TTR, TIR, TIK>(
-                this in (IndexedDB, TR, IEntityTable<TTR>) query, IIndexQueryable<TIR, TIK> index, TIK key)
+        public static (IndexedDB, IMagicTuple<TR, TRS>, IEntityTable<TTR>, IndexQuery<TIR, TIK>) Where<TR, TRS, TTR, TIR, TIK>(
+                this in (IndexedDB, IMagicTuple<TR, TRS>, IEntityTable<TTR>) query, IIndexQueryable<TIR, TIK> index, TIK key)
             where TR : class, IEntityRow
             where TTR : class, TR, TIR
             where TIR : class, IEntityRow
-            where TIK : unmanaged, IKeyEquatable<TIK>
+            where TIK : unmanaged, IEquatable<TIK>
         {
             return (query.Item1, query.Item2, query.Item3, index.Query(key));
         }
 
         // Select -> From Tables -> Where
         // Tables Row must implement both Selector Row and Index Row
-        public static (IndexedDB, TR, IEntityTables<TTR>, IndexQuery<TIR, TIK>) Where<TR, TTR, TIR, TIK>(
-                this in (IndexedDB, TR, IEntityTables<TTR>) query, IIndexQueryable<TIR, TIK> index, TIK key)
+        public static (IndexedDB, IMagicTuple<TR, TRS>, IEntityTables<TTR>, IndexQuery<TIR, TIK>) Where<TR, TRS, TTR, TIR, TIK>(
+                this in (IndexedDB, IMagicTuple<TR, TRS>, IEntityTables<TTR>) query, IIndexQueryable<TIR, TIK> index, TIK key)
             where TR : class, IEntityRow
             where TTR : class, TR, TIR
             where TIR : class, IEntityRow
-            where TIK : unmanaged, IKeyEquatable<TIK>
+            where TIK : unmanaged, IEquatable<TIK>
         {
             return (query.Item1, query.Item2, query.Item3, index.Query(key));
         }
 
         // Select -> From Table -> Where
         // Table Row must implement both Selector Row and Index Row
-        public static (IndexedDB, TR, IEntityTable<TTR>, MemoBase<TMR, TMC>) Where<TR, TTR, TMR, TMC>(
-                this in (IndexedDB, TR, IEntityTable<TTR>) query, MemoBase<TMR, TMC> memo)
+        public static (IndexedDB, IMagicTuple<TR, TRS>, IEntityTable<TTR>, MemoBase<TMR, TMC>) Where<TR, TRS, TTR, TMR, TMC>(
+                this in (IndexedDB, IMagicTuple<TR, TRS>, IEntityTable<TTR>) query, MemoBase<TMR, TMC> memo)
             where TR : class, IEntityRow
             where TTR : class, TR, TMR
-            where TMR : class, ISelectorRow<TMC>
+            where TMR : class, IIndexableRow<TMC>
             where TMC : unmanaged, IEntityComponent, INeedEGID
         {
             return (query.Item1, query.Item2, query.Item3, memo);
@@ -131,19 +128,19 @@ namespace Svelto.ECS.Schema
 
         // Select -> From Tables -> Where
         // Tables Row must implement both Selector Row and Index Row
-        public static (IndexedDB, TR, IEntityTables<TTR>, MemoBase<TMR, TMC>) Where<TR, TTR, TMR, TMC>(
-                this in (IndexedDB, TR, IEntityTables<TTR>) query, MemoBase<TMR, TMC> memo)
+        public static (IndexedDB, IMagicTuple<TR, TRS>, IEntityTables<TTR>, MemoBase<TMR, TMC>) Where<TR, TRS, TTR, TMR, TMC>(
+                this in (IndexedDB, IMagicTuple<TR, TRS>, IEntityTables<TTR>) query, MemoBase<TMR, TMC> memo)
             where TR : class, IEntityRow
             where TTR : class, TR, TMR
-            where TMR : class, ISelectorRow<TMC>
+            where TMR : class, IIndexableRow<TMC>
             where TMC : unmanaged, IEntityComponent, INeedEGID
         {
             return (query.Item1, query.Item2, query.Item3, memo);
         }
 
         // Select -> From Table -> Where -> Indices
-        internal static IndexedIndices Indices<TR, TI>(
-                this in (IndexedDB, TR, IEntityTable, TI) query)
+        internal static IndexedIndices Indices<TR, TRS, TI>(
+                this in (IndexedDB, IMagicTuple<TR, TRS>, IEntityTable, TI) query)
             where TR : class, IEntityRow
             where TI : IIndexQuery
         {
