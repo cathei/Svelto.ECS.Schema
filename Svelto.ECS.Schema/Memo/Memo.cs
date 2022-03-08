@@ -23,21 +23,23 @@ namespace Svelto.ECS.Schema.Internal
         internal MemoBase() { }
     }
 
-    public abstract class MemoBase<TRow, TComponent> : MemoBase
+    public abstract class MemoBase<TRow, TComponent> : MemoBase, IIndexQuery<TRow>
         where TRow : class, IIndexableRow<TComponent>
         where TComponent : unmanaged, IEntityComponent, INeedEGID
     {
         internal MemoBase() { }
 
-        internal void Set(IndexedDB indexedDB, IndexQuery query)
+        internal void Set<TIndex>(IndexedDB indexedDB, TIndex query)
+            where TIndex : IIndexQuery<TRow>
         {
             indexedDB.ClearMemo(this);
             Union(indexedDB, query);
         }
 
-        internal void Union(IndexedDB indexedDB, IndexQuery query)
+        internal void Union<TIndex>(IndexedDB indexedDB, TIndex query)
+            where TIndex : IIndexQuery<TRow>
         {
-            var queryData = query._keyData.groups;
+            var queryData = query.GetIndexerKeyData(indexedDB).groups;
 
             // if empty nothing to add
             if (queryData == null)
@@ -71,7 +73,8 @@ namespace Svelto.ECS.Schema.Internal
             }
         }
 
-        internal void Intersect(IndexedDB indexedDB, IndexQuery query)
+        internal void Intersect<TIndex>(IndexedDB indexedDB, TIndex query)
+            where TIndex : IIndexQuery<TRow>
         {
             var originalData = GetIndexerKeyData(indexedDB).groups;
 
@@ -79,7 +82,7 @@ namespace Svelto.ECS.Schema.Internal
             if (originalData == null)
                 return;
 
-            var queryData = query._keyData.groups;
+            var queryData = query.GetIndexerKeyData(indexedDB).groups;
 
             // if empty nothing to intersect
             if (queryData == null)
@@ -143,6 +146,9 @@ namespace Svelto.ECS.Schema.Internal
                 return result.keyData;
             return default;
         }
+
+        IndexerKeyData IIndexQuery.GetIndexerKeyData(IndexedDB indexedDB)
+            => GetIndexerKeyData(indexedDB);
     }
 }
 

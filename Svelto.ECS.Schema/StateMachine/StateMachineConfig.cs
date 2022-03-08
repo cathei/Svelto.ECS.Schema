@@ -50,13 +50,13 @@ namespace Svelto.ECS.Schema.Definition
             StateMachine<TComponent>.Config = Default;
         }
 
-        internal readonly FasterDictionary<TState, StateConfig> _states;
-        internal readonly AnyStateConfig _anyState;
+        internal readonly FasterDictionary<TState, State> _states;
+        internal readonly AnyState _anyState;
 
         internal StateMachineConfig() : base()
         {
-            _states = new FasterDictionary<TState, StateConfig>();
-            _anyState = new AnyStateConfig(this);
+            _states = new FasterDictionary<TState, State>();
+            _anyState = new AnyState(this);
         }
 
         internal override IStepEngine GetEngine(IndexedDB indexedDB)

@@ -9,7 +9,7 @@ namespace Svelto.ECS.Schema.Definition
 {
     partial class StateMachineConfig<TRow, TComponent, TState>
     {
-        internal sealed class StateConfig
+        internal sealed class State
         {
             internal readonly StateMachineConfig<TRow, TComponent, TState> _config;
             internal readonly TState _key;
@@ -23,7 +23,7 @@ namespace Svelto.ECS.Schema.Definition
 
             internal sealed class Memo : MemoBase<TRow, TComponent> { }
 
-            internal StateConfig(StateMachineConfig<TRow, TComponent, TState> config, in TState state)
+            internal State(StateMachineConfig<TRow, TComponent, TState> config, in TState state)
             {
                 _config = config;
                 _key = state;
@@ -39,7 +39,7 @@ namespace Svelto.ECS.Schema.Definition
             internal void Evaluate(IndexedDB indexedDB, NB<TComponent> components, IEntityTable<TRow> table)
             {
                 var indices = indexedDB
-                    .Select<StateMachineResultSet<TComponent>>().From(table).Where(_config._index, _key).Indices();
+                    .Select<StateMachineResultSet<TComponent>>().From(table).Where(_config._index.Is(_key)).Indices();
 
                 // nothing to check
                 if (indices.Count() == 0)
@@ -117,12 +117,12 @@ namespace Svelto.ECS.Schema.Definition
             }
         }
 
-        internal sealed class AnyStateConfig
+        internal sealed class AnyState
         {
             internal readonly StateMachineConfig<TRow, TComponent, TState> _config;
             internal readonly FasterList<TransitionConfig<TState>> _transitions;
 
-            internal AnyStateConfig(StateMachineConfig<TRow, TComponent, TState> config)
+            internal AnyState(StateMachineConfig<TRow, TComponent, TState> config)
             {
                 _config = config;
                 _transitions = new FasterList<TransitionConfig<TState>>();
