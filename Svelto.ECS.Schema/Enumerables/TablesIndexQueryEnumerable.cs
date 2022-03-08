@@ -1,6 +1,7 @@
 using Svelto.DataStructures;
+using Svelto.ECS.Schema.Internal;
 
-namespace Svelto.ECS.Schema.Internal
+namespace Svelto.ECS.Schema
 {
     public readonly ref struct TablesIndexQueryEnumerable<TResult, TRow>
         where TResult : struct, IResultSet

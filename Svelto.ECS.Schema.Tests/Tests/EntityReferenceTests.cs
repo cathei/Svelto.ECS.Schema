@@ -1,4 +1,5 @@
 using System.Linq;
+using Svelto.DataStructures;
 using Svelto.ECS.Schema.Definition;
 using Xunit;
 
@@ -17,13 +18,37 @@ namespace Svelto.ECS.Schema.Tests
             public uint proof;
         }
 
-        public interface IThiefRow : ISelectorRow<EGIDComponent, ThiefCopmonent>
+        public struct ThiefSet : IResultSet<EGIDComponent, ThiefCopmonent>
+        {
+            public NB<EGIDComponent> egid;
+            public NB<ThiefCopmonent> thief;
+
+            public int count { get; set; }
+
+            public void Init(in EntityCollection<EGIDComponent, ThiefCopmonent> buffers)
+            {
+                (egid, thief, count) = buffers;
+            }
+        }
+
+        public struct PoliceSet : IResultSet<PoliceComponent>
+        {
+            public NB<PoliceComponent> police;
+
+            public int count { get; set; }
+
+            public void Init(in EntityCollection<PoliceComponent> buffers)
+            {
+                (police, count) = buffers;
+            }
+        }
+
+        public sealed class ThiefRow :
+            DescriptorRow<ThiefRow>, IQueryableRow<ThiefSet>
         { }
 
-        public sealed class ThiefRow : DescriptorRow<ThiefRow>, IThiefRow
-        { }
-
-        public sealed class PoliceRow : DescriptorRow<PoliceRow>, ISelectorRow<PoliceComponent>
+        public sealed class PoliceRow :
+            DescriptorRow<PoliceRow>, IQueryableRow<PoliceSet>
         { }
 
         public class TestSchema : IEntitySchema
@@ -45,16 +70,16 @@ namespace Svelto.ECS.Schema.Tests
 
             uint policeCount = 0;
 
-            foreach (var ((egid, thief, count), table) in _indexedDB.Select<ThiefRow>().FromAll().Entities())
+            foreach (var result in _indexedDB.Select<ThiefSet>().FromAll())
             {
-                for (uint i = 0 ; i < count; ++i)
+                foreach (var i in result.indices)
                 {
                     var builder = _factory.Build(_schema.Police, policeCount++);
 
                     builder.Init(new PoliceComponent
                     {
-                        target = _indexedDB.GetEntityReference(table, egid[i].ID.entityID),
-                        proof = thief[i].proof
+                        target = _indexedDB.GetEntityReference(result.table, result.set.egid[i].ID.entityID),
+                        proof = result.set.thief[i].proof
                     });
                 }
             }
@@ -63,18 +88,18 @@ namespace Svelto.ECS.Schema.Tests
 
             _submissionScheduler.SubmitEntities();
 
-            var (police, pcount) = _indexedDB.Select<PoliceRow>().From(_schema.Police).Entities();
+            var policeResult = _indexedDB.Select<PoliceSet>().From(_schema.Police).Entities();
 
-            Assert.Equal(1000, pcount);
+            Assert.Equal(1000, policeResult.set.count);
 
             for (int i = 0; i < 1000; ++i)
             {
-                Assert.True(_indexedDB.TryGetEntityIndex<IThiefRow>(
-                    police[i].target, out var table, out var index));
+                Assert.True(_indexedDB.TryGetEntityIndex<ThiefRow>(
+                    policeResult.set.police[i].target, out var table, out var index));
 
-                var (egid, thief, count) = _indexedDB.Select<IThiefRow>().From(table).Entities();
+                var thiefResult = _indexedDB.Select<ThiefSet>().From(table).Entities();
 
-                Assert.Equal(police[i].proof, thief[index].proof);
+                Assert.Equal(policeResult.set.police[i].proof, thiefResult.set.thief[index].proof);
             }
         }
     }

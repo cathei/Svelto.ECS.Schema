@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
+using Svelto.DataStructures;
 using Svelto.ECS.Schema.Definition;
 using Xunit;
 
@@ -22,42 +23,53 @@ namespace Svelto.ECS.Schema.Tests
             public float value;
         }
 
-        public interface IRageCharacterRow : ISelectorRow<RageComponent, CharacterFSM.Component>
-        { }
-
-        public interface IAllFourRow : ISelectorRow<RageComponent, TriggerComponent, SpecialTimerComponent, CharacterFSM.Component>
-        { }
-
-        public interface ICharacterRow : CharacterFSM.IRow, IRageCharacterRow, IAllFourRow
-        { }
-
         public enum CharacterState { Normal, Upset, Angry, Special, MAX }
 
-        public readonly struct CharacterFSMState : IStateMachineComponent<CharacterFSMState>
+        public struct CharacterStateComponent : IStateMachineComponent<EnumKey<CharacterState>>
         {
-            private readonly CharacterState state;
+            public EGID ID { get; set; }
+            public EnumKey<CharacterState> state { get; set; }
 
-            public CharacterFSMState(CharacterState state) { this.state = state; }
-
-            public static implicit operator CharacterFSMState(CharacterState state) => new CharacterFSMState(state);
-
-            public bool KeyEquals(in CharacterFSMState other) => state == other.state;
-
-            public override bool Equals(object obj) => obj is CharacterFSMState other && KeyEquals(other);
-
-            public int KeyHashCode() => state.GetHashCode();
-
-            public override int GetHashCode() => state.GetHashCode();
-
-            public override string ToString() => state.ToString();
+            public CharacterStateComponent(CharacterState state) : this()
+            {
+                this.state = state;
+            }
         }
 
-        public class CharacterFSM : StateMachine<CharacterFSMState>
+        public struct RageResultSet : IResultSet<RageComponent, CharacterStateComponent>
+        {
+            public int count { get; set; }
+
+            public NB<RageComponent> rage;
+            public NB<CharacterStateComponent> state;
+
+            public void Init(in EntityCollection<RageComponent, CharacterStateComponent> buffers)
+            {
+                (rage, state, count) = buffers;
+            }
+        }
+
+        public struct AllFourSet : IResultSet<RageComponent, TriggerComponent, SpecialTimerComponent, CharacterStateComponent>
+        {
+            public int count { get; set; }
+
+            public NB<RageComponent> rage;
+            public NB<TriggerComponent> trigger;
+            public NB<SpecialTimerComponent> timer;
+            public NB<CharacterStateComponent> state;
+
+            public void Init(in EntityCollection<RageComponent, TriggerComponent, SpecialTimerComponent, CharacterStateComponent> buffers)
+            {
+                (rage, trigger, timer, state, count) = buffers;
+            }
+        }
+
+        public class CharacterFSM : StateMachine<CharacterStateComponent>
         {
             public interface IRow : IIndexableRow,
-                ISelectorRow<RageComponent>,
-                ISelectorRow<TriggerComponent>,
-                ISelectorRow<SpecialTimerComponent>
+                IEntityRow<RageComponent>,
+                IEntityRow<TriggerComponent>,
+                IEntityRow<SpecialTimerComponent>
             { }
 
             protected override void OnConfigure()
@@ -89,12 +101,14 @@ namespace Svelto.ECS.Schema.Tests
 
                 // any state but special
                 builder.AnyState.AddTransition(stateNormal)
-                    .AddCondition((ref Component self) => !self.Key.KeyEquals(CharacterState.Special))
+                    .AddCondition((ref CharacterStateComponent self) => self.state != CharacterState.Special)
                     .AddCondition((ref RageComponent rage) => rage.value < 10);
             }
         }
 
-        public class CharacterRow : DescriptorRow<CharacterRow>, ICharacterRow { }
+        public class CharacterRow : DescriptorRow<CharacterRow>,
+            CharacterFSM.IRow, IQueryableRow<RageResultSet>, IQueryableRow<AllFourSet>
+        { }
 
         public class TestSchema : IEntitySchema
         {
@@ -110,26 +124,26 @@ namespace Svelto.ECS.Schema.Tests
 
         private void AssertIndexer()
         {
-            var (component, count) = _indexedDB.Select<CharacterFSM.IIndexableRow>().From(_schema.Character).Entities();
+            var result = _indexedDB.Select<RageResultSet>().From(_schema.Character).Entities();
 
             int totalCheckedCount = 0;
 
             for (CharacterState state = 0; state < CharacterState.MAX; ++state)
             {
-                var indices = _indexedDB.Select<CharacterFSM.IIndexableRow>()
-                    .From(_schema.Character).Where(_characterFSM, state).Indices();
+                var indices = _indexedDB.Select<RageResultSet>()
+                    .From(_schema.Character).Where(_characterFSM.Is(state)).Indices();
 
                 foreach (var i in indices)
                 {
                     // component state must match
-                    Assert.Equal(state, component[i].Key);
+                    Assert.Equal(state, (CharacterState)result.set.state[i].state);
 
                     ++totalCheckedCount;
                 }
             }
 
             // all components should belong in index
-            Assert.Equal(count, totalCheckedCount);
+            Assert.Equal(result.set.count, totalCheckedCount);
         }
 
         [Fact]
@@ -138,7 +152,7 @@ namespace Svelto.ECS.Schema.Tests
             for (uint i = 0; i < 10; ++i)
             {
                 var character = _factory.Build(_schema.Character, i);
-                character.Init(new CharacterFSM.Component(CharacterState.Normal));
+                character.Init(new CharacterStateComponent(CharacterState.Normal));
             }
 
             _submissionScheduler.SubmitEntities();
@@ -147,21 +161,22 @@ namespace Svelto.ECS.Schema.Tests
 
             AssertIndexer();
 
-            var (rage, fsm, count) = _indexedDB.Select<IRageCharacterRow>().From(_schema.Character).Entities();
+            var result = _indexedDB.Select<RageResultSet>().From(_schema.Character).Entities();
 
-            for (int i = 0; i < count; ++i)
+            foreach (var i in result.indices)
             {
-                Assert.Equal(CharacterState.Normal, fsm[i].Key);
-                rage[i].value = i * 2;
+                Assert.Equal(CharacterState.Normal, (CharacterState)result.set.state[i].state);
+                result.set.rage[i].value = (int)(i * 2);
             }
 
             _characterFSM.Engine.Step();
 
             AssertIndexer();
 
-            for (int i = 0; i < count; ++i)
+            for (int i = 0; i < result.set.count; ++i)
             {
-                Assert.Equal(i < 5 ? CharacterState.Normal : CharacterState.Upset, fsm[i].Key);
+                Assert.Equal(i < 5 ? CharacterState.Normal : CharacterState.Upset,
+                    (CharacterState)result.set.state[i].state);
             }
         }
 
@@ -171,37 +186,37 @@ namespace Svelto.ECS.Schema.Tests
             for (uint i = 0; i < 10; ++i)
             {
                 var character = _factory.Build(_schema.Character, i);
-                character.Init(new CharacterFSM.Component(CharacterState.Normal));
+                character.Init(new CharacterStateComponent(CharacterState.Normal));
                 character.Init(new RageComponent { value = 100 });
             }
 
             _submissionScheduler.SubmitEntities();
 
-            var (rage, fsm, count) = _indexedDB.Select<IRageCharacterRow>().From(_schema.Character).Entities();
+            var result = _indexedDB.Select<RageResultSet>().From(_schema.Character).Entities();
 
             AssertIndexer();
 
-            for (int i = 0; i < count; ++i)
+            foreach (var i in result.indices)
             {
-                Assert.Equal(CharacterState.Normal, fsm[i].Key);
+                Assert.Equal(CharacterState.Normal, (CharacterState)result.set.state[i].state);
             }
 
             _characterFSM.Engine.Step();
 
             AssertIndexer();
 
-            for (int i = 0; i < count; ++i)
+            foreach (var i in result.indices)
             {
-                Assert.Equal(CharacterState.Upset, fsm[i].Key);
+                Assert.Equal(CharacterState.Upset, (CharacterState)result.set.state[i].state);
             }
 
             _characterFSM.Engine.Step();
 
             AssertIndexer();
 
-            for (int i = 0; i < count; ++i)
+            foreach (var i in result.indices)
             {
-                Assert.Equal(CharacterState.Angry, fsm[i].Key);
+                Assert.Equal(CharacterState.Angry, (CharacterState)result.set.state[i].state);
             }
         }
 
@@ -211,42 +226,41 @@ namespace Svelto.ECS.Schema.Tests
             for (uint i = 0; i < 100; ++i)
             {
                 var character = _factory.Build(_schema.Character, i);
-                character.Init(new CharacterFSM.Component(CharacterState.Normal));
+                character.Init(new CharacterStateComponent(CharacterState.Normal));
                 character.Init(new RageComponent { value = -1 });
                 character.Init(new TriggerComponent { value = i % 2 == 0 });
             }
 
             _submissionScheduler.SubmitEntities();
 
-            var (rage, trigger, timer, fsm, count) = _indexedDB
-                .Select<IAllFourRow>().From(_schema.Character).Entities();
+            var result = _indexedDB.Select<AllFourSet>().From(_schema.Character).Entities();
 
             _characterFSM.Engine.Step();
 
             AssertIndexer();
 
-            for (int i = 0; i < count; ++i)
+            foreach (var i in result.indices)
             {
-                Assert.Equal(i % 2 == 0 ? CharacterState.Special : CharacterState.Normal, fsm[i].Key);
+                Assert.Equal(i % 2 == 0 ? CharacterState.Special : CharacterState.Normal, (CharacterState)result.set.state[i].state);
 
                 // must assigned when ExecuteOnEnter
-                Assert.False(trigger[i].value);
-                Assert.Equal(i % 2 == 0 ? 1 : 0, timer[i].value);
+                Assert.False(result.set.trigger[i].value);
+                Assert.Equal(i % 2 == 0 ? 1 : 0, result.set.timer[i].value);
 
                 if (i % 3 == 0)
-                    timer[i].value = 0;
+                    result.set.timer[i].value = 0;
             }
 
             _characterFSM.Engine.Step();
 
             AssertIndexer();
 
-            for (int i = 0; i < count; ++i)
+            foreach (var i in result.indices)
             {
-                Assert.Equal(i % 3 != 0 && i % 2 == 0 ? CharacterState.Special : CharacterState.Normal, fsm[i].Key);
+                Assert.Equal(i % 3 != 0 && i % 2 == 0 ? CharacterState.Special : CharacterState.Normal, (CharacterState)result.set.state[i].state);
 
                 // must assigned when ExecuteOnExit
-                Assert.Equal(i % 3 == 0 && i % 2 == 0 ? 5 : -1, rage[i].value);
+                Assert.Equal(i % 3 == 0 && i % 2 == 0 ? 5 : -1, result.set.rage[i].value);
             }
         }
 
@@ -256,7 +270,7 @@ namespace Svelto.ECS.Schema.Tests
             for (uint i = 0; i < 1000; ++i)
             {
                 var character = _factory.Build(_schema.Character, i);
-                character.Init(new CharacterFSM.Component(CharacterState.Normal));
+                character.Init(new CharacterStateComponent(CharacterState.Normal));
             }
 
             _submissionScheduler.SubmitEntities();
@@ -264,19 +278,19 @@ namespace Svelto.ECS.Schema.Tests
             // warming up
             _characterFSM.Engine.Step();
 
-            var (rage, fsm, count) = _indexedDB.Select<IRageCharacterRow>().From(_schema.Character).Entities();
+            var result = _indexedDB.Select<RageResultSet>().From(_schema.Character).Entities();
 
-            for (int i = 0; i < count; ++i)
+            foreach (var i in result.indices)
             {
-                Assert.Equal(CharacterState.Normal, fsm[i].Key);
-                rage[i].value = i * 2;
+                Assert.Equal(CharacterState.Normal, (CharacterState)result.set.state[i].state);
+                result.set.rage[i].value = (int)i * 2;
             }
 
             _characterFSM.Engine.Step();
 
-            for (int i = 0; i < count; ++i)
+            foreach (var i in result.indices)
             {
-                rage[i].value = 0;
+                result.set.rage[i].value = 0;
             }
 
             _characterFSM.Engine.Step();

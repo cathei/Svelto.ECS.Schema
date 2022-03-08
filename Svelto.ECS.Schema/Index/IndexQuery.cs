@@ -68,5 +68,17 @@ namespace Svelto.ECS.Schema
             return new IndexQuery<TRow, TKey>(queryable.IndexerID, key);
         }
     }
+
+    public static class IndexQueryEnumExtensions
+    {
+        public static IndexQuery<TRow, EnumKey<TKey>> Is<TRow, TComponent, TKey>(
+                this IIndexQueryable<TRow, TComponent> queryable, TKey key)
+            where TRow : class, IIndexableRow<TComponent>
+            where TComponent : unmanaged, IIndexableComponent<EnumKey<TKey>>
+            where TKey : unmanaged, Enum
+        {
+            return new IndexQuery<TRow, EnumKey<TKey>>(queryable.IndexerID, key);
+        }
+    }
 }
 

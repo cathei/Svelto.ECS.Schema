@@ -29,16 +29,31 @@ namespace Svelto.ECS.Schema
 
             public Descriptor()
             {
-                // reflection time!
-                // for all interface the row implements
-                var interfaceTypes = typeof(TSelf).GetInterfaces();
                 var componentBuilderDict = new FasterDictionary<RefWrapperType, IComponentBuilder>();
 
                 componentBuilderDict.Add(
                     TypeRefWrapper<RowIdentityComponent>.wrapper,
                     new ComponentBuilder<RowIdentityComponent>());
 
-                foreach (var interfaceType in interfaceTypes)
+                void addComponentBuilders(Type interfaceType)
+                {
+                    var componentBuildersField = interfaceType.GetField(
+                        nameof(IEntityRow<EGIDComponent>.componentBuilders),
+                        BindingFlags.Static | BindingFlags.NonPublic);
+
+                    var componentBuilders = (IComponentBuilder[])componentBuildersField.GetValue(null);
+
+                    // prevent duplication with Dictionary
+                    foreach (var componentBuilder in componentBuilders)
+                    {
+                        var wrapper = new RefWrapperType(componentBuilder.GetEntityComponentType());
+                        componentBuilderDict[wrapper] = componentBuilder;
+                    }
+                }
+
+                // reflection time!
+                // for all interface the row implements
+                foreach (var interfaceType in typeof(TSelf).GetInterfaces())
                 {
                     // we are finding generics only
                     if (!interfaceType.IsGenericType)
@@ -46,23 +61,27 @@ namespace Svelto.ECS.Schema
 
                     var genericDefinition = interfaceType.GetGenericTypeDefinition();
 
-                    if (genericDefinition == typeof(IEntityRow<>) ||
-                        genericDefinition == typeof(IQueryableRow<>) ||
-                        genericDefinition == typeof(ISelectorRow<,>) ||
-                        genericDefinition == typeof(ISelectorRow<,,>) ||
-                        genericDefinition == typeof(ISelectorRow<,,,>))
+                    if (genericDefinition == typeof(IEntityRow<>))
+                        addComponentBuilders(interfaceType);
+
+                    if (genericDefinition == typeof(IQueryableRow<>))
                     {
-                        var componentBuildersField = interfaceType.GetField(
-                            nameof(IEntityRow<EGIDComponent>.componentBuilders),
-                            BindingFlags.Static | BindingFlags.NonPublic);
+                        var resultSetType = interfaceType.GenericTypeArguments[0];
 
-                        var componentBuilders = (IComponentBuilder[])componentBuildersField.GetValue(null);
-
-                        // prevent duplication with Dictionary
-                        foreach (var componentBuilder in componentBuilders)
+                        foreach (var innerInterfaceType in resultSetType.GetInterfaces())
                         {
-                            var wrapper = new RefWrapperType(componentBuilder.GetEntityComponentType());
-                            componentBuilderDict[wrapper] = componentBuilder;
+                            if (!innerInterfaceType.IsGenericType)
+                                continue;
+
+                            var innerGenericDefinition = innerInterfaceType.GetGenericTypeDefinition();
+
+                            if (innerGenericDefinition == typeof(IResultSet<>) ||
+                                innerGenericDefinition == typeof(IResultSet<,>) ||
+                                innerGenericDefinition == typeof(IResultSet<,,>) ||
+                                innerGenericDefinition == typeof(IResultSet<,,,>))
+                            {
+                                addComponentBuilders(innerInterfaceType);
+                            }
                         }
                     }
                 }

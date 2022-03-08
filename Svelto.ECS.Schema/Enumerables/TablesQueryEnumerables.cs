@@ -1,4 +1,6 @@
-namespace Svelto.ECS.Schema.Internal
+using Svelto.ECS.Schema.Internal;
+
+namespace Svelto.ECS.Schema
 {
     public readonly ref struct TablesQueryEnumerable<TResult, TRow>
         where TResult : struct, IResultSet

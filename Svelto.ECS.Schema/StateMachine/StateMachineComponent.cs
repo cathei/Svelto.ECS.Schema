@@ -4,12 +4,7 @@ using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema
 {
-    public interface IStateMachineComponent : IIndexableComponent
-    {
-        internal StateMachineConfigBase<TComponent> CreateConfig<TRow, TComponent>()
-            where TRow : class, StateMachine<TComponent>.IIndexableRow
-            where TComponent : unmanaged, IStateMachineComponent;
-    }
+    public interface IStateMachineComponent : IIndexableComponent { }
 
     public interface IStateMachineComponent<TState> :
             IStateMachineComponent, IIndexableComponent<TState>

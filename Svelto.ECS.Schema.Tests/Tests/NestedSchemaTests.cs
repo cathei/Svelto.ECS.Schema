@@ -9,10 +9,8 @@ namespace Svelto.ECS.Schema.Tests
 {
     public class NestedSchemaTests : SchemaTestsBase<NestedSchemaTests.TestSchema>
     {
-        public interface IHaveEGID : ISelectorRow<EGIDComponent> { }
-
-        public class DoofusRow : DescriptorRow<DoofusRow>, IHaveEGID { }
-        public class FoodRow : DescriptorRow<FoodRow>, IHaveEGID { }
+        public class DoofusRow : DescriptorRow<DoofusRow> { }
+        public class FoodRow : DescriptorRow<FoodRow> { }
 
         public enum TeamColor { Red, Blue, Yellow, Green, MAX }
         public enum FoodType { Rotten, Good, MAX }

@@ -29,7 +29,7 @@
     <Compile Remove="Generated\**\*.cs" />
   </ItemGroup>
   
-  <Target Name="CopyGeneratedFiles" AfterTargets="AfterBuild">
+  <!-- <Target Name="CopyGeneratedFiles" AfterTargets="AfterBuild">
     <PropertyGroup>
       <GeneratedOutputPath>$(BaseIntermediateOutputPath)GeneratedFiles\Svelto.ECS.Schema.Generator\</GeneratedOutputPath>
     </PropertyGroup>
@@ -37,7 +37,7 @@
       <GeneratedFiles Include="$(GeneratedOutputPath)*\*" />
     </ItemGroup>
     <Copy SourceFiles="@(GeneratedFiles)" DestinationFolder="Generated" />
-  </Target>
+  </Target> -->
 
   <ItemGroup>
     <None Include="..\README.md" Pack="true" PackagePath="\" />

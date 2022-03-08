@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Svelto.DataStructures;
 using Svelto.ECS.Schema.Definition;
 using Xunit;
 
@@ -13,28 +14,47 @@ namespace Svelto.ECS.Schema.Tests
 
         public struct DamageComponent : IEntityComponent { }
 
-        public interface IHealthRow : IReactiveRow<HealthComponent>, ISelectorRow<HealthComponent> { }
+        public struct HealthSet : IResultSet<HealthComponent>
+        {
+            public int count { get; set; }
+
+            public NB<HealthComponent> health;
+
+            public void Init(in EntityCollection<HealthComponent> buffers)
+            {
+                (health, count) = buffers;
+            }
+        }
+
+        public interface IHealthRow : IReactiveRow<HealthComponent>, IQueryableRow<HealthSet> { }
         public interface IDamageRow : IReactiveRow<DamageComponent> { }
 
-        public class HealthReactiveEngine : ReactToRowEngine<IHealthRow, HealthComponent>
+        public class HealthReactiveEngine :
+            IReactRowAddAndRemove<IHealthRow, HealthComponent>,
+            IReactRowSwap<IHealthRow, HealthComponent>
         {
             internal int added;
             internal int moved;
             internal int removed;
 
-            public HealthReactiveEngine(IndexedDB indexedDB) : base(indexedDB) { }
+            public HealthReactiveEngine(IndexedDB indexedDB)
+            {
+                this.indexedDB = indexedDB;
+            }
 
-            public override void Add(ref HealthComponent component, IEntityTable<IHealthRow> table, uint entityID)
+            public IndexedDB indexedDB { get; }
+
+            public void Add(ref HealthComponent component, IEntityTable<IHealthRow> table, uint entityID)
             {
                 added++;
             }
 
-            public override void MovedTo(ref HealthComponent component, IEntityTable<IHealthRow> previousTable, IEntityTable<IHealthRow> table, uint entityID)
+            public void MovedTo(ref HealthComponent component, IEntityTable<IHealthRow> previousTable, IEntityTable<IHealthRow> table, uint entityID)
             {
                 moved++;
             }
 
-            public override void Remove(ref HealthComponent component, IEntityTable<IHealthRow> table, uint entityID)
+            public void Remove(ref HealthComponent component, IEntityTable<IHealthRow> table, uint entityID)
             {
                 removed++;
             }
@@ -84,10 +104,10 @@ namespace Svelto.ECS.Schema.Tests
             Assert.Equal(0, engine.moved);
             Assert.Equal(0, engine.removed);
 
-            var (health, count) = _indexedDB.Select<IHealthRow>().From(_schema.Table2[0]).Entities();
+            var result = _indexedDB.Select<HealthSet>().From(_schema.Table2[0]).Entities();
 
-            for (int i = 0; i < count / 2; ++i)
-                _functions.Move(_schema.Table2[0], health[i].ID.entityID).To(_schema.Table2[1]);
+            for (int i = 0; i < result.set.count / 2; ++i)
+                _functions.Move(_schema.Table2[0], result.set.health[i].ID.entityID).To(_schema.Table2[1]);
 
             _functions.MoveAll(_schema.Table2[3]).To(_schema.Table2[4]);
 

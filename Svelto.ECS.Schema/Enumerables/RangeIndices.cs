@@ -13,7 +13,7 @@ namespace Svelto.ECS.Schema.Internal
 
         public bool MoveNext()
         {
-            return ++_index > _range;
+            return ++_index <= _range;
         }
 
         public void Reset()

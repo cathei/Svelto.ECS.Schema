@@ -25,7 +25,7 @@ namespace Svelto.ECS.Schema
         {
             // we have own structure to track previous state of indexed component
             public SveltoDictionaryNative<EntityReference, IndexerEntityData<TKey>> entities
-                = new SveltoDictionaryNative<EntityReference, IndexerEntityData<TKey>>();
+                = new SveltoDictionaryNative<EntityReference, IndexerEntityData<TKey>>(0);
         }
 
         internal IndexableComponentCache<TK> CreateOrGetComponentCache<TC, TK>()
@@ -93,9 +93,11 @@ namespace Svelto.ECS.Schema
             {
                 var mapper = GetEGIDMapper(group);
 
-                for (int i = 0; i < indexers.count; ++i)
+                var indexerValues = indexers.GetValues(out var count);
+
+                for (int i = 0; i < count; ++i)
                 {
-                    indexers[i].RebuildFilters(group, mapper);
+                    indexerValues[i].RebuildFilters(group, mapper);
                 }
             }
         }
