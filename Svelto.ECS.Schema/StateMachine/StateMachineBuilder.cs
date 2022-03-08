@@ -7,54 +7,20 @@ using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema.Definition
 {
-    // public partial class StateMachine<TComponent>
-    // {
-    //     protected Builder<TRow> Configure<TRow>()
-    //         where TRow : class, IIndexableRow
-    //     {
-    //         if (Config != null)
-    //             throw new ECSException("Configure should only called once!");
-
-    //         var config = new StateMachineConfig<TRow>();
-    //         Config = config;
-    //         return new Builder<TRow>(config);
-    //     }
-
-    public readonly ref struct Builder<TRow, TComponent>
+    public readonly ref struct StateMachineBuilder<TRow, TComponent>
         where TRow : class, IEntityRow<TComponent>
         where TComponent : unmanaged, IStateMachineComponent
     {
-        private readonly StateMachineConfigBase<TComponent> _config;
+        public AnyStateBuilder AnyState => new AnyStateBuilder();
 
-        internal Builder(StateMachineConfigBase<TComponent> config)
+        public readonly ref struct StateBuilder<TState>
+            where TState : unmanaged, IEquatable<TState>
         {
-            _config = config;
-        }
+            internal readonly TState _key;
 
-        public AnyStateBuilder AnyState => new AnyStateBuilder(_config._anyState);
-
-        public StateBuilder AddState(in TComponent key)
-        {
-            var wrapper = new KeyWrapper<TComponent>(key);
-
-            if (_config._states.ContainsKey(wrapper))
+            internal StateBuilder(TState key)
             {
-                throw new ECSException($"State {key} already exsists!");
-            }
-
-            var stateConfig = new StateConfig(_config, key);
-            _config._states[wrapper] = stateConfig;
-
-            return new StateBuilder(stateConfig);
-        }
-
-        public readonly ref struct StateBuilder
-        {
-            internal readonly StateConfig _state;
-
-            internal StateBuilder(StateConfig stateConfig)
-            {
-                _state = stateConfig;
+                _key = key;
             }
 
             public TransitionBuilder AddTransition(in TComponent next)
@@ -101,6 +67,29 @@ namespace Svelto.ECS.Schema.Definition
 
     public static class StateMachineConfigExtensions
     {
+        public static StateMachineBuilder<TRow, TComponent>.StateBuilder<TState> AddState<TRow, TComponent, TState>(
+                this StateMachineBuilder<TRow, TComponent> builder, in TState key)
+            where TRow : class, StateMachine<TComponent>.IIndexableRow
+            where TComponent : unmanaged, IStateMachineComponent<TState>
+            where TState : unmanaged, IEquatable<TState>
+        {
+            var config = StateMachineConfig<TRow, TComponent, TState>.Default;
+
+            if (config._states.ContainsKey(key))
+            {
+                throw new ECSException($"State {key} already exsists!");
+            }
+
+            var stateConfig = new StateConfig(key);
+            config._states[key] = stateConfig;
+
+            return new StateBuilder(stateConfig);
+        }
+
+
+
+
+
         public static StateMachine<TS>.Builder<TR>.TransitionBuilder AddCondition<TS, TR, TC>(
                 this StateMachine<TS>.Builder<TR>.TransitionBuilder builder,
                 PredicateNative<TC> preciate)

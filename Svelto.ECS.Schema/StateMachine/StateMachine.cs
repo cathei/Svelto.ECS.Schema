@@ -43,5 +43,14 @@ namespace Svelto.ECS.Schema.Definition
         int IIndexQueryable<IIndexableRow, TComponent>.IndexerID => Config._index._indexerId;
 
         IEntityIndex IEntityStateMachine.Index => Config._index;
+
+        protected StateMachineBuilder<TRow, TComponent> Configure<TRow>()
+            where TRow : class, IIndexableRow
+        {
+            if (Config != null)
+                throw new ECSException("Configure should only called once!");
+
+            return new StateMachineBuilder<TRow, TComponent>();
+        }
     }
 }
