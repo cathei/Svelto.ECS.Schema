@@ -162,7 +162,7 @@ namespace Svelto.ECS.Schema
     /// This is normally only possible with interfaces.
     /// so we can chain extension methods properly with Value type query.
     /// </summary>
-    public static partial class RowQueryExtensions
+    public static class RowQueryExtensions
     {
         internal static IndexQuery ToIndexQuery<TRow, TComponent, TKey>(
                 this IndexedDB indexedDB, IIndexQueryable<TRow, TComponent> index, TKey key)
@@ -179,9 +179,7 @@ namespace Svelto.ECS.Schema
             return new IndexQuery(result);
         }
 
-        internal static IndexQuery ToIndexQuery<TRow>(
-                this IndexedDB indexedDB, MemoBase memo)
-            where TRow : class, IEntityRow
+        internal static IndexQuery ToIndexQuery(this IndexedDB indexedDB, MemoBase memo)
         {
             var memoID = memo._memoID;
             if (!indexedDB.memos.ContainsKey(memoID))
@@ -190,6 +188,7 @@ namespace Svelto.ECS.Schema
             var memoData = indexedDB.memos[memoID].keyData;
             return new IndexQuery(memoData);
         }
+
         // query entrypoint Select -> (From ->) (Where ->) Entities
         // query entrypoint Select -> From Table -> Where -> Indices
         // query entrypoint Select -> Tables
@@ -234,7 +233,7 @@ namespace Svelto.ECS.Schema
         // Select -> From Table -> Where
         // Where methods are extensions because there's table row restraints
         // Table Row must implement both Selector Row and Index Row
-        public static SelectFromTableWhereQuery<TR, TRS, TTR, MemoBase<TMR, TMC>> Where<TR, TRS, TTR, TMR, TMC>(
+        public static SelectFromTableWhereQuery<TR, TRS, TTR> Where<TR, TRS, TTR, TMR, TMC>(
                 this in SelectFromTableQuery<TR, TRS, TTR> query, MemoBase<TMR, TMC> memo)
             where TR : class, IEntityRow
             where TRS : struct, IResultSet
@@ -242,13 +241,13 @@ namespace Svelto.ECS.Schema
             where TMR : class, IIndexableRow<TMC>
             where TMC : unmanaged, IEntityComponent, INeedEGID
         {
-            return new SelectFromTableWhereQuery<TR, TRS, TTR, MemoBase<TMR, TMC>>(query.Item1, query.Item3, memo);
+            return new SelectFromTableWhereQuery<TR, TRS, TTR>(query.Item1, query.Item3, query.Item1.ToIndexQuery(memo));
         }
 
         // Select -> From Tables -> Where
         // Where methods are extensions because there's table row restraints
         // Tables Row must implement both Selector Row and Index Row
-        public static SelectFromTablesWhereQuery<TR, TRS, TTR, MemoBase<TMR, TMC>> Where<TR, TRS, TTR, TMR, TMC>(
+        public static SelectFromTablesWhereQuery<TR, TRS, TTR> Where<TR, TRS, TTR, TMR, TMC>(
                 this in SelectFromTablesQuery<TR, TRS, TTR> query, MemoBase<TMR, TMC> memo)
             where TR : class, IEntityRow
             where TRS : struct, IResultSet
@@ -256,7 +255,7 @@ namespace Svelto.ECS.Schema
             where TMR : class, IIndexableRow<TMC>
             where TMC : unmanaged, IEntityComponent, INeedEGID
         {
-            return new SelectFromTablesWhereQuery<TR, TRS, TTR, MemoBase<TMR, TMC>>(query.Item1, query.Item3, memo);
+            return new SelectFromTablesWhereQuery<TR, TRS, TTR>(query.Item1, query.Item3, query.Item1.ToIndexQuery(memo));
         }
     }
 }

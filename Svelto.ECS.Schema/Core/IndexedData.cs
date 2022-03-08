@@ -39,7 +39,10 @@ namespace Svelto.ECS.Schema.Internal
         public TKey previousKey;
     }
 
-    internal abstract class IndexerData { }
+    internal abstract class IndexerData
+    {
+        public abstract void RebuildFilters(in ExclusiveGroupStruct groupID, in EGIDMapper<RowIdentityComponent> mapper);
+    }
 
     internal sealed class IndexerData<TKey> : IndexerData
         where TKey : unmanaged, IEquatable<TKey>
@@ -58,6 +61,19 @@ namespace Svelto.ECS.Schema.Internal
         public bool TryGetValue(in TKey key, out IndexerKeyData result)
         {
             return keyToGroups.TryGetValue(key, out result);
+        }
+
+        public override void RebuildFilters(in ExclusiveGroupStruct groupID, in EGIDMapper<RowIdentityComponent> mapper)
+        {
+            var groupDatas = keyToGroups.GetValues(out var count);
+
+            for (int i = 0; i < count; ++i)
+            {
+                if (groupDatas[i].groups.TryGetValue(groupID, out var groupData))
+                {
+                    groupData.filter.RebuildIndicesOnStructuralChange(mapper);
+                }
+            }
         }
     }
 

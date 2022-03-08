@@ -12,7 +12,7 @@ namespace Svelto.ECS.Schema
             where TR : class, IIndexableRow<TC>
             where TC : unmanaged, IEntityComponent, INeedEGID
         {
-            var mapper = GetEGIDMapper(table);
+            var mapper = GetEGIDMapper(table.ExclusiveGroup);
 
             ref var groupData = ref CreateOrGetMemoGroup(memo._memoID, table);
 
@@ -45,18 +45,19 @@ namespace Svelto.ECS.Schema
             where TR : class, IEntityRow
         {
             var memoData = memos.GetOrCreate(memoID, () => new MemoData());
+            var groupID = table.ExclusiveGroup;
 
-            if (!memoData.keyData.groups.ContainsKey(table.ExclusiveGroup))
+            if (!memoData.keyData.groups.ContainsKey(groupID))
             {
-                memoData.keyData.groups[table.ExclusiveGroup] = new IndexerGroupData
+                memoData.keyData.groups[groupID] = new IndexerGroupData
                 {
-                    table = table,
+                    groupID = groupID,
                     filter = entitiesDB.GetFilters().CreateOrGetFilterForGroup<RowIdentityComponent>(
-                        GenerateFilterId(), table.ExclusiveGroup)
+                        GenerateFilterId(), groupID)
                 };
             }
 
-            return ref memoData.keyData.groups.GetValueByRef(table.ExclusiveGroup);
+            return ref memoData.keyData.groups.GetValueByRef(groupID);
         }
     }
 }

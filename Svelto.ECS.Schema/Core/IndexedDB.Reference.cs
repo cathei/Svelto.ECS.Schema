@@ -8,7 +8,7 @@ namespace Svelto.ECS.Schema
 {
     public partial class IndexedDB
     {
-        // EGIDMapper is struct - no boxing!
+        // EGIDMapper is struct, avoid boxing
         internal EGIDMapper<RowIdentityComponent> GetEGIDMapper(in ExclusiveGroupStruct groupID)
         {
             return entitiesDB.QueryMappedEntities<RowIdentityComponent>(groupID);

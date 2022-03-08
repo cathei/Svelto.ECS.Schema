@@ -33,7 +33,7 @@ namespace Svelto.ECS.Schema.Tests
 
         public enum CharacterState { Normal, Upset, Angry, Special, MAX }
 
-        public readonly struct CharacterFSMState : IStateMachineKey<CharacterFSMState>
+        public readonly struct CharacterFSMState : IStateMachineComponent<CharacterFSMState>
         {
             private readonly CharacterState state;
 
@@ -54,7 +54,7 @@ namespace Svelto.ECS.Schema.Tests
 
         public class CharacterFSM : StateMachine<CharacterFSMState>
         {
-            public interface IRow : IIndexedRow,
+            public interface IRow : IIndexableRow,
                 ISelectorRow<RageComponent>,
                 ISelectorRow<TriggerComponent>,
                 ISelectorRow<SpecialTimerComponent>
@@ -110,13 +110,13 @@ namespace Svelto.ECS.Schema.Tests
 
         private void AssertIndexer()
         {
-            var (component, count) = _indexedDB.Select<CharacterFSM.IIndexedRow>().From(_schema.Character).Entities();
+            var (component, count) = _indexedDB.Select<CharacterFSM.IIndexableRow>().From(_schema.Character).Entities();
 
             int totalCheckedCount = 0;
 
             for (CharacterState state = 0; state < CharacterState.MAX; ++state)
             {
-                var indices = _indexedDB.Select<CharacterFSM.IIndexedRow>()
+                var indices = _indexedDB.Select<CharacterFSM.IIndexableRow>()
                     .From(_schema.Character).Where(_characterFSM, state).Indices();
 
                 foreach (var i in indices)

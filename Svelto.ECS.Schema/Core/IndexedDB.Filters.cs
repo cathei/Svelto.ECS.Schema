@@ -10,17 +10,8 @@ namespace Svelto.ECS.Schema
     public sealed partial class IndexedDB
     {
         // dictionary for each group
-        private FasterDictionary<RefWrapperType, IndexableComponentCache> _componentCaches
+        private readonly FasterDictionary<RefWrapperType, IndexableComponentCache> _componentCaches
             = new FasterDictionary<RefWrapperType, IndexableComponentCache>();
-
-        // private FasterDictionary<ExclusiveGroupStruct, GroupCache> _groupCaches
-        //     = new FasterDictionary<ExclusiveGroupStruct, GroupCache>();
-
-        // // cache for indexer update
-        // internal struct GroupCache
-        // {
-        //     public FasterDictionary<RefWrapperType, FasterList<IEntityIndex>> componentToIndexers;
-        // }
 
         internal class IndexableComponentCache
         {
@@ -90,6 +81,23 @@ namespace Svelto.ECS.Schema
             }
 
             return componentIndexers;
+        }
+
+        /// <summary>
+        /// We need to rebuild all groups that has structural change
+        /// This can be safely removed as new Filters system applied
+        /// </summary>
+        internal void RebuildFilters(HashSet<ExclusiveGroupStruct> groups)
+        {
+            foreach (var group in groups)
+            {
+                var mapper = GetEGIDMapper(group);
+
+                for (int i = 0; i < indexers.count; ++i)
+                {
+                    indexers[i].RebuildFilters(group, mapper);
+                }
+            }
         }
 
         // remove

@@ -19,11 +19,12 @@ namespace Svelto.ECS.Schema.Internal
         where TComponent : unmanaged, IIndexableComponent
     {
         // equvalent to ExclusiveGroupStruct.Generate()
-        private readonly int _indexerId = GlobalIndexCount.Generate();
+        internal readonly int _indexerId = GlobalIndexCount.Generate();
 
         RefWrapperType IEntityIndex.ComponentType => TypeRefWrapper<TComponent>.wrapper;
 
         int IEntityIndex.IndexerID => _indexerId;
+        int IIndexQueryable<TRow, TComponent>.IndexerID => _indexerId;
 
         internal IndexBase() { }
 
@@ -31,17 +32,12 @@ namespace Svelto.ECS.Schema.Internal
         {
             enginesRoot.AddEngine(new TableIndexingEngine<TRow, TComponent>(indexedDB));
         }
-
-        // public IndexQuery<TRow, TKey> Query(in TKey key)
-        // {
-        //     return new IndexQuery<TRow, TKey>(_indexerId, key);
-        // }
     }
 }
 
 namespace Svelto.ECS.Schema.Definition
 {
     public sealed class Index<TComponent> : IndexBase<IIndexableRow<TComponent>, TComponent>
+        where TComponent : unmanaged, IIndexableComponent
     { }
-
 }

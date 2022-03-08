@@ -1,3 +1,4 @@
+using System;
 using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema
@@ -58,34 +59,37 @@ namespace Svelto.ECS.Schema
             query.Item2.Intersect(query.Item1, memo);
         }
 
-        public static void Set<TR, TC, TIR, TIK>(this (IndexedDB, MemoBase<TR, TC>) query,
-                IIndexQueryable<TIR, TIK> index, in TIK key)
+        public static void Set<TR, TC, TIR, TIC, TIK>(this (IndexedDB, MemoBase<TR, TC>) query,
+                IIndexQueryable<TIR, TIC> index, in TIK key)
             where TR : class, IIndexableRow<TC>, TIR
             where TC : unmanaged, IEntityComponent, INeedEGID
             where TIR : class, IEntityRow
+            where TIC : unmanaged, IIndexableComponent<TIK>
             where TIK : unmanaged, IEquatable<TIK>
         {
-            query.Item2.Set(query.Item1, index.Query(key));
+            query.Item2.Set(query.Item1, query.Item1.ToIndexQuery(index, key));
         }
 
-        public static void Union<TR, TC, TIR, TIK>(this (IndexedDB, MemoBase<TR, TC>) query,
-                IIndexQueryable<TIR, TIK> index, in TIK key)
+        public static void Union<TR, TC, TIR, TIC, TIK>(this (IndexedDB, MemoBase<TR, TC>) query,
+                IIndexQueryable<TIR, TIC> index, in TIK key)
             where TR : class, IIndexableRow<TC>, TIR
             where TC : unmanaged, IEntityComponent, INeedEGID
             where TIR : class, IEntityRow
+            where TIC : unmanaged, IIndexableComponent<TIK>
             where TIK : unmanaged, IEquatable<TIK>
         {
-            query.Item2.Union(query.Item1, index.Query(key));
+            query.Item2.Union(query.Item1, query.Item1.ToIndexQuery(index, key));
         }
 
-        public static void Intersect<TR, TC, TIR, TIK>(this (IndexedDB, MemoBase<TR, TC>) query,
-                IIndexQueryable<TIR, TIK> index, in TIK key)
+        public static void Intersect<TR, TC, TIR, TIC, TIK>(this (IndexedDB, MemoBase<TR, TC>) query,
+                IIndexQueryable<TIR, TIC> index, in TIK key)
             where TR : class, IIndexableRow<TC>, TIR
             where TC : unmanaged, IEntityComponent, INeedEGID
             where TIR : class, IEntityRow
+            where TIC : unmanaged, IIndexableComponent<TIK>
             where TIK : unmanaged, IEquatable<TIK>
         {
-            query.Item2.Intersect(query.Item1, index.Query(key));
+            query.Item2.Intersect(query.Item1, query.Item1.ToIndexQuery(index, key));
         }
     }
 }

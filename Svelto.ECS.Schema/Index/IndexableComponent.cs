@@ -53,4 +53,5 @@ namespace Svelto.ECS.Schema
             indexedDB.RemoveIndexableComponent<TComponent, TKey>(ID);
         }
     }
+
 }

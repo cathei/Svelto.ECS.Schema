@@ -71,8 +71,7 @@ namespace Svelto.ECS.Schema.Internal
             }
         }
 
-        internal void Intersect<TQ>(IndexedDB indexedDB, TQ query)
-            where TQ : IIndexQuery
+        internal void Intersect(IndexedDB indexedDB, IndexQuery query)
         {
             var originalData = GetIndexerKeyData(indexedDB).groups;
 
@@ -80,7 +79,7 @@ namespace Svelto.ECS.Schema.Internal
             if (originalData == null)
                 return;
 
-            var queryData = query.GetIndexerKeyData(indexedDB).groups;
+            var queryData = query._keyData.groups;
 
             // if empty nothing to intersect
             if (queryData == null)
@@ -144,9 +143,6 @@ namespace Svelto.ECS.Schema.Internal
                 return result.keyData;
             return default;
         }
-
-        IndexerKeyData IIndexQuery.GetIndexerKeyData(IndexedDB indexedDB)
-            => GetIndexerKeyData(indexedDB);
     }
 }
 

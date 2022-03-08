@@ -12,8 +12,6 @@ namespace Svelto.ECS.Schema.Internal
         where TR : class, IReactiveRow<TC>
         where TC : unmanaged, IIndexableComponent
     {
-        private readonly HashSet<IndexerGroupData> _groupsToRebuild = new HashSet<IndexerGroupData>();
-
         public IndexedDB indexedDB { get; }
 
         public TableIndexingEngine(IndexedDB indexedDB)
@@ -23,68 +21,17 @@ namespace Svelto.ECS.Schema.Internal
 
         public void Add(ref TC component, IEntityTable<TR> table, uint entityID)
         {
-            CheckAdd(ref component, table);
+            component.UpdateIndex<TC>(indexedDB);
         }
 
         public void MovedTo(ref TC component, IEntityTable<TR> previousTable, IEntityTable<TR> table, uint entityID)
         {
-            CheckRemove(ref component, previousTable);
-            CheckAdd(ref component, table);
+            component.UpdateIndex<TC>(indexedDB);
         }
 
         public void Remove(ref TC component, IEntityTable<TR> table, uint entityID)
         {
-            CheckRemove(ref component, table);
-        }
-
-        private void CheckAdd(ref TC keyComponent, IEntityTable<TR> table)
-        {
-            var indexers = indexedDB.FindIndexers<TK, TC>(table.ExclusiveGroup);
-
-            foreach (var indexer in indexers)
-            {
-                AddToFilter(indexer.IndexerID, ref keyComponent, table);
-            }
-        }
-
-        private void CheckRemove(ref TC keyComponent, IEntityTable<TR> table)
-        {
-            var indexers = indexedDB.FindIndexers<TK, TC>(table.ExclusiveGroup);
-
-            foreach (var indexer in indexers)
-            {
-                RemoveFromFilter(indexer.IndexerID, ref keyComponent, table);
-            }
-        }
-
-        private void AddToFilter(int indexerID, ref TC keyComponent, IEntityTable<TR> table)
-        {
-            ref var groupData = ref indexedDB.CreateOrGetIndexedGroupData(indexerID, keyComponent.Key, table);
-
-            var mapper = indexedDB.GetEGIDMapper(table);
-
-            groupData.filter.Add(keyComponent.ID.entityID, mapper);
-        }
-
-        private void RemoveFromFilter(int indexerID, ref TC keyComponent, IEntityTable<TR> table)
-        {
-            ref var groupData = ref indexedDB.CreateOrGetIndexedGroupData(indexerID, keyComponent.Key, table);
-
-            groupData.filter.TryRemove(keyComponent.ID.entityID);
-
-            // filter will be rebuilt when submission is done
-            _groupsToRebuild.Add(groupData);
-        }
-
-        public void EntitiesSubmitted()
-        {
-            foreach (var groupData in _groupsToRebuild)
-            {
-                var mapper = indexedDB.GetEGIDMapper(groupData.table);
-                groupData.filter.RebuildIndicesOnStructuralChange(mapper);
-            }
-
-            _groupsToRebuild.Clear();
+            component.RemoveFromIndex<TC>(indexedDB);
         }
     }
 }
