@@ -91,17 +91,16 @@ namespace Svelto.ECS.Schema.Internal
         }
     }
 
-    public readonly ref struct SelectFromTableWhereQuery<TRow, TResult, TTableRow, TIndexQuery>
+    public readonly ref struct SelectFromTableWhereQuery<TRow, TResult, TTableRow>
         where TRow : class, IEntityRow
         where TResult : struct, IResultSet
         where TTableRow : class, IEntityRow
-        where TIndexQuery : IIndexQuery
     {
         internal readonly IndexedDB Item1;
         internal readonly IEntityTable<TTableRow> Item3;
-        internal readonly TIndexQuery Item4;
+        internal readonly IndexQuery Item4;
 
-        internal SelectFromTableWhereQuery(IndexedDB indexedDB, IEntityTable<TTableRow> table, TIndexQuery indexQuery)
+        internal SelectFromTableWhereQuery(IndexedDB indexedDB, IEntityTable<TTableRow> table, IndexQuery indexQuery)
         {
             Item1 = indexedDB;
             Item3 = table;
@@ -111,7 +110,7 @@ namespace Svelto.ECS.Schema.Internal
         // Select -> From Table -> Where -> Indices
         internal IndexedIndices Indices()
         {
-            var keyData = Item4.GetIndexerKeyData(Item1);
+            var keyData = Item4._keyData;
             var group = Item3.ExclusiveGroup;
 
             if (keyData.groups == null || !group.IsEnabled() ||
@@ -131,17 +130,16 @@ namespace Svelto.ECS.Schema.Internal
         }
     }
 
-    public readonly ref struct SelectFromTablesWhereQuery<TRow, TResult, TTableRow, TIndexQuery>
+    public readonly ref struct SelectFromTablesWhereQuery<TRow, TResult, TTableRow>
         where TRow : class, IEntityRow
         where TResult : struct, IResultSet
         where TTableRow : class, IEntityRow
-        where TIndexQuery : IIndexQuery
     {
         internal readonly IndexedDB Item1;
         internal readonly IEntityTables<TTableRow> Item3;
-        internal readonly TIndexQuery Item4;
+        internal readonly IndexQuery Item4;
 
-        internal SelectFromTablesWhereQuery(IndexedDB indexedDB, IEntityTables<TTableRow> tables, TIndexQuery indexQuery)
+        internal SelectFromTablesWhereQuery(IndexedDB indexedDB, IEntityTables<TTableRow> tables, IndexQuery indexQuery)
         {
             Item1 = indexedDB;
             Item3 = tables;
@@ -151,7 +149,7 @@ namespace Svelto.ECS.Schema.Internal
         public TablesIndexQueryEnumerable<TResult, TTableRow> Entities()
         {
             return new TablesIndexQueryEnumerable<TResult, TTableRow>(
-                Item1, Item3, Item4.GetIndexerKeyData(Item1).groups);
+                Item1, Item3, Item4._keyData.groups);
         }
     }
 }
@@ -166,9 +164,9 @@ namespace Svelto.ECS.Schema
     /// </summary>
     public static partial class RowQueryExtensions
     {
-        internal static IndexQuery IndexQuery<TRow, TComponent, TKey>(
+        internal static IndexQuery ToIndexQuery<TRow, TComponent, TKey>(
                 this IndexedDB indexedDB, IIndexQueryable<TRow, TComponent> index, TKey key)
-            where TRow : class, IReactiveRow<TComponent>
+            where TRow : class, IEntityRow
             where TComponent : unmanaged, IIndexableComponent<TKey>
             where TKey : unmanaged, IEquatable<TKey>
         {
@@ -181,7 +179,17 @@ namespace Svelto.ECS.Schema
             return new IndexQuery(result);
         }
 
+        internal static IndexQuery ToIndexQuery<TRow>(
+                this IndexedDB indexedDB, MemoBase memo)
+            where TRow : class, IEntityRow
+        {
+            var memoID = memo._memoID;
+            if (!indexedDB.memos.ContainsKey(memoID))
+                return default;
 
+            var memoData = indexedDB.memos[memoID].keyData;
+            return new IndexQuery(memoData);
+        }
         // query entrypoint Select -> (From ->) (Where ->) Entities
         // query entrypoint Select -> From Table -> Where -> Indices
         // query entrypoint Select -> Tables
@@ -194,29 +202,33 @@ namespace Svelto.ECS.Schema
         // Select -> From Table -> Where
         // Where methods are extensions because there's table row restraints
         // Table Row must implement both Selector Row and Index Row
-        public static SelectFromTableWhereQuery<TR, TRS, TTR, IndexQuery<TIR, TIK>> Where<TR, TRS, TTR, TIR, TIK>(
-                this in SelectFromTableQuery<TR, TRS, TTR> query, IIndexQueryable<TIR, TIK> index, TIK key)
+        public static SelectFromTableWhereQuery<TR, TRS, TTR> Where<TR, TRS, TTR, TIR, TIC, TIK>(
+                this in SelectFromTableQuery<TR, TRS, TTR> query, IIndexQueryable<TIR, TIC> index, TIK key)
             where TR : class, IEntityRow
             where TRS : struct, IResultSet
             where TTR : class, TR, TIR
             where TIR : class, IEntityRow
+            where TIC : unmanaged, IIndexableComponent<TIK>
             where TIK : unmanaged, IEquatable<TIK>
         {
-            return new SelectFromTableWhereQuery<TR, TRS, TTR, IndexQuery<TIR, TIK>>(query.Item1, query.Item3, index.Query(key));
+            return new SelectFromTableWhereQuery<TR, TRS, TTR>(
+                query.Item1, query.Item3, query.Item1.ToIndexQuery(index, key));
         }
 
         // Select -> From Tables -> Where
         // Where methods are extensions because there's table row restraints
         // Tables Row must implement both Selector Row and Index Row
-        public static SelectFromTablesWhereQuery<TR, TRS, TTR, IndexQuery<TIR, TIK>> Where<TR, TRS, TTR, TIR, TIK>(
-                this in SelectFromTablesQuery<TR, TRS, TTR> query, IIndexQueryable<TIR, TIK> index, TIK key)
+        public static SelectFromTablesWhereQuery<TR, TRS, TTR> Where<TR, TRS, TTR, TIR, TIC, TIK>(
+                this in SelectFromTablesQuery<TR, TRS, TTR> query, IIndexQueryable<TIR, TIC> index, TIK key)
             where TR : class, IEntityRow
             where TRS : struct, IResultSet
             where TTR : class, TR, TIR
             where TIR : class, IEntityRow
+            where TIC : unmanaged, IIndexableComponent<TIK>
             where TIK : unmanaged, IEquatable<TIK>
         {
-            return new SelectFromTablesWhereQuery<TR, TRS, TTR, IndexQuery<TIR, TIK>>(query.Item1, query.Item3, index.Query(key));
+            return new SelectFromTablesWhereQuery<TR, TRS, TTR>(
+                query.Item1, query.Item3, query.Item1.ToIndexQuery(index, key));
         }
 
         // Select -> From Table -> Where

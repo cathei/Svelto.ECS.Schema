@@ -13,7 +13,7 @@ namespace Svelto.ECS.Schema.Internal
         public static int Generate() => Interlocked.Increment(ref Count);
     }
 
-    public class MemoBase : ISchemaDefinitionMemo
+    public abstract class MemoBase : ISchemaDefinitionMemo
     {
         // equvalent to ExclusiveGroupStruct.Generate()
         internal readonly int _memoID = GlobalMemoCount.Generate();
@@ -23,23 +23,21 @@ namespace Svelto.ECS.Schema.Internal
         internal MemoBase() { }
     }
 
-    public class MemoBase<TRow, TComponent> : MemoBase, IIndexQuery
+    public abstract class MemoBase<TRow, TComponent> : MemoBase
         where TRow : class, IIndexableRow<TComponent>
         where TComponent : unmanaged, IEntityComponent, INeedEGID
     {
         internal MemoBase() { }
 
-        internal void Set<TQ>(IndexedDB indexedDB, TQ query)
-            where TQ : IIndexQuery
+        internal void Set(IndexedDB indexedDB, IndexQuery query)
         {
             indexedDB.ClearMemo(this);
             Union(indexedDB, query);
         }
 
-        internal void Union<TQ>(IndexedDB indexedDB, TQ query)
-            where TQ : IIndexQuery
+        internal void Union(IndexedDB indexedDB, IndexQuery query)
         {
-            var queryData = query.GetIndexerKeyData(indexedDB).groups;
+            var queryData = query._keyData.groups;
 
             // if empty nothing to add
             if (queryData == null)
@@ -55,13 +53,13 @@ namespace Svelto.ECS.Schema.Internal
                 if (queryGroupData.filter.filteredIndices.Count() == 0)
                     continue;
 
-                var table = queryGroupData.table as IEntityTable<TRow>;
+                var table = indexedDB.FindTable<TRow>(queryGroupData.groupID);
 
                 // type mismatch - noathing to add
                 if (table == null)
                     continue;
 
-                var mapper = indexedDB.GetEGIDMapper(table);
+                var mapper = indexedDB.GetEGIDMapper(queryGroupData.groupID);
 
                 // TODO: change group to table!
                 var result = indexedDB.Select<IndexableResultSet<TComponent>>().From(table).Entities();
@@ -102,14 +100,14 @@ namespace Svelto.ECS.Schema.Internal
                     continue;
 
                 // if target is empty there is no intersection
-                if (!queryData.TryGetValue(originalDataValues[groupIndex].table.ExclusiveGroup, out var queryGroupData) ||
+                if (!queryData.TryGetValue(originalDataValues[groupIndex].groupID, out var queryGroupData) ||
                     queryGroupData.filter.filteredIndices.Count() == 0)
                 {
                     originalGroupData.filter.Clear();
                     continue;
                 }
 
-                var table = queryGroupData.table as IEntityTable<TRow>;
+                var table = indexedDB.FindTable<TRow>(queryGroupData.groupID);
 
                 // type mismatch - no intersection
                 if (table == null)
