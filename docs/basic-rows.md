@@ -1,22 +1,31 @@
 ## Defining Rows
 Rows are most basic unit in Schema extensions. Rows must define how Engines see Entities, which traits that Entities have in common, and finally what Entities are in your game design domain.
 
-There is three level of Rows as it extends.
-
-### Selector Rows
-`Selector Row`s are minimal blocks, leaf nodes of Rows. You can consider these as unit of components you can query. Specifically, in Svelto.ECS you query entities like this.
+### Result Sets
+`Result Set`s are composition of components that a Engine will process.  You can consider these as unit of components you can query. In Svelto.ECS you query entities like this.
 ```csharp
 var (component1, component2, component3, count) = entitiesDB.QueryEntities<Component1, Component2, Component3>(characterGroup);
 ```
-In Schema Extensions, you should first define Seletor Row and then you can query.
+
+In Schema Extensions, you must define Seletor Row and then you can query.
 ```csharp
-public interface ISelect123Row : ISelectorRow<Component1, Component2, Component3> {}
+// the components you're using in your engine
+public struct Result123Set : IResultSet<Component1, Component2, Component3>
+{
+    public NB<Component1> component1;
+    public NB<Component2> component2;
+    public NB<Component3> component3;
 
-// yes, the return value is exactly same as when you're using plain Svelto
-var (component1, component2, component3, count) = indexedDB.Select<ISelect123Row>().From(characterTable).Entities();
+    // required by IResultSet
+    public int count { get; set; }
 
-// below is valid, but not recommended at all. Always define as own selector row that has meaning.
-// var (component1, component2, component3, count) = indexedDB.Select<ISelectorRow<Component1, Component2, Component3>>().From(characterTable).Entities();
+    public void Init(in EntityCollection<Component1, Component2, Component3> collection)
+        => (component1, component2, component3, count) = collection;
+}
+
+// you can access result set through `result.set`
+// it is an compile-time error if characterTable does not contain ISelect123Row
+var result = indexedDB.Select<ISelect123Row>().From(characterTable).Entities();
 ```
 Fundametally, it helps writing 'good code' because the set of components you query always should have meanings. You'll always have to define how Engines should see Entities, and what they know about Entities.
 
@@ -27,23 +36,26 @@ public class CharacterDescriptor : GenericEntityDescriptor<PositionComponent, Sp
 ```
 In Schema extensions, Descriptor Rows are defined like this. Note than only one PositionComponent will be included in CharacterRow since they are same type.
 ```csharp
-// selector rows
-public interface IMovableRow : ISelectorRow<PositionComponent, SpeedComponent> {}
-public interface IDamagableRow : ISelectorRow<PositionComponent, HealthComponent> {}
+// result sets
+public struct MoveableSet : IResultSet<PositionComponent, SpeedComponent> { ... }
+public struct DamagableSet : IResultSet<PositionComponent, HealthComponent> { ... }
 
-// descriptor row implements multiple selector rows
+// descriptor row can contain multiple result sets by implementing IQueryableRow
 // a entity from this descriptor row will have PositionComponent, SpeedComponent, HealthComponent
-public sealed class CharacterRow : DescriptorRow<CharacterRow>, IMovableRow, IDamagableRow {}
+public sealed class CharacterRow : DescriptorRow<CharacterRow>,
+    IQueryableRow<MovableSet>,
+    IQueryableRow<DamagableSet>
+{ }
 ```
-As you can see, DescriptorRow doesn't even need to know what Component it has. It will focus on what Selector Rows it should include. In other words, it will make you focus more on logic than a data.
+As you can see, DescriptorRow doesn't even need to know what Component it has. It will focus on what Result Sets it should include. In other words, it will make you focus more on logic than a data.
 
 ### Interface Rows
-`Interface Row`s are middle-mans, internal nodes of the Rows. You cannot Query with them, you cannot make descriptor with them, but what you can is using it as grouping of Seletor Rows commonly implemented.
+`Interface Row`s are something you can define as a grouping of different Descriptor Rows. You cannot make descriptor with them, but you can use it represent common trait of Entities.
 ```csharp
 // common traits Descriptor Rows implementing
-public interface ICharacterRow : IMovableRow, IDamagableRow {}
+public interface ICharacterRow : IQueryableRow<MovableSet>, IQueryableRow<DamgableSet> {}
 // all enemies are characters
-public interface IEnemyRow : ICharacterRow, ISpawnableRow {}
+public interface IEnemyRow : ICharacterRow, IQueryableRow<EnemySpawnSet> {}
 
 // 'hero' is character with special ability
 public sealed class HeroRow : DescriptorRow<HeroRow>, ICharacterRow, ISpecialAbilityRow {}
@@ -55,5 +67,5 @@ public sealed class FlyingEnemyRow : DescriptorRow<FlyingEnemyRow>, IEnemyRow, I
 By making layers with Interface Rows, you'll have flexiblity to define and modify traits used over multiple Descriptor Rows.
 
 ### Summary
-We looked into how to define Rows. [Next Document](basic-schemas.md) we'll see how to define Schemas using Rows we defined.
+We looked into how to define Result Sets and Rows. [Next Document](basic-schemas.md) we'll see how to define Schemas using Rows we defined.
 

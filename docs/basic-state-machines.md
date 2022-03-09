@@ -4,26 +4,21 @@ Schema extensions support Finite State Machine (FSM) feature, which automaticall
 ```csharp
 public enum CharacterState { Normal, Angry, Fever, MAX }
 ```
-And StateMachineKey class to ensure uniquness of State Machine you create.
+And IStateMachineComponent class to store and index the state of the entity.
 ```csharp
-public readonly struct CharacterFSMState : IStateMachineKey<CharacterFSMState>
+public struct CharacterStateComponent : IStateMachineComponent<EnumKey<CharacterState>>
 {
-    public readonly CharacterState _state;
+    public EGID ID { get; set; }
+    public EnumKey<CharacterState> key { get; set; }
 
-    public CharacterFSMState(CharacterState state) => _state = state;
-
-    public static implicit operator CharacterFSMState(CharacterState state) => new CharacterFSMState(state);
-
-    public bool KeyEquals(in CharacterFSMState other) => _state == other._state;
-
-    public int KeyHashCode() => _state.GetHashCode();
+    public CharacterStateComponent(CharacterState state) : this() { this.key = state; }
 }
 ```
-Since it is `enum`, be careful to not call `Equals` on it, that will cause boxing. In future when C# 10.0 comes to Unity this can be replaced by `record struct`.
+The structure is smae as `IIndexableComponent`. Since the key is `enum`, which does not implement `IEquatable<T>`, we use special wrapper `EnumKey<T>`. You can use it as it is the inner enum.
 
-Now you can define FSM class, inherit `EntityStateMachine<TKey>`.
+Now you can define FSM class, inherit `StateMachine<TComponent>`.
 ```csharp
-public class CharacterFSM : StateMachine<CharacterFSMState>
+public class CharacterFSM : StateMachine<CharacterStateComponent>
 {
     public interface IRow : IIndexedRow {}
 

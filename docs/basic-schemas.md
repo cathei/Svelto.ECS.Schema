@@ -4,11 +4,27 @@ Using Schema, we can define hierarchical structure of Entities in our game.
 ### Defining Schema
 Let's define simplest Schema. You'll need to define Rows first.
 ```csharp
-public interface IDamagableRow : ISelectorRow<HealthComponent, DefenseComponent> { }
-public interface IStackableRow : ISelectorRow<AmountComponent> { }
+public struct DamagableSet : IResultSet<HealthComponent, DefenseComponent>
+{
+    public NB<HealthComponent> health;
+    public NB<DefenseComponent> defense;
+    public int count { get; set; }
 
-public sealed class CharacterRow : DescriptorRow<CharacterRow>, IDamagableRow {}
-public sealed class ItemRow : DescriptorRow<ItemRow>, IStackableRow {}
+    public void Init(EntityCollection<HealthComponent, DefenseComponent> collection)
+        => (health, defense, count) = collection;
+}
+
+public struct StackableSet : IResultSet<AmountComponent>
+{
+    public NB<AmountComponent> stack;
+    public int count { get; set; }
+
+    public void Init(EntityCollection<AmountComponent> collection)
+        => (stack, count) = collection;
+}
+
+public sealed class CharacterRow : DescriptorRow<CharacterRow>, IQueryable<DamagableSet> {}
+public sealed class ItemRow : DescriptorRow<ItemRow>, IQueryable<StackableSet> {}
 ```
 And put the Tables in your Schema.
 ```csharp
@@ -69,7 +85,7 @@ public class PlayerSchema : IEntitySchema
     public readonly Table<CharacterRow> AliveCharacter = new Table<CharacterRow>();
     public readonly Table<CharacterRow> DeadCharacter = new Table<CharacterRow>();
 
-    public readonly Tables<ItemRow><ItemType> Items = new Tables<ItemRow><ItemType>(ItemType.MAX, type => (int)type);
+    public readonly Tables<ItemRow, ItemType> Items = new Tables<ItemRow, ItemType>(ItemType.MAX, type => (int)type);
 }
 
 public enum ItemType { Potion, Weapon, Armor, MAX };
