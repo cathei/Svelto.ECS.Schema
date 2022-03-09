@@ -3,7 +3,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 
-namespace Svelto.ECS.Schema
+namespace Svelto.ECS.Schema.Internal
 {
     internal static class ResultSetHelper<T> where T : struct, IResultSet
     {

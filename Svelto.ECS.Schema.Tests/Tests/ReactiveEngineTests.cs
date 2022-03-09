@@ -29,32 +29,26 @@ namespace Svelto.ECS.Schema.Tests
         public interface IHealthRow : IReactiveRow<HealthComponent>, IQueryableRow<HealthSet> { }
         public interface IDamageRow : IReactiveRow<DamageComponent> { }
 
-        public class HealthReactiveEngine :
-            IReactRowAddAndRemove<IHealthRow, HealthComponent>,
-            IReactRowSwap<IHealthRow, HealthComponent>
+        public class HealthReactiveEngine : ReactToRowEngine<IHealthRow, HealthComponent>
         {
             internal int added;
             internal int moved;
             internal int removed;
 
-            public HealthReactiveEngine(IndexedDB indexedDB)
-            {
-                this.indexedDB = indexedDB;
-            }
+            public HealthReactiveEngine(IndexedDB indexedDB) : base(indexedDB)
+            { }
 
-            public IndexedDB indexedDB { get; }
-
-            public void Add(ref HealthComponent component, IEntityTable<IHealthRow> table, uint entityID)
+            protected override void Add(ref HealthComponent component, IEntityTable<IHealthRow> table, uint entityID)
             {
                 added++;
             }
 
-            public void MovedTo(ref HealthComponent component, IEntityTable<IHealthRow> previousTable, IEntityTable<IHealthRow> table, uint entityID)
+            protected override void MovedTo(ref HealthComponent component, IEntityTable<IHealthRow> previousTable, IEntityTable<IHealthRow> table, uint entityID)
             {
                 moved++;
             }
 
-            public void Remove(ref HealthComponent component, IEntityTable<IHealthRow> table, uint entityID)
+            protected override void Remove(ref HealthComponent component, IEntityTable<IHealthRow> table, uint entityID)
             {
                 removed++;
             }
