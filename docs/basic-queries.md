@@ -27,7 +27,7 @@ foreach (var result in _indexedDB.Select<DamagableSet>().FromAll().Entities())
 In this case, you'll iterate any `Table` in your schema that their Row implementing `IQueryable<DamagableSet>`. Important note: If the their Row does not implements `IQueryable<DamagableSet>`, then that Table does not included in result of this query. **Even though Row has both `HealthComponent` and `DefenseComponent`.** This is important because it is different behavour from Svelto or other ECS frameworks. **In Schema extensions Rows define behaviours, not the Components.**
 
 ### Basic Query to find Tables
-But what if you want to find specific type of Tables that is not Selector Row? You can query like this.
+But what if you want to find specific type of Tables only, not all `DamagableSet`? You can query like this.
 ```csharp
 var tables = _indexedDB.FindTables<CharacterRow>();
 

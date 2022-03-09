@@ -3,14 +3,14 @@
 Schema extensions defines few convariant interfaces so users can easily access to abstracted Tables. For example, if `HeroRow` and `EnemyRow` both implements `ICharacterRow`, you can do this.
 ```csharp
 // this should be in schema, actually
-Table<HeroRow> heroTable = new Hero.Table();
+Table<HeroRow> heroTable = new Table<HeroRow>();
 Table<EnemyRow> enemyTable = new Table<EnemyRow>();
 
 // you have common interface, you can treat it as same type of table!
 IEntityTable<ICharacterRow> charcterTable1 = heroTable;
 IEntityTable<ICharacterRow> charcterTable2 = enemyTable;
 ```
-And it is still type safe when you do queries! In other words with `IEntityTable<ICharacterRow>` you can only query with Selector Rows that ICharacterRow implements.
+And it is still type safe when you do queries! In other words with `IEntityTable<ICharacterRow>` you can only query with Result Sets ICharacterRow implements.
 
 ## Reactive Engine Usage
 To get notified when a Entity with specific Row is added, removed or swapped, you can define a Row extending `IReactiveRow<TComponent>`. And create a engine extending `ReactToRowEngine<TRow, TComponent>`.

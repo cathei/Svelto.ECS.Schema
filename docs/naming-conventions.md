@@ -1,25 +1,24 @@
 ## Naming Convention Recommendations
 Below is naming convention suggestions to make schema more readable.
 
+### For Result Sets
+* Use `*Noun* + Set` for `Result Sets`. e.g. `DamgableSet`
+
 ### For Rows
-* Use `INounRow` or `IAdjectiveRow` for `Interface Rows`. e.g. `IDamagableRow`
-* Use `NounRow` for `Descriptor Rows`. e.g. `CharacterRow`
+* Use `I + *Noun* + Row` or `I + *Adjective* + Row` for `Interface Rows`. e.g. `IDamagableRow`
+* Use `*Noun* + Row` for `Descriptor Rows`. e.g. `CharacterRow`
 
 ### For Tables
-* Use `SingularNoun` for `Table<T>`.
-* Use `PluralNouns` for `Tables<T>` or `CombinedTables<T>`.
+* Use `*SingularNoun*` for `Table<T>`.
+* Use `*PluralNouns*` for `Tables<T>` or `CombinedTables<T>`.
 
 ### For Schemas
-* Use `Adjective` or `SingularNoun` for Schema object. e.g. `Flying`, so you can access like `Flying.Monster`
-* Use `Adjective` or `PluralNouns` for `Ranged<TSchema>`
+* Use `*Adjective*` or `*SingularNoun*` for Schema object. e.g. `Flying`, so you can access like `Flying.Monster`
+* Use `*Adjective*` or `*PluralNouns*` for `Ranged<TSchema>`
 
-### For Indexes
-* Use `EntityName + Noun` for `IIndexKey<T>`. e.g. `ItemHolder`
-* Use same name for `Index<T>` instance in Schema.
-
-### For State Machines
-* Use `EntityName + State` for `IStateMachineKey<T>`. e.g. `CharacterState`
-* Use `EntityName + FSM` for `StateMachine<T>`. e.g. `CharacterFSM`
+### For Indexes and State Machines
+* Use `*EntityName* + *Noun*` for `Index<T>` instance in Schema. e.g. `ItemHolder`
+* Use `*EntityName* + FSM` for `StateMachine<T>`. e.g. `CharacterFSM`
 
 ### Etc.
 * Use `Indexes` as plural form for `Index` in schema.
