@@ -8,13 +8,7 @@ namespace Svelto.ECS.Schema.Definition
     {
         void IEntityStateMachine.AddEngines(EnginesRoot enginesRoot, IndexedDB indexedDB)
         {
-            // this is required to handle added or removed entities
-            enginesRoot.AddEngine(new TableIndexingEngine<IIndexableRow, TComponent>(indexedDB));
-
-            // this is required to validate and change state
-            Engine = Config.GetEngine(indexedDB);
-
-            enginesRoot.AddEngine(Engine);
+            Engine = Config.AddEngines(enginesRoot, indexedDB);
         }
     }
 

@@ -28,18 +28,16 @@ namespace Svelto.ECS.Schema
                 = new SveltoDictionaryNative<EntityReference, IndexerEntityData<TKey>>(0);
         }
 
-        internal IndexableComponentCache<TK> CreateOrGetComponentCache<TC, TK>()
+        internal IndexableComponentCache<TK> CreateOrGetComponentCache<TK>(in RefWrapperType componentType)
             where TK : unmanaged, IEquatable<TK>
         {
-            var componentType = TypeRefWrapper<TC>.wrapper;
             return (IndexableComponentCache<TK>)_componentCaches.GetOrCreate(
                 componentType, () => new IndexableComponentCache<TK>());
         }
 
-        internal FasterList<IEntityIndex> FindIndexers<TC>(IndexableComponentCache componentCache, in ExclusiveGroupStruct groupID)
+        internal FasterList<IEntityIndex> FindIndexers(
+            in RefWrapperType componentType, IndexableComponentCache componentCache, in ExclusiveGroupStruct groupID)
         {
-            var componentType = TypeRefWrapper<TC>.wrapper;
-
             if (componentCache.groupToIndexers.TryGetValue(groupID, out var result))
                 return result;
 
@@ -103,18 +101,17 @@ namespace Svelto.ECS.Schema
         }
 
         // remove
-        internal void RemoveIndexableComponent<TC, TK>(in EGID egid)
-            where TC : unmanaged, IIndexableComponent
+        internal void RemoveIndexableComponent<TK>(RefWrapperType componentType, in EGID egid)
             where TK : unmanaged, IEquatable<TK>
         {
-            // we need to compare with previous key with referenc
+            // we need to compare with previous key with reference because it's only reliable value
             var entityReference = entitiesDB.GetEntityReference(egid);
-            var componentCache = CreateOrGetComponentCache<TC, TK>();
+            var componentCache = CreateOrGetComponentCache<TK>(componentType);
 
             if (componentCache.entities.TryGetValue(entityReference, out var entityData))
             {
                 // remove old indexers
-                var oldIndexers = FindIndexers<TC>(componentCache, entityData.previousEGID.groupID);
+                var oldIndexers = FindIndexers(componentType, componentCache, entityData.previousEGID.groupID);
 
                 foreach (var indexer in oldIndexers)
                 {
@@ -130,13 +127,12 @@ namespace Svelto.ECS.Schema
         }
 
         // add or update
-        internal void UpdateIndexableComponent<TC, TK>(in EGID egid, in TK key)
-            where TC : unmanaged, IIndexableComponent
+        internal void UpdateIndexableComponent<TK>(RefWrapperType componentType, in EGID egid, in TK key)
             where TK : unmanaged, IEquatable<TK>
         {
             // we need to compare with previous key with reference because it's only reliable value
             var entityReference = entitiesDB.GetEntityReference(egid);
-            var componentCache = CreateOrGetComponentCache<TC, TK>();
+            var componentCache = CreateOrGetComponentCache<TK>(componentType);
 
             // has previous record
             if (componentCache.entities.TryGetValue(entityReference, out var entityData))
@@ -148,7 +144,7 @@ namespace Svelto.ECS.Schema
                     return;
                 }
 
-                var oldIndexers = FindIndexers<TC>(componentCache, entityData.previousEGID.groupID);
+                var oldIndexers = FindIndexers(componentType, componentCache, entityData.previousEGID.groupID);
 
                 foreach (var indexer in oldIndexers)
                 {
@@ -164,7 +160,7 @@ namespace Svelto.ECS.Schema
             entityData.previousKey = key;
             componentCache.entities[entityReference] = entityData;
 
-            var indexers = FindIndexers<TC>(componentCache, egid.groupID);
+            var indexers = FindIndexers(componentType, componentCache, egid.groupID);
             var mapper = GetEGIDMapper(egid.groupID);
 
             foreach (var indexer in indexers)

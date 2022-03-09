@@ -1,4 +1,5 @@
 using System;
+using Svelto.DataStructures;
 using Svelto.ECS.Schema.Definition;
 using Svelto.ECS.Schema.Internal;
 
@@ -6,12 +7,13 @@ namespace Svelto.ECS.Schema
 {
     public static class IndexExtensions
     {
-        public static void Update<TComponent>(
-                this IndexedDB indexedDB, ref TComponent component)
-            where TComponent : unmanaged, IIndexableComponent
-        {
-            component.UpdateIndex<TComponent>(indexedDB);
-        }
+        // public static void Update<TComponent>(
+        //         this IndexedDB indexedDB, ref TComponent component)
+        //     where TComponent : unmanaged, IIndexableComponent
+        // {
+        //     indexedDB.UpdateIndexableComponent(, component.ID,
+        //         IndexComponentReflection<TComponent>.KeyGetter<TK>.Getter(ref component));
+        // }
 
         public static void Update<TComponent, TKey>(
                 this IndexedDB indexedDB, ref TComponent component, in TKey key)
@@ -19,7 +21,8 @@ namespace Svelto.ECS.Schema
             where TKey : unmanaged, IEquatable<TKey>
         {
             component.key = key;
-            component.UpdateIndex<TComponent>(indexedDB);
+            indexedDB.UpdateIndexableComponent(
+                TypeRefWrapper<TComponent>.wrapper, component.ID, component.key);
         }
 
         public static void Update<TComponent, TKey>(
@@ -28,7 +31,8 @@ namespace Svelto.ECS.Schema
             where TKey : unmanaged, Enum
         {
             component.key = key;
-            component.UpdateIndex<TComponent>(indexedDB);
+            indexedDB.UpdateIndexableComponent(
+                TypeRefWrapper<TComponent>.wrapper, component.ID, component.key);
         }
     }
 }

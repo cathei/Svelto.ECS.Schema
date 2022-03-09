@@ -23,7 +23,7 @@ namespace Svelto.ECS.Schema.Definition
     internal abstract class StateMachineConfigBase<TComponent>
         where TComponent : unmanaged, IStateMachineComponent
     {
-        internal abstract IStepEngine GetEngine(IndexedDB indexedDB);
+        internal abstract IStepEngine AddEngines(EnginesRoot enginesRoot, IndexedDB indexedDB);
         internal abstract void Process(IndexedDB indexedDB);
 
         // this will manage filters for state machine
@@ -59,9 +59,20 @@ namespace Svelto.ECS.Schema.Definition
             _anyState = new AnyState(this);
         }
 
-        internal override IStepEngine GetEngine(IndexedDB indexedDB)
+        internal override IStepEngine AddEngines(EnginesRoot enginesRoot, IndexedDB indexedDB)
         {
-            return new TransitionEngine(indexedDB);
+            // this is required to handle added or removed entities
+            var indexingEngine = new TableIndexingEngine<
+                StateMachine<TComponent>.IIndexableRow, TComponent, TState>(indexedDB);
+
+            // this is required to validate and change state
+            var stepEngine = new TransitionEngine(indexedDB);
+
+            enginesRoot.AddEngine(indexingEngine);
+
+            enginesRoot.AddEngine(stepEngine);
+
+            return stepEngine;
         }
 
         internal override void Process(IndexedDB indexedDB)

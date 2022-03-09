@@ -26,11 +26,17 @@ namespace Svelto.ECS.Schema.Internal
         int IEntityIndex.IndexerID => _indexerId;
         int IIndexQueryable<TRow, TComponent>.IndexerID => _indexerId;
 
+        static IndexBase()
+        {
+            // must register and trigger reflection
+            default(TComponent).Warmup<TComponent>();
+        }
+
         internal IndexBase() { }
 
         void IEntityIndex.AddEngines(EnginesRoot enginesRoot, IndexedDB indexedDB)
         {
-            enginesRoot.AddEngine(new TableIndexingEngine<TRow, TComponent>(indexedDB));
+            IndexableComponentHelper<TComponent>.EngineHandler.AddEngines<TRow>(enginesRoot, indexedDB);
         }
     }
 }
