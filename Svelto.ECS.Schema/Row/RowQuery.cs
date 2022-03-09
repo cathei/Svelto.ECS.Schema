@@ -64,8 +64,7 @@ namespace Svelto.ECS.Schema.Internal
 
         public QueryResult<TResult, TRow> Entities()
         {
-            TResult result = default;
-            result.LoadEntities(Item1.entitiesDB, Item3.ExclusiveGroup);
+            ResultSetAssigner<TResult>.Assign(out var result, Item1.entitiesDB, Item3.ExclusiveGroup);
             return new QueryResult<TResult, TRow>(result, Item3);
         }
 
@@ -139,8 +138,7 @@ namespace Svelto.ECS.Schema.Internal
 
         public IndexedQueryResult<TResult, TRow> Entities()
         {
-            TResult result = default;
-            result.LoadEntities(Item1.entitiesDB, Item3.ExclusiveGroup);
+            ResultSetAssigner<TResult>.Assign(out var result, Item1.entitiesDB, Item3.ExclusiveGroup);
             return new IndexedQueryResult<TResult, TRow>(result, Indices(), Item3);
         }
     }

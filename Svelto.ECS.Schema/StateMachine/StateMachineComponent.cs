@@ -9,8 +9,5 @@ namespace Svelto.ECS.Schema
     public interface IStateMachineComponent<TState> :
             IStateMachineComponent, IIndexableComponent<TState>
         where TState : unmanaged, IEquatable<TState>
-    {
-        TState IIndexableComponent<TState>.key { get => state; set => state = value; }
-        TState state { get; set; }
-    }
+    { }
 }

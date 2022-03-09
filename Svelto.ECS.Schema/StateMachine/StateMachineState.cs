@@ -61,7 +61,7 @@ namespace Svelto.ECS.Schema.Definition
                         ref var current = ref components[index];
 
                         // register to execute transition
-                        var currentState = current.state;
+                        var currentState = current.key;
                         var nextState = transition._next;
 
                         indexedDB.Memo(_config._states[currentState]._exitCandidates).Add(current);
@@ -141,14 +141,14 @@ namespace Svelto.ECS.Schema.Definition
                         ref var current = ref components[index];
 
                         // component is already in this state
-                        if (current.state.Equals(transition._next))
+                        if (current.key.Equals(transition._next))
                             continue;
 
                         if (!transition.Evaluate(index))
                             continue;
 
                         // register to execute transition
-                        var currentState = current.state;
+                        var currentState = current.key;
                         var nextState = transition._next;
 
                         indexedDB.Memo(_config._states[currentState]._exitCandidates).Add(current);

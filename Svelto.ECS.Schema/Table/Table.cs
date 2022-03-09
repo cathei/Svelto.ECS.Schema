@@ -23,10 +23,14 @@ namespace Svelto.ECS.Schema.Internal
     {
         internal TableBase() : base() { }
 
+        public string Name { get; set; }
+
         IEnumerable<IEntityTable<TRow>> IEntityTablesBuilder<TRow>.Tables
         {
             get { yield return this; }
         }
+
+        public override string ToString() => Name;
     }
 }
 

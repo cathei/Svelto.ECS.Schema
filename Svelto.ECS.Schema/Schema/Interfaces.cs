@@ -11,6 +11,8 @@ namespace Svelto.ECS.Schema
 
         public interface IEntityTable : ISchemaDefinition
         {
+            string Name { get; set; }
+
             ref readonly ExclusiveGroupStruct ExclusiveGroup { get; }
         }
 
@@ -23,6 +25,8 @@ namespace Svelto.ECS.Schema
 
         public interface IEntityTables : ISchemaDefinition
         {
+            string Name { get; set; }
+
             bool IsCombined { get; }
             int Range { get; }
             LocalFasterReadOnlyList<ExclusiveGroupStruct> ExclusiveGroups { get; }

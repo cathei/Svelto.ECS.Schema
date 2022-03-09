@@ -59,9 +59,12 @@ namespace Svelto.ECS.Schema
                         break;
 
                     case IEntityTables rangedTable:
+                        rangedTable.Name = $"{name}.{fieldInfo.Name}";
+
                         // metadata should not include combined tables
                         if (rangedTable.IsCombined)
                             break;
+
                         for (int i = 0; i < rangedTable.Range; ++i)
                             RegisterTable(node, rangedTable.GetTable(i), $"{name}.{fieldInfo.Name}.{i}");
                         break;
@@ -91,6 +94,8 @@ namespace Svelto.ECS.Schema
 
         private void RegisterTable(ShardNode parent, IEntityTable table, string name)
         {
+            table.Name = name;
+
             groupToTable[table.ExclusiveGroup] = new TableNode
             {
                 parent = parent,
@@ -101,7 +106,7 @@ namespace Svelto.ECS.Schema
             // GroupHashMap
             // GroupHashMapRegisterGroup?.Invoke(null, new object[] { table.ExclusiveGroup, name });
             // GroupNamesMap.idToName
-            GroupNamesMapIdToName?.Add(table.ExclusiveGroup, $"{name} {table.ExclusiveGroup.id})");
+            GroupNamesMapIdToName?.Add(table.ExclusiveGroup, $"{name}-{table.ExclusiveGroup.id}");
             // ExclusiveGroup._knownGroups
             ExclusiveGroupKnownGroups?.Add(name, table.ExclusiveGroup);
         }

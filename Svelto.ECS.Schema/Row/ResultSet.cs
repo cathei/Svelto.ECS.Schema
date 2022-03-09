@@ -1,3 +1,27 @@
+using System;
+using System.Linq;
+using System.Reflection;
+using System.Threading;
+
+namespace Svelto.ECS.Schema
+{
+    internal static class ResultSetAssigner<T>
+        where T : struct, IResultSet
+    {
+        // boxed as template
+        private readonly static ThreadLocal<IResultSet> defaultBoxed
+            = new ThreadLocal<IResultSet>(() => default(T));
+
+        // some tricky thing is happening here but this should be threadsafe
+        public static void Assign(out T resultSet, EntitiesDB entitiesDB, in ExclusiveGroupStruct groupID)
+        {
+            var boxed = defaultBoxed.Value;
+            boxed.LoadEntities(entitiesDB, groupID);
+            resultSet = (T)boxed;
+        }
+    }
+}
+
 namespace Svelto.ECS.Schema
 {
     public interface IResultSet

@@ -60,7 +60,7 @@ namespace Svelto.ECS.Schema
                     if (!_table.ExclusiveGroup.IsEnabled() || _indices.Count() == 0)
                         continue;
 
-                    _result.LoadEntities(_indexedDB.entitiesDB, _table.ExclusiveGroup);
+                    ResultSetAssigner<TResult>.Assign(out _result, _indexedDB.entitiesDB, _table.ExclusiveGroup);
                     break;
                 }
 

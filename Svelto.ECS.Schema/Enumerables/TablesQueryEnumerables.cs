@@ -42,11 +42,7 @@ namespace Svelto.ECS.Schema
                     if (!_table.ExclusiveGroup.IsEnabled())
                         continue;
 
-                    // cannot do this due because count is internal...
-                    // if (collection.count == 0)
-                    //     continue;
-
-                    _result.LoadEntities(_indexedDB.entitiesDB, _table.ExclusiveGroup);
+                    ResultSetAssigner<TResult>.Assign(out _result, _indexedDB.entitiesDB, _table.ExclusiveGroup);
                     if (_result.count == 0)
                         continue;
                     break;
