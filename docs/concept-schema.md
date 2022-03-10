@@ -13,7 +13,7 @@ In Svelto.ECS, groups can hold entities having specific combination of component
 That is why I chose to take friendly terms from RDBMS and define Schema of ECS.
 
 ### Rows
-In Schema extensions, `Row`s are abstracted layer of traits that a Entity can have. It can be extended, layered, mxied and matched very flexiblely. Engines should query entities as `Selector Row`s, while actual Entity Descriptor is defined with `Descriptor Row`s.
+In Schema extensions, `Row`s are abstracted layer of traits that a Entity can have. It can be extended, layered, mxied and matched very flexiblely. Engines should query entities as `Result Set`s, while actual Entity Descriptor is defined with `Descriptor Row`s.
 
 ### Tables
 `Table` is a wrapper for `Group` in Svelto ECS, mimicking RDBMS Tables. A `Table` is tied up to specific `Descriptor Row`. You can either define single Table, or ranged, or combined Table from defined onces. Using `IEntityTable<out TRow>` interface is a way to treat Tables with same common interface same way.
