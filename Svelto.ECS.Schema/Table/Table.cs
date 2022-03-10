@@ -31,6 +31,16 @@ namespace Svelto.ECS.Schema.Internal
         }
 
         public override string ToString() => Name;
+
+        /// <summary>
+        /// Schema extensions only support remove from untyped table for now
+        /// Because it is not possible to determine if it is safe to swap to other table
+        /// After Primary Key implemented it should be used instead of swap.
+        /// </summary>
+        void IEntityTable<TRow>.Remove(IEntityFunctions functions, uint entityID)
+        {
+            functions.RemoveEntity<DescriptorRow<TRow>.Descriptor>(entityID, ExclusiveGroup);
+        }
     }
 }
 

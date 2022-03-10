@@ -89,9 +89,10 @@ namespace Svelto.ECS.Schema
         /// </summary>
         public static void Remove<TRow>(
                 this IEntityFunctions functions, IEntityTable<TRow> table, uint entityID)
-            where TRow : DescriptorRow<TRow>
+            where TRow : class, IEntityRow
         {
-            functions.RemoveEntity<DescriptorRow<TRow>.Descriptor>(entityID, table.ExclusiveGroup);
+            // this is supported with virtual fuction so you can delete with any row
+            table.Remove(functions, entityID);
         }
 
         /// <summary>
