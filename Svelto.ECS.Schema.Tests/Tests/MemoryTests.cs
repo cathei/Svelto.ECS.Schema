@@ -47,7 +47,6 @@ namespace Svelto.ECS.Schema.Tests
             }
         }
 
-
         public class ItemRow : DescriptorRow<ItemRow>,
             IIndexableRow<ItemOwnerComponent>, IQueryableRow<ItemWithOwnerSet>, IQueryableRow<EGIDSet>
         { }

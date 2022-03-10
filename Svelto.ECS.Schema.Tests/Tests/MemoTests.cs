@@ -67,12 +67,14 @@ namespace Svelto.ECS.Schema.Tests
             _indexedDB.Memo(_schema.Memo).Clear();
 
             // 30 entities
-            _indexedDB.Memo(_schema.Memo).Union(_schema.Controller.Is(0));
-            _indexedDB.Memo(_schema.Memo).Union(_schema.Controller.Is(3));
-            _indexedDB.Memo(_schema.Memo).Union(_schema.Controller.Is(6));
+            _indexedDB.Memo(_schema.Memo)
+                .Union(_schema.Controller.Is(0))
+                .Union(_schema.Controller.Is(3))
+                .Union(_schema.Controller.Is(6));
 
             // 33 entities
-            _indexedDB.Memo(_schema.Memo).Union(_schema.State.Is(CharacterState.Happy));
+            _indexedDB.Memo(_schema.Memo)
+                .Union(_schema.State.Is(CharacterState.Happy));
 
             int entityCount = 0;
 
@@ -114,12 +116,14 @@ namespace Svelto.ECS.Schema.Tests
             _indexedDB.Memo(_schema.Memo).Clear();
 
             // 30 entities
-            _indexedDB.Memo(_schema.Memo).Union(_schema.Controller.Is(0));
-            _indexedDB.Memo(_schema.Memo).Union(_schema.Controller.Is(3));
-            _indexedDB.Memo(_schema.Memo).Union(_schema.Controller.Is(6));
+            _indexedDB.Memo(_schema.Memo)
+                .Union(_schema.Controller.Is(0))
+                .Union(_schema.Controller.Is(3))
+                .Union(_schema.Controller.Is(6));
 
             // 33 entities
-            _indexedDB.Memo(_schema.Memo).Intersect(_schema.State.Is(CharacterState.Happy));
+            _indexedDB.Memo(_schema.Memo)
+                .Intersect(_schema.State.Is(CharacterState.Happy));
 
             int entityCount = 0;
 

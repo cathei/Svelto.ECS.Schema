@@ -16,39 +16,45 @@ namespace Svelto.ECS.Schema.Internal
             _memo = memo;
         }
 
-        public void Add(TComponent component)
+        public MemoQuery<TRow, TComponent> Add(TComponent component)
         {
             var table = _indexedDB.FindTable<TRow>(component.ID.groupID);
             _indexedDB.AddMemo(_memo, component.ID.entityID, table);
+            return this;
         }
 
-        public void Remove(TComponent component)
+        public MemoQuery<TRow, TComponent> Remove(TComponent component)
         {
             var table = _indexedDB.FindTable<TRow>(component.ID.groupID);
             _indexedDB.RemoveMemo(_memo, component.ID.entityID, table);
+            return this;
         }
 
-        public void Clear()
+        public MemoQuery<TRow, TComponent> Clear()
         {
             _indexedDB.ClearMemo(_memo);
+            return this;
         }
 
-        public void Set<TIndex>(TIndex indexQuery)
+        public MemoQuery<TRow, TComponent> Set<TIndex>(TIndex indexQuery)
             where TIndex : IIndexQuery<TRow>
         {
             _memo.Set(_indexedDB, indexQuery);
+            return this;
         }
 
-        public void Union<TIndex>(TIndex indexQuery)
+        public MemoQuery<TRow, TComponent> Union<TIndex>(TIndex indexQuery)
             where TIndex : IIndexQuery<TRow>
         {
             _memo.Union(_indexedDB, indexQuery);
+            return this;
         }
 
-        public void Intersect<TIndex>(TIndex indexQuery)
+        public MemoQuery<TRow, TComponent> Intersect<TIndex>(TIndex indexQuery)
             where TIndex : IIndexQuery<TRow>
         {
             _memo.Intersect(_indexedDB, indexQuery);
+            return this;
         }
     }
 }
