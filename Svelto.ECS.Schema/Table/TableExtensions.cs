@@ -23,8 +23,7 @@ namespace Svelto.ECS.Schema
                 uint entityID, IEnumerable<object> implementors = null)
             where TRow : DescriptorRow<TRow>
         {
-            return factory.BuildEntity<DescriptorRow<TRow>.Descriptor>(
-                entityID, table.ExclusiveGroup, implementors);
+            return table.Build(factory, entityID, implementors);
         }
 
         /// <summary>

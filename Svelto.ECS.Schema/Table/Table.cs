@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Svelto.DataStructures;
 using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema.Internal
@@ -32,6 +33,30 @@ namespace Svelto.ECS.Schema.Internal
 
         public override string ToString() => Name;
 
+        private delegate void InitializerDelegate(in EntityInitializer initializer);
+
+        private FasterList<InitializerDelegate> _defaultInitializerActions;
+
+        public void SetDefault<T>(T initialValue)
+            where T : struct, IEntityComponent
+        {
+            _defaultInitializerActions ??= new FasterList<InitializerDelegate>();
+            _defaultInitializerActions.Add((in EntityInitializer builder) => builder.Init(initialValue));
+        }
+
+        EntityInitializer IEntityTable<TRow>.Build(IEntityFactory factory, uint entityID, IEnumerable<object> implementors)
+        {
+            var builder = factory.BuildEntity<DescriptorRow<TRow>.Descriptor>(entityID, _exclusiveGroup, implementors);
+
+            if (_defaultInitializerActions != null)
+            {
+                foreach (var action in _defaultInitializerActions)
+                    action(builder);
+            }
+
+            return builder;
+        }
+
         /// <summary>
         /// Schema extensions only support remove from untyped table for now
         /// Because it is not possible to determine if it is safe to swap to other table
@@ -39,7 +64,7 @@ namespace Svelto.ECS.Schema.Internal
         /// </summary>
         void IEntityTable<TRow>.Remove(IEntityFunctions functions, uint entityID)
         {
-            functions.RemoveEntity<DescriptorRow<TRow>.Descriptor>(entityID, ExclusiveGroup);
+            functions.RemoveEntity<DescriptorRow<TRow>.Descriptor>(entityID, _exclusiveGroup);
         }
     }
 }
