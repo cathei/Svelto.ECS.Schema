@@ -18,7 +18,8 @@ namespace Svelto.ECS.Schema.Internal
 
     public interface IIndexQuery
     {
-        internal IndexerKeyData GetIndexerKeyData(IndexedDB indexedDB);
+        internal void Apply(ResultSetQueryConfig config);
+        // internal IndexerKeyData GetIndexerKeyData(IndexedDB indexedDB);
     }
 
     /// <summary>
@@ -40,7 +41,12 @@ namespace Svelto.ECS.Schema.Internal
             _key = key;
         }
 
-        IndexerKeyData IIndexQuery.GetIndexerKeyData(IndexedDB indexedDB)
+        void IIndexQuery.Apply(ResultSetQueryConfig config)
+        {
+            config.indexers.Add(GetIndexerKeyData(config.indexedDB));
+        }
+
+        private IndexerKeyData GetIndexerKeyData(IndexedDB indexedDB)
         {
             if (!indexedDB.indexers.ContainsKey(_indexerID))
                 return default;

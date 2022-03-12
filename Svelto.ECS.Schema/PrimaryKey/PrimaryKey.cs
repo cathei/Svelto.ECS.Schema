@@ -15,4 +15,16 @@ Since the groups must stay statically - primary key component have to give you t
 Primary key also have to support partial Query.
 
     ***/
+
+    public interface IPrimaryKeyComponent { }
+
+    public interface IPrimaryKeyComponent<TKey> : IIndexableComponent<TKey>, IPrimaryKeyComponent
+        where TKey : unmanaged, IEquatable<TKey>
+    { }
+
+    public class PrimaryKeyBase {}
+
+    public class PrimaryKey<TComponent> : PrimaryKeyBase
+        where TComponent : unmanaged, IPrimaryKeyComponent
+    { }
 }
