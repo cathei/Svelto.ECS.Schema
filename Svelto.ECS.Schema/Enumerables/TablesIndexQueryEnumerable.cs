@@ -7,38 +7,33 @@ namespace Svelto.ECS.Schema
         where TResult : struct, IResultSet
         where TRow : class, IEntityRow
     {
-        private readonly IndexedDB _indexedDB;
+        private readonly ResultSetQueryConfig _config;
         private readonly IEntityTables<TRow> _tables;
-        private readonly FasterDictionary<ExclusiveGroupStruct, IndexerGroupData> _dict;
 
-        internal TablesIndexQueryEnumerable(IndexedDB indexedDB,
-            IEntityTables<TRow> tables,
-            FasterDictionary<ExclusiveGroupStruct, IndexerGroupData> dict)
+        internal TablesIndexQueryEnumerable(ResultSetQueryConfig config, IEntityTables<TRow> tables)
         {
-            _indexedDB = indexedDB;
+            _config = config;
             _tables = tables;
-            _dict = dict;
         }
 
-        public RefIterator GetEnumerator() => new RefIterator(_indexedDB, _tables, _dict);
+        public RefIterator GetEnumerator() => new RefIterator(_config, _tables);
 
         public ref struct RefIterator
         {
-            private readonly IndexedDB _indexedDB;
+            private readonly ResultSetQueryConfig _config;
             private readonly IEntityTables<TRow> _tables;
-            private readonly FasterDictionary<ExclusiveGroupStruct, IndexerGroupData> _dict;
+
+            private int _indexValue;
+            private TableGroupEnumerable.RefIterator _tableIter;
 
             private TResult _result;
             private FilteredIndices _indices;
-            private IEntityTable<TRow> _table;
-            private int _indexValue;
 
-            internal RefIterator(IndexedDB indexedDB,
-                IEntityTables<TRow> tables,
-                FasterDictionary<ExclusiveGroupStruct, IndexerGroupData> dict) : this()
+            internal RefIterator(ResultSetQueryConfig config, IEntityTables<TRow> tables) : this()
             {
-                _indexedDB = indexedDB;
+                _config = config;
                 _tables = tables;
+
                 _dict = dict;
                 _indexValue = -1;
             }

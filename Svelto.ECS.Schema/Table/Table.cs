@@ -19,11 +19,23 @@ namespace Svelto.ECS.Schema.Internal
         public static implicit operator ExclusiveGroupStruct(in TableBase group) => group._exclusiveGroup;
     }
 
-    public abstract class TableBase<TRow> : TableBase, IEntityTable<TRow>, IEntityTablesBuilder<TRow>
+    public class Table
+    {
+        internal ExclusiveGroup group;
+        internal int groupRange;
+
+        internal struct PrimaryKeyInfo
+        {
+            internal int id;
+            internal int possibleKeyCount;
+        }
+
+        internal FasterList<PrimaryKeyInfo> primaryKeys = new FasterList<PrimaryKeyInfo>();
+    }
+
+    public abstract class Table<TRow> : Table, IEntityTable<TRow>, IEntityTablesBuilder<TRow>
         where TRow : DescriptorRow<TRow>
     {
-        internal TableBase() : base() { }
-
         public string Name { get; set; }
 
         IEnumerable<IEntityTable<TRow>> IEntityTablesBuilder<TRow>.Tables
@@ -36,6 +48,16 @@ namespace Svelto.ECS.Schema.Internal
         private delegate void InitializerDelegate(in EntityInitializer initializer);
 
         private FasterList<InitializerDelegate> _defaultInitializerActions;
+
+        public void AddPrimaryKey<TPrimaryKey>(TPrimaryKey primaryKey)
+            where TPrimaryKey : IPrimaryKeyProvider<TRow>
+        {
+            primaryKeys.Add(new PrimaryKeyInfo
+            {
+                id = primaryKey.PrimaryKeyID,
+                possibleKeyCount = primaryKey.PossibleKeyCount
+            });
+        }
 
         public void SetDefault<T>(T initialValue)
             where T : struct, IEntityComponent
@@ -67,6 +89,7 @@ namespace Svelto.ECS.Schema.Internal
             functions.RemoveEntity<DescriptorRow<TRow>.Descriptor>(entityID, _exclusiveGroup);
         }
     }
+
 }
 
 namespace Svelto.ECS.Schema

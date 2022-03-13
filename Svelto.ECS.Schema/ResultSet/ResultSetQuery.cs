@@ -21,7 +21,7 @@ namespace Svelto.ECS.Schema.Internal
 
         internal IndexedDB indexedDB;
 
-        internal FasterDictionary<int, int> pkIdToValue = new FasterDictionary<int, int>();
+        internal FasterDictionary<int, int> pkToValue = new FasterDictionary<int, int>();
         internal FasterList<IndexerKeyData> indexers = new FasterList<IndexerKeyData>();
 
         internal static ThreadLocal<Stack<ResultSetQueryConfig>> Pool =
@@ -45,7 +45,7 @@ namespace Svelto.ECS.Schema.Internal
 
             config.isReturned = true;
             config.indexedDB = null;
-            config.pkIdToValue.FastClear();
+            config.pkToValue.FastClear();
             config.indexers.FastClear();
 
             Pool.Value.Push(config);

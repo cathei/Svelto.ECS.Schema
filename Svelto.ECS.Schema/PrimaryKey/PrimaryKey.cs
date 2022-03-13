@@ -2,6 +2,8 @@ using System;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
+using Svelto.DataStructures;
+using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema.Internal
 {
@@ -16,15 +18,90 @@ Primary key also have to support partial Query.
 
     ***/
 
-    public interface IPrimaryKeyComponent { }
+    // contravariance (in) for TRow, for type check
+    public interface IPrimaryKeyProvider<in TRow>
+        where TRow : class, IEntityRow
+    {
+        public int PrimaryKeyID { get; }
+        public int PossibleKeyCount { get; }
+    }
 
-    public interface IPrimaryKeyComponent<TKey> : IIndexableComponent<TKey>, IPrimaryKeyComponent
-        where TKey : unmanaged, IEquatable<TKey>
-    { }
+    // contravariance (in) for TRow, for type check
+    public interface IPrimaryKeyQueryable<in TRow, TComponent>
+    {
+        public int PrimaryKeyID { get; }
+        public Delegate KeyToIndex { get; }
+    }
 
-    public class PrimaryKeyBase {}
+    /// <summary>
+    /// Default primary key when no primary key specified for the table
+    /// </summary>
+    internal class NullPrimaryKey : IPrimaryKeyProvider<IEntityRow>
+    {
+        public int PrimaryKeyID => 0;
+        public int PossibleKeyCount => 1;
+    }
 
-    public class PrimaryKey<TComponent> : PrimaryKeyBase
+    internal static class GlobalPrimaryKeyCount
+    {
+        private static int Count = 0;
+
+        public static int Generate() => Interlocked.Increment(ref Count);
+    }
+}
+
+namespace Svelto.ECS.Schema
+{
+    public class PrimaryKey<TComponent> :
+            IPrimaryKeyProvider<IPrimaryKeyRow<TComponent>>,
+            IPrimaryKeyQueryable<IPrimaryKeyRow<TComponent>, TComponent>
         where TComponent : unmanaged, IPrimaryKeyComponent
-    { }
+    {
+        // equvalent to ExclusiveGroupStruct.Generate()
+        internal readonly int _primaryKeyID = GlobalPrimaryKeyCount.Generate();
+
+        internal Func<TComponent, int> _componentToIndex;
+        internal Delegate _keyToIndex;
+
+        public int PrimaryKeyID => _primaryKeyID;
+        public int PossibleKeyCount { get; internal set; }
+
+        Delegate IPrimaryKeyQueryable<IPrimaryKeyRow<TComponent>, TComponent>.KeyToIndex => _keyToIndex;
+    }
+
+    public static class PrimaryKeyExtensions
+    {
+        public static void SetPossibleKeys<TComponent, TKey>(this PrimaryKey<TComponent> primaryKey, TKey[] possibleKeys)
+            where TComponent : unmanaged, IPrimaryKeyComponent<TKey>
+            where TKey : unmanaged, IEquatable<TKey>
+        {
+            FasterDictionary<TKey, int> dict = new FasterDictionary<TKey, int>((uint)possibleKeys.Length);
+
+            for (int i = 0; i < possibleKeys.Length; ++i)
+                dict.Add(possibleKeys[i], i);
+
+            primaryKey._componentToIndex = component => dict[component.key];
+            primaryKey._keyToIndex = new Func<TKey, int>(key => dict[key]);
+
+            primaryKey.PossibleKeyCount = dict.count;
+        }
+    }
+
+    public static class PrimaryKeyEnumExtensions
+    {
+        public static void SetPossibleKeys<TComponent, TKey>(this PrimaryKey<TComponent> primaryKey, TKey[] possibleKeys)
+            where TComponent : unmanaged, IPrimaryKeyComponent<EnumKey<TKey>>
+            where TKey : unmanaged, Enum
+        {
+            FasterDictionary<EnumKey<TKey>, int> dict = new FasterDictionary<EnumKey<TKey>, int>((uint)possibleKeys.Length);
+
+            for (int i = 0; i < possibleKeys.Length; ++i)
+                dict.Add(possibleKeys[i], i);
+
+            primaryKey._componentToIndex = component => dict[component.key];
+            primaryKey._keyToIndex = new Func<EnumKey<TKey>, int>(key => dict[key]);
+
+            primaryKey.PossibleKeyCount = dict.count;
+        }
+    }
 }
