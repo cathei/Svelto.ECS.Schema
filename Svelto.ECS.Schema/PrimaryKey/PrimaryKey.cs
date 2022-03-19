@@ -33,15 +33,6 @@ Primary key also have to support partial Query.
         public Delegate KeyToIndex { get; }
     }
 
-    /// <summary>
-    /// Default primary key when no primary key specified for the table
-    /// </summary>
-    internal class NullPrimaryKey : IPrimaryKeyProvider<IEntityRow>
-    {
-        public int PrimaryKeyID => 0;
-        public int PossibleKeyCount => 1;
-    }
-
     internal static class GlobalPrimaryKeyCount
     {
         private static int Count = 0;
