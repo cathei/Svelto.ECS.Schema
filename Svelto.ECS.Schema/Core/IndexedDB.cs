@@ -24,7 +24,13 @@ namespace Svelto.ECS.Schema
         // well... let's have some space for user defined filter
         private int filterIdCounter = 10000;
 
+        internal IEntityFunctions entityFunctions;
         internal EntitiesDB entitiesDB;
+
+        internal IndexedDB(IEntityFunctions entityFunctions)
+        {
+            this.entityFunctions = entityFunctions;
+        }
 
         internal void RegisterSchema(EnginesRoot enginesRoot, SchemaMetadata metadata)
         {

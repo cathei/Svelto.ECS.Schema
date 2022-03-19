@@ -23,7 +23,7 @@ Primary key also have to support partial Query.
         where TRow : class, IEntityRow
     {
         public int PrimaryKeyID { get; }
-        public int PossibleKeyCount { get; }
+        public ushort PossibleKeyCount { get; }
     }
 
     // contravariance (in) for TRow, for type check
@@ -64,7 +64,7 @@ namespace Svelto.ECS.Schema
         internal Delegate _keyToIndex;
 
         public int PrimaryKeyID => _primaryKeyID;
-        public int PossibleKeyCount { get; internal set; }
+        public ushort PossibleKeyCount { get; internal set; }
 
         Delegate IPrimaryKeyQueryable<IPrimaryKeyRow<TComponent>, TComponent>.KeyToIndex => _keyToIndex;
     }
@@ -83,7 +83,7 @@ namespace Svelto.ECS.Schema
             primaryKey._componentToIndex = component => dict[component.key];
             primaryKey._keyToIndex = new Func<TKey, int>(key => dict[key]);
 
-            primaryKey.PossibleKeyCount = dict.count;
+            primaryKey.PossibleKeyCount = (ushort)dict.count;
         }
     }
 
@@ -101,7 +101,7 @@ namespace Svelto.ECS.Schema
             primaryKey._componentToIndex = component => dict[component.key];
             primaryKey._keyToIndex = new Func<EnumKey<TKey>, int>(key => dict[key]);
 
-            primaryKey.PossibleKeyCount = dict.count;
+            primaryKey.PossibleKeyCount = (ushort)dict.count;
         }
     }
 }

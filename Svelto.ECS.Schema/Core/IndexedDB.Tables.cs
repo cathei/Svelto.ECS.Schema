@@ -14,8 +14,7 @@ namespace Svelto.ECS.Schema
         internal readonly FasterDictionary<RefWrapperType, IEntityTables> _rowToTables
             = new FasterDictionary<RefWrapperType, IEntityTables>();
 
-        public IEntityTable<TR> FindTable<TR>(in ExclusiveGroupStruct groupID)
-            where TR : class, IEntityRow
+        public IEntityTable FindTable(in ExclusiveGroupStruct groupID)
         {
             if (!_groupToTable.TryGetValue(groupID, out var table))
             {
@@ -31,8 +30,14 @@ namespace Svelto.ECS.Schema
                 _groupToTable[groupID] = table;
             }
 
+            return table;
+        }
+
+        public IEntityTable<TR> FindTable<TR>(in ExclusiveGroupStruct groupID)
+            where TR : class, IEntityRow
+        {
             // return null if type does not match
-            return table as IEntityTable<TR>;
+            return FindTable(groupID) as IEntityTable<TR>;
         }
 
         /// <summary>

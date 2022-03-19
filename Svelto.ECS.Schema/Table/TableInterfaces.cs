@@ -7,13 +7,10 @@ namespace Svelto.ECS.Schema
     // supports Covariance
     public interface IEntityTable<out TRow> : IEntityTable where TRow : class, IEntityRow
     {
-        internal ExclusiveGroup Group { get; }
-        internal int GroupRange { get; }
+        ref readonly ExclusiveGroup Group { get; }
+        int GroupRange { get; }
 
         internal LocalFasterReadOnlyList<Table.PrimaryKeyInfo> PrimaryKeys { get; }
-
-        internal EntityInitializer Build(IEntityFactory factory, uint entityID, IEnumerable<object> implementors);
-        internal void Remove(IEntityFunctions functions, uint entityID);
     }
 
     // supports Covariance

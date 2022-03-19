@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Svelto.DataStructures;
 using Svelto.ECS.Schema.Definition;
 using Svelto.ECS.Schema.Internal;
@@ -11,9 +12,8 @@ namespace Svelto.ECS.Schema
 
         public interface IEntityTable : ISchemaDefinition
         {
-            string Name { get; set; }
-
-            ref readonly ExclusiveGroupStruct ExclusiveGroup { get; }
+            internal EntityInitializer Build(IEntityFactory factory, uint entityID, IEnumerable<object> implementors);
+            internal void Remove(IEntityFunctions functions, uint entityID, in ExclusiveGroupStruct groupID);
         }
 
         public interface IEntityIndex : ISchemaDefinition
@@ -21,16 +21,6 @@ namespace Svelto.ECS.Schema
             RefWrapperType ComponentType { get; }
             int IndexerID { get; }
             void AddEngines(EnginesRoot enginesRoot, IndexedDB indexedDB);
-        }
-
-        public interface IEntityTables : ISchemaDefinition
-        {
-            string Name { get; set; }
-
-            bool IsCombined { get; }
-            int Range { get; }
-
-            IEntityTable GetTable(int index);
         }
 
         internal interface ISchemaDefinitionRangedSchema : ISchemaDefinition
@@ -42,6 +32,12 @@ namespace Svelto.ECS.Schema
         internal interface ISchemaDefinitionMemo : ISchemaDefinition
         {
             int MemoID { get; }
+        }
+
+        public interface IEntityTables
+        {
+            int Range { get; }
+            IEntityTable GetTable(int index);
         }
 
         public interface IEntityStateMachine

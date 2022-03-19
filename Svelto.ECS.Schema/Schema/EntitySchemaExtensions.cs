@@ -65,7 +65,8 @@ namespace Svelto.ECS.Schema
 
         public static IndexedDB GenerateIndexedDB(this EnginesRoot enginesRoot)
         {
-            var indexedDB = new IndexedDB();
+            var entityFunctions = enginesRoot.GenerateEntityFunctions();
+            var indexedDB = new IndexedDB(entityFunctions);
 
             // SchemaContextEngine injects EntitiesDB to IndexedDB
             enginesRoot.AddEngine(new IndexedDBEngine(indexedDB));

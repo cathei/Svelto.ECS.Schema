@@ -54,19 +54,8 @@ namespace Svelto.ECS.Schema
 
                 switch (element)
                 {
-                    case IEntityTable table:
+                    case Table table:
                         RegisterTable(node, table, $"{name}.{fieldInfo.Name}");
-                        break;
-
-                    case IEntityTables rangedTable:
-                        rangedTable.Name = $"{name}.{fieldInfo.Name}";
-
-                        // metadata should not include combined tables
-                        if (rangedTable.IsCombined)
-                            break;
-
-                        for (int i = 0; i < rangedTable.Range; ++i)
-                            RegisterTable(node, rangedTable.GetTable(i), $"{name}.{fieldInfo.Name}.{i}");
                         break;
 
                     case IEntityIndex indexer:
@@ -92,23 +81,43 @@ namespace Svelto.ECS.Schema
             }
         }
 
-        private void RegisterTable(ShardNode parent, IEntityTable table, string name)
+        private void RegisterTable(ShardNode parent, Table table, string name)
         {
             table.Name = name;
 
-            groupToTable[table.ExclusiveGroup] = new TableNode
-            {
-                parent = parent,
-                table = table
-            };
+            ushort groupRange = 1;
 
-            // ok we have to set three internal Svelto Dictionary here to support serialization
-            // GroupHashMap
-            // GroupHashMapRegisterGroup?.Invoke(null, new object[] { table.ExclusiveGroup, name });
-            // GroupNamesMap.idToName
-            GroupNamesMapIdToName?.Add(table.ExclusiveGroup, $"{name}-{table.ExclusiveGroup.id}");
-            // ExclusiveGroup._knownGroups
-            ExclusiveGroupKnownGroups?.Add(name, table.ExclusiveGroup);
+            foreach (var pk in table.primaryKeys)
+            {
+                groupRange *= pk.possibleKeyCount;
+            }
+
+            if (table.primaryKeys.count > 0)
+                groupRange++;
+
+            table.group = new ExclusiveGroup(groupRange);
+            table.groupRange = groupRange;
+
+            for (uint i = 0; i < groupRange; ++i)
+            {
+                var group = table.group + i;
+
+                groupToTable[group] = new TableNode
+                {
+                    parent = parent,
+                    table = table
+                };
+
+                var groupName = $"{name}-({i+1}/{groupRange})";
+
+                // ok we have to set three internal Svelto Dictionary here to support serialization
+                // GroupHashMap
+                // GroupHashMapRegisterGroup?.Invoke(null, new object[] { table.ExclusiveGroup, name });
+                // GroupNamesMap.idToName
+                GroupNamesMapIdToName?.Add(group, groupName);
+                // ExclusiveGroup._knownGroups
+                ExclusiveGroupKnownGroups?.Add(groupName, group);
+            }
         }
 
         private void RegisterIndexer(ShardNode node, IEntityIndex indexer)

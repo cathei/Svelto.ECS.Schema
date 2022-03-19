@@ -24,7 +24,10 @@ namespace Svelto.ECS.Schema
             {
                 var table = tables.GetTable(i);
 
-                IterateGroup(table);
+                if (table.PrimaryKeys.count == 0)
+                    _config.temporaryGroups.Add(table.Group, table.Group);
+                else
+                    IterateGroup(table);
             }
         }
 
@@ -32,7 +35,8 @@ namespace Svelto.ECS.Schema
         {
             if (depth >= table.PrimaryKeys.count)
             {
-                var group = table.Group + (uint)groupIndex;
+                // table group index 0 is reserved for adding only
+                var group = table.Group + (uint)(groupIndex + 1);
                 _config.temporaryGroups.Add(group, group);
                 return;
             }

@@ -27,81 +27,40 @@ namespace Svelto.ECS.Schema
         }
 
         /// <summary>
-        /// Query entrypoint Move -> To
+        /// Throws exception if Row type mismatches
         /// </summary>
-        public static (IEntityFunctions, IEntityTable<TRow>, uint) Move<TRow>(
-                this IEntityFunctions functions, IEntityTable<TRow> table, uint entityID)
+        public static void Move<TRow>(
+                this IndexedDB indexedDB, IEntityTable<TRow> table, uint entityID, in ExclusiveGroupStruct groupID)
             where TRow : DescriptorRow<TRow>
         {
-            return (functions, table, entityID);
-        }
+            if (indexedDB.FindTable<TRow>(groupID) == null)
+                throw new ECSException("Row type mismatch");
 
-        /// <summary>
-        /// Move(fromGroup, fromID).To(toGroup, toID)
-        /// </summary>
-        public static void To<TRow>(this (IEntityFunctions, IEntityTable<TRow>, uint) query,
-                IEntityTable<TRow> table, uint entityID)
-            where TRow : DescriptorRow<TRow>
-        {
-            query.Item1.SwapEntityGroup<DescriptorRow<TRow>.Descriptor>(
-                new EGID(query.Item3, query.Item2.ExclusiveGroup),
-                new EGID(entityID, table.ExclusiveGroup));
-        }
-
-        /// <summary>
-        /// Move(fromGroup, fromID).To(toGroup)
-        /// no entity ID means it will use previous entity ID
-        /// </summary>
-        public static void To<TRow>(this (IEntityFunctions, IEntityTable<TRow>, uint) query,
-                IEntityTable<TRow> table)
-            where TRow : DescriptorRow<TRow>
-        {
-            query.Item1.SwapEntityGroup<DescriptorRow<TRow>.Descriptor>(
-                query.Item3, query.Item2.ExclusiveGroup, table.ExclusiveGroup);
-        }
-
-        /// <summary>
-        /// Query entrypoint MoveAll -> To
-        /// No entity id means it will move whole group
-        /// </summary>
-        public static (IEntityFunctions, IEntityTable<TRow>) MoveAll<TRow>(
-                this IEntityFunctions functions, IEntityTable<TRow> table)
-            where TRow : DescriptorRow<TRow>
-        {
-            return (functions, table);
-        }
-
-        /// <summary>
-        /// MoveAll(fromGroup).To(toGroup)
-        /// no entity ID means it will use previous entity ID
-        /// </summary>
-        public static void To<TRow>(this (IEntityFunctions, IEntityTable<TRow>) query,
-                IEntityTable<TRow> table)
-            where TRow : DescriptorRow<TRow>
-        {
-            query.Item1.SwapEntitiesInGroup<DescriptorRow<TRow>.Descriptor>(
-                query.Item2.ExclusiveGroup, table.ExclusiveGroup);
+            indexedDB.entityFunctions.SwapEntityGroup<DescriptorRow<TRow>.Descriptor>(entityID, groupID, table.Group);
         }
 
         /// <summary>
         /// Remove entity from table
         /// </summary>
-        public static void Remove<TRow>(
-                this IEntityFunctions functions, IEntityTable<TRow> table, uint entityID)
-            where TRow : class, IEntityRow
+        public static void Remove(
+            this IndexedDB indexedDB, uint entityID, in ExclusiveGroupStruct groupID)
         {
+            var table = indexedDB.FindTable(groupID);
             // this is supported with virtual fuction so you can delete with any row
-            table.Remove(functions, entityID);
+            table.Remove(indexedDB.entityFunctions, entityID, groupID);
         }
 
         /// <summary>
-        /// Remove all entity from table
+        /// Remove all entities from table
         /// </summary>
-        public static void RemoveAll<TRow>(
-                this IEntityFunctions functions, IEntityTable<TRow> table)
-            where TRow : DescriptorRow<TRow>
+        public static void RemoveAll<TR>(
+                this IndexedDB indexedDB, IEntityTable<TR> table)
+            where TR : class, IEntityRow
         {
-            functions.RemoveEntitiesFromGroup(table.ExclusiveGroup);
+            for (uint i = 0; i < table.GroupRange; ++i)
+            {
+                indexedDB.entityFunctions.RemoveEntitiesFromGroup(table.Group + i);
+            }
         }
     }
 }
