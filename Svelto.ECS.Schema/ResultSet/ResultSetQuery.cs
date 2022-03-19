@@ -26,8 +26,8 @@ namespace Svelto.ECS.Schema.Internal
         internal FasterDictionary<int, int> pkToValue = new FasterDictionary<int, int>();
         internal FasterList<IndexerKeyData> indexers = new FasterList<IndexerKeyData>();
 
-        internal SveltoDictionaryNative<ExclusiveGroupStruct, ExclusiveGroupStruct> temporaryGroups =
-            new SveltoDictionaryNative<ExclusiveGroupStruct, ExclusiveGroupStruct>();
+        internal SharedSveltoDictionaryNative<ExclusiveGroupStruct, ExclusiveGroupStruct> temporaryGroups =
+            new SharedSveltoDictionaryNative<ExclusiveGroupStruct, ExclusiveGroupStruct>(0);
 
         internal NativeDynamicArrayCast<FilterGroup> temporaryFilters =
             new NativeDynamicArrayCast<FilterGroup>(NativeDynamicArray.Alloc<FilterGroup>());

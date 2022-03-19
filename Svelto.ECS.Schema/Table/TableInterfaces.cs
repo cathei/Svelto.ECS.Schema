@@ -17,7 +17,8 @@ namespace Svelto.ECS.Schema
     }
 
     // supports Covariance
-    public interface IEntityTables<out TRow> : IEntityTables where TRow : class, IEntityRow
+    public interface IEntityTables<out TRow> : IEntityTables, IEntityTablesBuilder<TRow>
+        where TRow : class, IEntityRow
     {
         new IEntityTable<TRow> GetTable(int index);
     }

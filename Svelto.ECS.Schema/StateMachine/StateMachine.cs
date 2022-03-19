@@ -36,9 +36,7 @@ namespace Svelto.ECS.Schema.Definition
 
         protected abstract void OnConfigure();
 
-        public interface IIndexableRow :
-            IIndexableRow<TComponent>,
-            IQueryableRow<StateMachineResultSet<TComponent>> { }
+        public interface IIndexableRow : IIndexableRow<TComponent> { }
 
         int IIndexQueryable<IIndexableRow, TComponent>.IndexerID => Config._index._indexerId;
 

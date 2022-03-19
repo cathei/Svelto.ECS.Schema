@@ -5,7 +5,7 @@ namespace Svelto.ECS.Schema.Internal
 {
     public readonly ref struct MemoQuery<TRow, TComponent>
         where TRow : class, IIndexableRow<TComponent>
-        where TComponent : unmanaged, IEntityComponent, INeedEGID
+        where TComponent : unmanaged, IEntityComponent
     {
         public readonly IndexedDB _indexedDB;
         public readonly MemoBase<TRow, TComponent> _memo;
@@ -16,17 +16,15 @@ namespace Svelto.ECS.Schema.Internal
             _memo = memo;
         }
 
-        public MemoQuery<TRow, TComponent> Add(TComponent component)
+        public MemoQuery<TRow, TComponent> Add(uint entityID, in ExclusiveGroupStruct groupID)
         {
-            var table = _indexedDB.FindTable<TRow>(component.ID.groupID);
-            _indexedDB.AddMemo(_memo, component.ID.entityID, table);
+            _indexedDB.AddMemo(_memo, entityID, groupID);
             return this;
         }
 
-        public MemoQuery<TRow, TComponent> Remove(TComponent component)
+        public MemoQuery<TRow, TComponent> Remove(uint entityID, in ExclusiveGroupStruct groupID)
         {
-            var table = _indexedDB.FindTable<TRow>(component.ID.groupID);
-            _indexedDB.RemoveMemo(_memo, component.ID.entityID, table);
+            _indexedDB.RemoveMemo(_memo, entityID, groupID);
             return this;
         }
 
@@ -66,7 +64,7 @@ namespace Svelto.ECS.Schema
         public static MemoQuery<TRow, TComponent> Memo<TRow, TComponent>(
                 this IndexedDB indexedDB, MemoBase<TRow, TComponent> memo)
             where TRow : class, IIndexableRow<TComponent>
-            where TComponent : unmanaged, IEntityComponent, INeedEGID
+            where TComponent : unmanaged, IEntityComponent
         {
             return new MemoQuery<TRow, TComponent>(indexedDB, memo);
         }

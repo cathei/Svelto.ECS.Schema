@@ -46,7 +46,7 @@ namespace Svelto.ECS.Schema.Internal
             config.indexers.Add(GetIndexerKeyData(config.indexedDB));
         }
 
-        private IndexerKeyData GetIndexerKeyData(IndexedDB indexedDB)
+        internal IndexerKeyData GetIndexerKeyData(IndexedDB indexedDB)
         {
             if (!indexedDB.indexers.ContainsKey(_indexerID))
                 return default;

@@ -7,19 +7,6 @@ using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema.Definition
 {
-    public struct StateMachineResultSet<TComponent> : IResultSet<TComponent>
-        where TComponent : unmanaged, IStateMachineComponent
-    {
-        public NB<TComponent> component;
-
-        public int count { get; set; }
-
-        public void Init(in EntityCollection<TComponent> buffers)
-        {
-            (component, count) = buffers;
-        }
-    }
-
     internal abstract class StateMachineConfigBase<TComponent>
         where TComponent : unmanaged, IStateMachineComponent
     {
@@ -89,26 +76,28 @@ namespace Svelto.ECS.Schema.Definition
                 indexedDB.Memo(states[i]._enterCandidates).Clear();
             }
 
-            foreach (var result in indexedDB.Select<StateMachineResultSet<TComponent>>().From(tables).Entities())
+            using var query = indexedDB.Select<IndexableResultSet<TComponent>>().From(tables);
+
+            foreach (var result in query.Entities())
             {
                 for (int i = 0; i < stateCount; ++i)
                 {
-                    states[i].Evaluate(indexedDB, result.set.component, result.table);
+                    states[i].Evaluate(indexedDB, result);
                 }
 
                 // any state transition has lower priority
-                _anyState.Evaluate(indexedDB, result.set.component, result.set.count, result.table);
+                _anyState.Evaluate(indexedDB, result);
 
                 // check for exit candidates
                 for (int i = 0; i < stateCount; ++i)
                 {
-                    states[i].ProcessExit(indexedDB, result.table);
+                    states[i].ProcessExit(indexedDB, result);
                 }
 
                 // check for enter candidates
                 for (int i = 0; i < stateCount; ++i)
                 {
-                    states[i].ProcessEnter(indexedDB, result.set.component, result.table);
+                    states[i].ProcessEnter(indexedDB, result);
                 }
             }
         }

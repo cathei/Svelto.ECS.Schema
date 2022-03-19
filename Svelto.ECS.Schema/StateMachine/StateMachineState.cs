@@ -36,17 +36,21 @@ namespace Svelto.ECS.Schema.Definition
                 _onEnter = new FasterList<CallbackConfig>();
             }
 
-            internal void Evaluate(IndexedDB indexedDB, NB<TComponent> components, IEntityTable<TRow> table)
+            internal void Evaluate(IndexedDB indexedDB, in IndexedQueryResult<IndexableResultSet<TComponent>, TRow> result)
             {
-                var indices = indexedDB
-                    .Select<StateMachineResultSet<TComponent>>().From(table).Where(_config._index.Is(_key)).Indices();
+                var keyData = _config._index.Is(_key).GetIndexerKeyData(indexedDB);
+
+                if (!keyData.groups.TryGetValue(result.group, out var groupData))
+                    return;
+
+                var indices = new IndexedIndices(groupData.filter.filteredIndices);
 
                 // nothing to check
                 if (indices.Count() == 0)
                     return;
 
                 for (int i = 0; i < _transitions.count; ++i)
-                    _transitions[i].Ready(indexedDB.entitiesDB, table.ExclusiveGroup);
+                    _transitions[i].Ready(indexedDB.entitiesDB, result.group);
 
                 foreach (uint index in indices)
                 {
@@ -58,32 +62,37 @@ namespace Svelto.ECS.Schema.Definition
                         if (!transition.Evaluate(index))
                             continue;
 
-                        ref var current = ref components[index];
+                        ref var current = ref result.set.component[index];
+                        ref var egid = ref result.set.egid[index];
 
                         // register to execute transition
                         var currentState = current.key;
                         var nextState = transition._next;
 
-                        indexedDB.Memo(_config._states[currentState]._exitCandidates).Add(current);
-                        indexedDB.Memo(_config._states[nextState]._enterCandidates).Add(current);
+                        indexedDB.Memo(_config._states[currentState]._exitCandidates).Add(egid.ID.entityID, result.group);
+                        indexedDB.Memo(_config._states[nextState]._enterCandidates).Add(egid.ID.entityID, result.group);
                         break;
                     }
                 }
             }
 
-            internal void ProcessExit(IndexedDB indexedDB, IEntityTable<TRow> table)
+            internal void ProcessExit(IndexedDB indexedDB, in IndexedQueryResult<IndexableResultSet<TComponent>, TRow> result)
             {
                 if (_onExit.count == 0)
                     return;
 
-                var indices = indexedDB
-                    .Select<IndexableResultSet<TComponent>>().From(table).Where(_exitCandidates).Indices();
+                var keyData = _exitCandidates.GetIndexerKeyData(indexedDB);
+
+                if (!keyData.groups.TryGetValue(result.group, out var groupData))
+                    return;
+
+                var indices = new IndexedIndices(groupData.filter.filteredIndices);
 
                 if (indices.Count() == 0)
                     return;
 
                 for (int i = 0; i < _onExit.count; ++i)
-                    _onExit[i].Ready(indexedDB.entitiesDB, table.ExclusiveGroup);
+                    _onExit[i].Ready(indexedDB.entitiesDB, result.group);
 
                 foreach (uint index in indices)
                 {
@@ -92,24 +101,29 @@ namespace Svelto.ECS.Schema.Definition
                 }
             }
 
-            internal void ProcessEnter(IndexedDB indexedDB, NB<TComponent> components, IEntityTable<TRow> table)
+            internal void ProcessEnter(IndexedDB indexedDB, in IndexedQueryResult<IndexableResultSet<TComponent>, TRow> result)
             {
-                var indices = indexedDB
-                    .Select<IndexableResultSet<TComponent>>().From(table).Where(_enterCandidates).Indices();
+                var keyData = _enterCandidates.GetIndexerKeyData(indexedDB);
+
+                if (!keyData.groups.TryGetValue(result.group, out var groupData))
+                    return;
+
+                var indices = new IndexedIndices(groupData.filter.filteredIndices);
 
                 if (indices.Count() == 0)
                     return;
 
                 for (int i = 0; i < _onEnter.count; ++i)
-                    _onEnter[i].Ready(indexedDB.entitiesDB, table.ExclusiveGroup);
+                    _onEnter[i].Ready(indexedDB.entitiesDB, result.group);
 
                 foreach (uint index in indices)
                 {
-                    ref var current = ref components[index];
+                    ref var current = ref result.set.component[index];
+                    ref var egid = ref result.set.egid[index];
 
                     // this group will not be visited again in this step
                     // updating indexes
-                    indexedDB.Update(ref current, _key);
+                    indexedDB.Update(ref current, egid.ID, _key);
 
                     for (int i = 0; i < _onEnter.count; ++i)
                         _onEnter[i].Invoke(index);
@@ -128,17 +142,18 @@ namespace Svelto.ECS.Schema.Definition
                 _transitions = new FasterList<TransitionConfig<TState>>();
             }
 
-            internal void Evaluate(IndexedDB indexedDB, NB<TComponent> components, int count, IEntityTable<TRow> table)
+            internal void Evaluate(IndexedDB indexedDB, in IndexedQueryResult<IndexableResultSet<TComponent>, TRow> result)
             {
                 for (int i = 0; i < _transitions.count; ++i)
-                    _transitions[i].Ready(indexedDB.entitiesDB, table.ExclusiveGroup);
+                    _transitions[i].Ready(indexedDB.entitiesDB, result.group);
 
-                for (uint index = 0; index < count; ++index)
+                foreach (var index in result.indices)
                 {
                     for (int i = 0; i < _transitions.count; ++i)
                     {
                         var transition = _transitions[i];
-                        ref var current = ref components[index];
+                        ref var current = ref result.set.component[index];
+                        ref var egid = ref result.set.egid[index];
 
                         // component is already in this state
                         if (current.key.Equals(transition._next))
@@ -151,8 +166,8 @@ namespace Svelto.ECS.Schema.Definition
                         var currentState = current.key;
                         var nextState = transition._next;
 
-                        indexedDB.Memo(_config._states[currentState]._exitCandidates).Add(current);
-                        indexedDB.Memo(_config._states[nextState]._enterCandidates).Add(current);
+                        indexedDB.Memo(_config._states[currentState]._exitCandidates).Add(egid.ID.entityID, result.group);
+                        indexedDB.Memo(_config._states[nextState]._enterCandidates).Add(egid.ID.entityID, result.group);
                         break;
                     }
                 }

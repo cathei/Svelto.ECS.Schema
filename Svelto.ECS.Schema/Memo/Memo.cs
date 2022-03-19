@@ -105,15 +105,17 @@ namespace Svelto.ECS.Schema.Internal
             }
         }
 
-        private IndexerKeyData GetIndexerKeyData(IndexedDB indexedDB)
+        internal IndexerKeyData GetIndexerKeyData(IndexedDB indexedDB)
         {
             if (indexedDB.memos.TryGetValue(_memoID, out var result))
                 return result.keyData;
             return default;
         }
 
-        IndexerKeyData IIndexQuery.GetIndexerKeyData(IndexedDB indexedDB)
-            => GetIndexerKeyData(indexedDB);
+        void IIndexQuery.Apply(ResultSetQueryConfig config)
+        {
+            config.indexers.Add(GetIndexerKeyData(config.indexedDB));
+        }
     }
 }
 

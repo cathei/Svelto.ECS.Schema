@@ -24,8 +24,8 @@ namespace Svelto.ECS.Schema
             where TKey : unmanaged, IEquatable<TKey>
         {
             // we have own structure to track previous state of indexed component
-            public SveltoDictionaryNative<EntityReference, IndexerEntityData<TKey>> entities
-                = new SveltoDictionaryNative<EntityReference, IndexerEntityData<TKey>>(0);
+            public SharedSveltoDictionaryNative<EntityReference, IndexerEntityData<TKey>> entities
+                = new SharedSveltoDictionaryNative<EntityReference, IndexerEntityData<TKey>>(0);
         }
 
         internal IndexableComponentCache<TK> CreateOrGetComponentCache<TK>(in RefWrapperType componentType)

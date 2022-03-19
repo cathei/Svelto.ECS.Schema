@@ -44,8 +44,6 @@ namespace Svelto.ECS.Schema.Internal
         }
     }
 
-    // we need EGID constraints because it requires INeedEGID
-    // it won't be necessary when Svelto update it's filter utility functions
     public interface IIndexableComponent : IEntityComponent
     {
         internal void Warmup<TComponent>() where TComponent : unmanaged, IIndexableComponent;

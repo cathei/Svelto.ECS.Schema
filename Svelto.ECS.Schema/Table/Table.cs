@@ -33,15 +33,10 @@ namespace Svelto.ECS.Schema.Internal
         internal FasterList<PrimaryKeyInfo> primaryKeys = new FasterList<PrimaryKeyInfo>();
     }
 
-    public abstract class Table<TRow> : Table, IEntityTable<TRow>, IEntityTablesBuilder<TRow>
+    public abstract class Table<TRow> : Table, IEntityTable<TRow>, IEntityTables<TRow>
         where TRow : DescriptorRow<TRow>
     {
         public string Name { get; set; }
-
-        IEnumerable<IEntityTable<TRow>> IEntityTablesBuilder<TRow>.Tables
-        {
-            get { yield return this; }
-        }
 
         public override string ToString() => Name;
 
@@ -88,8 +83,20 @@ namespace Svelto.ECS.Schema.Internal
         {
             functions.RemoveEntity<DescriptorRow<TRow>.Descriptor>(entityID, _exclusiveGroup);
         }
-    }
 
+        bool IEntityTables.IsCombined => false;
+
+        int IEntityTables.Range => 1;
+
+        IEntityTable IEntityTables.GetTable(int index) => this;
+
+        IEntityTable<TRow> IEntityTables<TRow>.GetTable(int index) => this;
+
+        IEnumerable<IEntityTable<TRow>> IEntityTablesBuilder<TRow>.Tables
+        {
+            get { yield return this; }
+        }
+    }
 }
 
 namespace Svelto.ECS.Schema
@@ -97,40 +104,4 @@ namespace Svelto.ECS.Schema
     public sealed class Table<TRow> : TableBase<TRow>
         where TRow : DescriptorRow<TRow>
     { }
-
-    public class Tables<TRow> : TablesBase<TRow>
-        where TRow : DescriptorRow<TRow>
-    {
-        public Tables(int range) : base(GenerateTables(range), false) { }
-
-        private static Table<TRow>[] GenerateTables(int range)
-        {
-            var tables = new Table<TRow>[range];
-
-            for (int i = 0; i < range; ++i)
-                tables[i] = new Table<TRow>();
-
-            return tables;
-        }
-    }
-
-    public sealed class Tables<TRow, TIndex> : Tables<TRow>
-        where TRow : DescriptorRow<TRow>
-    {
-        internal readonly Func<TIndex, int> _mapper;
-
-        internal Tables(int range, Func<TIndex, int> mapper) : base(range)
-        {
-            _mapper = mapper;
-        }
-
-        internal Tables(TIndex range, Func<TIndex, int> mapper) : base(mapper(range))
-        {
-            _mapper = mapper;
-        }
-
-        public IEntityTable<TRow> this[TIndex index] => _tables[_mapper(index)];
-        public IEntityTable<TRow> Get(TIndex index) => _tables[_mapper(index)];
-    }
-
 }
