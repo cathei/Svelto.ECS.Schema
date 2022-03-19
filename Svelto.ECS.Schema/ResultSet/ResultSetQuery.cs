@@ -4,6 +4,8 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using Svelto.DataStructures;
+using Svelto.DataStructures.Native;
+using Svelto.ECS.DataStructures;
 using Svelto.ECS.Hybrid;
 using Svelto.ECS.Schema.Definition;
 using Svelto.ECS.Schema.Internal;
@@ -23,6 +25,12 @@ namespace Svelto.ECS.Schema.Internal
 
         internal FasterDictionary<int, int> pkToValue = new FasterDictionary<int, int>();
         internal FasterList<IndexerKeyData> indexers = new FasterList<IndexerKeyData>();
+
+        internal SveltoDictionaryNative<ExclusiveGroupStruct, ExclusiveGroupStruct> temporaryGroups =
+            new SveltoDictionaryNative<ExclusiveGroupStruct, ExclusiveGroupStruct>();
+
+        internal NativeDynamicArrayCast<FilterGroup> temporaryFilters =
+            new NativeDynamicArrayCast<FilterGroup>(NativeDynamicArray.Alloc<FilterGroup>());
 
         internal static ThreadLocal<Stack<ResultSetQueryConfig>> Pool =
             new ThreadLocal<Stack<ResultSetQueryConfig>>(() => new Stack<ResultSetQueryConfig>());
@@ -47,6 +55,9 @@ namespace Svelto.ECS.Schema.Internal
             config.indexedDB = null;
             config.pkToValue.FastClear();
             config.indexers.FastClear();
+
+            config.temporaryGroups.FastClear();
+            config.temporaryFilters.Clear();
 
             Pool.Value.Push(config);
         }
@@ -109,12 +120,9 @@ namespace Svelto.ECS.Schema.Internal
             ResultSetQueryConfig.Return(config);
         }
 
-        public TablesQueryEnumerable<TResult, TRow> Entities()
+        public TablesIndexQueryEnumerable<TResult, TRow> Entities()
         {
-            if (config.indexers.count == 0)
-                return new TablesQueryEnumerable<TResult, TRow>(config, table);
-            else
-                return new TablesIndexQueryEnumerable<TResult, TRow>(config, table);
+            return new TablesIndexQueryEnumerable<TResult, TRow>(config, table);
         }
 
         public SelectFromQuery<TResult, TRow> Where<TIndexQuery>(TIndexQuery query)
@@ -124,9 +132,10 @@ namespace Svelto.ECS.Schema.Internal
             return this;
         }
 
-        public TablesQueryEnumerable<TResult, TRow>.RefIterator GetEnumerator()
+        public TablesIndexQueryEnumerable<TResult, TRow>.RefIterator GetEnumerator()
             => Entities().GetEnumerator();
     }
+
 
     // public readonly ref struct SelectFromTableWhereQuery<TResult, TRow, TIndex>
     //     where TResult : struct, IResultSet

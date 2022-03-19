@@ -16,23 +16,23 @@ namespace Svelto.ECS.Schema
         // }
 
         public static void Update<TComponent, TKey>(
-                this IndexedDB indexedDB, ref TComponent component, in TKey key)
+                this IndexedDB indexedDB, ref TComponent component, in EGID egid, in TKey key)
             where TComponent : unmanaged, IIndexableComponent<TKey>
             where TKey : unmanaged, IEquatable<TKey>
         {
             component.key = key;
             indexedDB.UpdateIndexableComponent(
-                TypeRefWrapper<TComponent>.wrapper, component.ID, component.key);
+                TypeRefWrapper<TComponent>.wrapper, egid, component.key);
         }
 
         public static void Update<TComponent, TKey>(
-                this IndexedDB indexedDB, ref TComponent component, in EnumKey<TKey> key)
+                this IndexedDB indexedDB, ref TComponent component, in EGID egid, in EnumKey<TKey> key)
             where TComponent : unmanaged, IIndexableComponent<EnumKey<TKey>>
             where TKey : unmanaged, Enum
         {
             component.key = key;
             indexedDB.UpdateIndexableComponent(
-                TypeRefWrapper<TComponent>.wrapper, component.ID, component.key);
+                TypeRefWrapper<TComponent>.wrapper, egid, component.key);
         }
     }
 }

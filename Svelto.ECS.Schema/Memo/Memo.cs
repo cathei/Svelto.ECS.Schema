@@ -25,7 +25,7 @@ namespace Svelto.ECS.Schema.Internal
 
     public abstract class MemoBase<TRow, TComponent> : MemoBase, IIndexQuery<TRow>
         where TRow : class, IIndexableRow<TComponent>
-        where TComponent : unmanaged, IEntityComponent, INeedEGID
+        where TComponent : unmanaged, IEntityComponent
     {
         internal MemoBase() { }
 
@@ -39,41 +39,22 @@ namespace Svelto.ECS.Schema.Internal
         internal void Union<TIndex>(IndexedDB indexedDB, TIndex query)
             where TIndex : IIndexQuery<TRow>
         {
-            var queryData = query.GetIndexerKeyData(indexedDB).groups;
+            using var results = indexedDB.Select<IndexableResultSet<TComponent>>().FromAll<TRow>().Where(query);
 
-            // if empty nothing to add
-            if (queryData == null)
-                return;
-
-            var queryDataValues = queryData.GetValues(out var queryDataCount);
-
-            for (int groupIndex = 0; groupIndex < queryDataCount; ++groupIndex)
+            foreach (var result in results)
             {
-                var queryGroupData = queryDataValues[groupIndex];
+                var mapper = indexedDB.GetEGIDMapper(result.group);
 
-                // if empty nothing to add
-                if (queryGroupData.filter.filteredIndices.Count() == 0)
-                    continue;
+                ref var originalGroupData = ref indexedDB.CreateOrGetMemoGroup(_memoID, result.group);
 
-                var table = indexedDB.FindTable<TRow>(queryGroupData.groupID);
-
-                // type mismatch - noathing to add
-                if (table == null)
-                    continue;
-
-                var mapper = indexedDB.GetEGIDMapper(queryGroupData.groupID);
-
-                // TODO: change group to table!
-                var result = indexedDB.Select<IndexableResultSet<TComponent>>().From(table).Entities();
-
-                ref var originalGroupData = ref indexedDB.CreateOrGetMemoGroup(_memoID, table);
-
-                foreach (var i in new IndexedIndices(queryGroupData.filter.filteredIndices))
-                    originalGroupData.filter.Add(result.set.component[i].ID.entityID, mapper);
+                foreach (var i in result.indices)
+                {
+                    originalGroupData.filter.Add(result.set.egid[i].ID.entityID, mapper);
+                }
             }
         }
 
-        internal void Intersect<TIndex>(IndexedDB indexedDB, TIndex query)
+        internal void Intersect<TIndex>(IndexedDB indexedDB, TIndex other)
             where TIndex : IIndexQuery<TRow>
         {
             var originalData = GetIndexerKeyData(indexedDB).groups;
@@ -82,14 +63,9 @@ namespace Svelto.ECS.Schema.Internal
             if (originalData == null)
                 return;
 
-            var queryData = query.GetIndexerKeyData(indexedDB).groups;
+            using var otherQuery = indexedDB.Select<IndexableResultSet<TComponent>>().FromAll<TRow>().Where(other);
 
-            // if empty nothing to intersect
-            if (queryData == null)
-            {
-                indexedDB.ClearMemo(this);
-                return;
-            }
+            var otherData = otherQuery.Entities();
 
             var originalDataValues = originalData.GetValues(out var originalDataCount);
 
@@ -102,40 +78,29 @@ namespace Svelto.ECS.Schema.Internal
                     continue;
 
                 // if target is empty there is no intersection
-                if (!queryData.TryGetValue(originalDataValues[groupIndex].groupID, out var queryGroupData) ||
-                    queryGroupData.filter.filteredIndices.Count() == 0)
-                {
+                if (!otherData._config.temporaryGroups.ContainsKey(originalGroupData.groupID))
                     originalGroupData.filter.Clear();
+            }
+
+            foreach (var otherGroupData in otherData)
+            {
+                if (!originalData.ContainsKey(otherGroupData.group))
                     continue;
-                }
 
-                var table = indexedDB.FindTable<TRow>(queryGroupData.groupID);
+                ref var originalGroupData = ref originalData.GetValueByRef(otherGroupData.group);
 
-                // type mismatch - no intersection
-                if (table == null)
-                {
-                    originalGroupData.filter.Clear();
+                // if group is empty there is nothing to remove
+                if (originalGroupData.filter.filteredIndices.Count() == 0)
                     continue;
-                }
 
-                var result = indexedDB.Select<IndexableResultSet<TComponent>>().From(table).Entities();
+                var indices = originalGroupData.filter.filteredIndices;
 
-                // ugh I have to check what to delete
-                // since I cannot change filter while iteration
-                // this will be removed when Svelto updates it's filter system
-                FasterList<uint> entityIDsToDelete = new FasterList<uint>();
-
-                foreach (uint i in new IndexedIndices(originalGroupData.filter.filteredIndices))
+                for (int i = indices.Count() - 1; i >= 0; --i)
                 {
-                    ref var component = ref result.set.component[i];
+                    var entityID = otherGroupData.set.egid[indices[i]].ID.entityID;
 
-                    if (!queryGroupData.filter.Exists(component.ID.entityID))
-                        entityIDsToDelete.Add(component.ID.entityID);
-                }
-
-                for (int i = 0; i < entityIDsToDelete.count; ++i)
-                {
-                    originalGroupData.filter.TryRemove(entityIDsToDelete[i]);
+                    if (!otherGroupData.indices.Exists(entityID))
+                        originalGroupData.filter.TryRemove(entityID);
                 }
             }
         }

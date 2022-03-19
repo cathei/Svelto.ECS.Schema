@@ -41,11 +41,9 @@ namespace Svelto.ECS.Schema
                 values[i].Clear();
         }
 
-        internal ref IndexerGroupData CreateOrGetMemoGroup<TR>(int memoID, IEntityTable<TR> table)
-            where TR : class, IEntityRow
+        internal ref IndexerGroupData CreateOrGetMemoGroup(int memoID, in ExclusiveGroupStruct groupID)
         {
             var memoData = memos.GetOrCreate(memoID, () => new MemoData());
-            var groupID = table.ExclusiveGroup;
 
             if (!memoData.keyData.groups.ContainsKey(groupID))
             {

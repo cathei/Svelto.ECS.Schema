@@ -29,7 +29,7 @@ namespace Svelto.ECS.Schema
 
             bool IsCombined { get; }
             int Range { get; }
-            LocalFasterReadOnlyList<ExclusiveGroupStruct> ExclusiveGroups { get; }
+
             IEntityTable GetTable(int index);
         }
 

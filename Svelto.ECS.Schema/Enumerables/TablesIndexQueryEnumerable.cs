@@ -7,72 +7,120 @@ namespace Svelto.ECS.Schema
         where TResult : struct, IResultSet
         where TRow : class, IEntityRow
     {
-        private readonly ResultSetQueryConfig _config;
-        private readonly IEntityTables<TRow> _tables;
+        internal readonly ResultSetQueryConfig _config;
 
         internal TablesIndexQueryEnumerable(ResultSetQueryConfig config, IEntityTables<TRow> tables)
         {
             _config = config;
-            _tables = tables;
+
+            LoadGroups(tables);
         }
 
-        public RefIterator GetEnumerator() => new RefIterator(_config, _tables);
+        private void LoadGroups(IEntityTables<TRow> tables)
+        {
+            int tableCount = tables.Range;
+
+            for (int i = 0; i < tableCount; ++i)
+            {
+                var table = tables.GetTable(i);
+
+                IterateGroup(table);
+            }
+        }
+
+        private void IterateGroup(IEntityTable<TRow> table, int groupIndex = 0, int depth = 0)
+        {
+            if (depth >= table.PrimaryKeys.count)
+            {
+                var group = table.Group + (uint)groupIndex;
+                _config.temporaryGroups.Add(group, group);
+                return;
+            }
+
+            var pk = table.PrimaryKeys[depth];
+
+            // mutiply parent index
+            groupIndex *= pk.possibleKeyCount;
+
+            // when sub-index applied
+            if (_config.pkToValue.TryGetValue(pk.id, out var value))
+            {
+                groupIndex += value;
+                IterateGroup(table, groupIndex, depth + 1);
+                return;
+            }
+
+            // iterate all subgroup
+            for (int i = 0; i < pk.possibleKeyCount; ++i)
+            {
+                IterateGroup(table, groupIndex + i, depth + 1);
+            }
+        }
+
+        public RefIterator GetEnumerator() => new RefIterator(_config);
 
         public ref struct RefIterator
         {
             private readonly ResultSetQueryConfig _config;
-            private readonly IEntityTables<TRow> _tables;
 
-            private int _indexValue;
-            private TableGroupEnumerable.RefIterator _tableIter;
+            private readonly NB<ExclusiveGroupStruct> _groups;
+            private readonly uint _groupCount;
 
+            private int _groupIndex;
             private TResult _result;
-            private FilteredIndices _indices;
+            private NB<EGIDComponent> _egid;
 
-            internal RefIterator(ResultSetQueryConfig config, IEntityTables<TRow> tables) : this()
+            internal RefIterator(ResultSetQueryConfig config) : this()
             {
                 _config = config;
-                _tables = tables;
+                _groupIndex = -1;
 
-                _dict = dict;
-                _indexValue = -1;
+                _groups = _config.temporaryGroups.GetValues(out _groupCount);
             }
 
             public bool MoveNext()
             {
-                if (_dict == null)
-                    return false;
+                bool moveNext = false;
 
-                while (++_indexValue < _tables.Range)
+                while (++_groupIndex < _groupCount)
                 {
-                    _table = _tables.GetTable(_indexValue);
+                    var currentGroup = _groups[_groupIndex];
 
-                    if (!_dict.TryGetValue(_table.ExclusiveGroup, out var groupData))
-                        continue;
+                    bool haveAllFilters = true;
 
-                    _indices = groupData.filter.filteredIndices;
+                    for (uint i = 0; i < _config.indexers.count; ++i)
+                    {
+                        if (!_config.indexers[i].groups.TryGetValue(currentGroup, out var groupData) ||
+                            groupData.filter.filteredIndices.Count() == 0)
+                        {
+                            haveAllFilters = false;
+                            break;
+                        }
 
-                    if (!_table.ExclusiveGroup.IsEnabled() || _indices.Count() == 0)
-                        continue;
+                        _config.temporaryFilters.AddAt(i) = groupData.filter;
+                    }
 
-                    ResultSetHelper<TResult>.Assign(out _result, _indexedDB.entitiesDB, _table.ExclusiveGroup);
-                    break;
+                    if (haveAllFilters)
+                    {
+                        ResultSetHelper<TResult>.Assign(out _result, _config.indexedDB.entitiesDB, currentGroup);
+
+                        if (_config.temporaryFilters.count > 0)
+                            (_egid, _) = _config.indexedDB.entitiesDB.QueryEntities<EGIDComponent>(currentGroup);
+
+                        moveNext = true;
+                        break;
+                    }
                 }
-
-                var moveNext = _indexValue < _tables.Range;
-
-                if (!moveNext)
-                    Reset();
 
                 return moveNext;
             }
 
-            public void Reset() { _indexValue = -1; _result = default; }
+            public void Reset() { _groupIndex = -1; }
 
             public void Dispose() { }
 
-            public IndexedQueryResult<TResult, TRow> Current =>
-                new IndexedQueryResult<TResult, TRow>(_result, new IndexedIndices(_indices), _table);
+            public IndexedQueryResult<TResult, TRow> Current => new IndexedQueryResult<TResult, TRow>(
+                _result, new MultiIndexedIndices(_config.temporaryFilters, _egid, _result.count), _groups[_groupIndex]);
         }
     }
 }

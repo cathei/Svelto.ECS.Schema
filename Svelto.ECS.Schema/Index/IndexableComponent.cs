@@ -46,21 +46,22 @@ namespace Svelto.ECS.Schema.Internal
 
     // we need EGID constraints because it requires INeedEGID
     // it won't be necessary when Svelto update it's filter utility functions
-    public interface IIndexableComponent : IEntityComponent, INeedEGID
+    public interface IIndexableComponent : IEntityComponent
     {
         internal void Warmup<TComponent>() where TComponent : unmanaged, IIndexableComponent;
     }
 
-    public struct IndexableResultSet<T> : IResultSet<T>
-        where T : unmanaged, IEntityComponent, INeedEGID
+    public struct IndexableResultSet<T> : IResultSet<T, EGIDComponent>
+        where T : unmanaged, IEntityComponent
     {
+        public NB<T> component;
+        public NB<EGIDComponent> egid;
+
         public int count { get; set; }
 
-        public NB<T> component;
-
-        public void Init(in EntityCollection<T> buffers)
+        public void Init(in EntityCollection<T, EGIDComponent> buffers)
         {
-            (component, count) = buffers;
+            (component, egid, count) = buffers;
         }
     }
 }
@@ -68,8 +69,9 @@ namespace Svelto.ECS.Schema.Internal
 namespace Svelto.ECS.Schema
 {
     public interface IIndexableRow<TComponent> :
-            IReactiveRow<TComponent>, IQueryableRow<IndexableResultSet<TComponent>>
-        where TComponent : unmanaged, IEntityComponent, INeedEGID
+            IReactiveRow<TComponent>,
+            IQueryableRow<IndexableResultSet<TComponent>>
+        where TComponent : unmanaged, IEntityComponent
     { }
 
     public interface IIndexableComponent<TKey> : IIndexableComponent

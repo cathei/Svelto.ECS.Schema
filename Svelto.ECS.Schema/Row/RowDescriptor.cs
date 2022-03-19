@@ -10,7 +10,7 @@ using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema.Internal
 {
-    // empty component that always exists
+    // component that always exists
     internal struct RowIdentityComponent : IEntityComponent { }
 }
 

@@ -19,21 +19,21 @@ namespace Svelto.ECS.Schema.Internal
 
         private static readonly RefWrapperType ComponentType = TypeRefWrapper<TC>.wrapper;
 
-        protected override void Add(ref TC component, IEntityTable<TR> table, uint entityID)
+        protected override void Add(ref TC component, IEntityTable<TR> table, EGID egid)
         {
-            indexedDB.UpdateIndexableComponent(ComponentType, component.ID,
+            indexedDB.UpdateIndexableComponent(ComponentType, egid,
                 IndexableComponentHelper<TC>.KeyGetter<TK>.Getter(ref component));
         }
 
-        protected override void MovedTo(ref TC component, IEntityTable<TR> previousTable, IEntityTable<TR> table, uint entityID)
+        protected override void MovedTo(ref TC component, IEntityTable<TR> previousTable, IEntityTable<TR> table, EGID egid)
         {
-            indexedDB.UpdateIndexableComponent(ComponentType, component.ID,
+            indexedDB.UpdateIndexableComponent(ComponentType, egid,
                 IndexableComponentHelper<TC>.KeyGetter<TK>.Getter(ref component));
         }
 
-        protected override void Remove(ref TC component, IEntityTable<TR> table, uint entityID)
+        protected override void Remove(ref TC component, IEntityTable<TR> table, EGID egid)
         {
-            indexedDB.RemoveIndexableComponent<TK>(ComponentType, component.ID);
+            indexedDB.RemoveIndexableComponent<TK>(ComponentType, egid);
         }
     }
 }

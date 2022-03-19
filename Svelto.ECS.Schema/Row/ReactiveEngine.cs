@@ -20,9 +20,9 @@ namespace Svelto.ECS.Schema
 
         protected IndexedDB indexedDB { get; }
 
-        protected virtual void Add(ref TComponent entityComponent, IEntityTable<TRow> table, uint entityID) { }
-        protected virtual void Remove(ref TComponent entityComponent, IEntityTable<TRow> table, uint entityID) { }
-        protected virtual void MovedTo(ref TComponent entityComponent, IEntityTable<TRow> previousTable, IEntityTable<TRow> table, uint entityID) { }
+        protected virtual void Add(ref TComponent entityComponent, IEntityTable<TRow> table, EGID egid) { }
+        protected virtual void Remove(ref TComponent entityComponent, IEntityTable<TRow> table, EGID egid) { }
+        protected virtual void MovedTo(ref TComponent entityComponent, IEntityTable<TRow> previousTable, IEntityTable<TRow> table, EGID egid) { }
 
         void IReactOnAddAndRemove<TComponent>.Add(ref TComponent component, EGID egid)
         {
@@ -30,7 +30,7 @@ namespace Svelto.ECS.Schema
             if (table == null)
                 return;
 
-            Add(ref component, table, egid.entityID);
+            Add(ref component, table, egid);
         }
 
         void IReactOnAddAndRemove<TComponent>.Remove(ref TComponent component, EGID egid)
@@ -39,7 +39,7 @@ namespace Svelto.ECS.Schema
             if (table == null)
                 return;
 
-            Remove(ref component, table, egid.entityID);
+            Remove(ref component, table, egid);
         }
 
         void IReactOnSwap<TComponent>.MovedTo(ref TComponent component, ExclusiveGroupStruct previousGroup, EGID egid)
@@ -50,7 +50,7 @@ namespace Svelto.ECS.Schema
             if (previousTable == null || table == null)
                 return;
 
-            MovedTo(ref component, previousTable, table, egid.entityID);
+            MovedTo(ref component, previousTable, table, egid);
         }
     }
 
