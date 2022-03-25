@@ -58,10 +58,6 @@ namespace Svelto.ECS.Schema
                         RegisterTable(node, table, $"{name}.{fieldInfo.Name}");
                         break;
 
-                    case IEntityIndex indexer:
-                        RegisterIndexer(node, indexer);
-                        break;
-
                     case IEntitySchema schema:
                         GenerateChildren(new ShardNode(node), element, $"{name}.{fieldInfo.Name}");
                         break;
@@ -71,6 +67,11 @@ namespace Svelto.ECS.Schema
                             GenerateChildren(new ShardNode(node), rangedSchema.GetSchema(i), $"{name}.{fieldInfo.Name}.{i}");
                         break;
 
+                    case IEntityIndex indexer:
+                        RegisterIndexer(node, indexer);
+                        break;
+
+                    case IEntityPrimaryKey pk:
                     case ISchemaDefinitionMemo memo:
                     // case ISchemaDefinitionStateMachine stateMachine:
                         break;
@@ -89,9 +90,10 @@ namespace Svelto.ECS.Schema
 
             foreach (var pk in table.primaryKeys)
             {
-                groupRange *= pk.possibleKeyCount;
+                groupRange *= pk.PossibleKeyCount;
             }
 
+            // group 0 reserved as build group
             if (table.primaryKeys.count > 0)
                 groupRange++;
 

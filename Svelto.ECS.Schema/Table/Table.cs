@@ -5,20 +5,6 @@ using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema.Internal
 {
-    // public abstract partial class TableBase
-    // {
-    //     protected readonly ExclusiveGroupStruct _exclusiveGroup;
-
-    //     public ref readonly ExclusiveGroupStruct ExclusiveGroup => ref _exclusiveGroup;
-
-    //     internal TableBase()
-    //     {
-    //         _exclusiveGroup = new ExclusiveGroup();
-    //     }
-
-    //     public static implicit operator ExclusiveGroupStruct(in TableBase group) => group._exclusiveGroup;
-    // }
-
     public abstract class Table : IEntityTable
     {
         public string Name { get; internal set; }
@@ -31,26 +17,24 @@ namespace Svelto.ECS.Schema.Internal
         public ref readonly ExclusiveGroup Group => ref group;
         public int GroupRange => groupRange;
 
-        internal struct PrimaryKeyInfo
-        {
-            internal int id;
-            internal ushort possibleKeyCount;
-        }
-
-        internal FasterList<PrimaryKeyInfo> primaryKeys = new FasterList<PrimaryKeyInfo>();
+        internal FasterList<IEntityPrimaryKey> primaryKeys = new FasterList<IEntityPrimaryKey>();
 
         internal Table() { }
 
         protected abstract EntityInitializer Build(IEntityFactory factory, uint entityID, IEnumerable<object> implementors);
+        protected abstract void Swap(IEntityFunctions functions, in EGID egid, in ExclusiveBuildGroup groupID);
         protected abstract void Remove(IEntityFunctions functions, uint entityID, in ExclusiveGroupStruct groupID);
 
         EntityInitializer IEntityTable.Build(IEntityFactory factory, uint entityID, IEnumerable<object> implementors)
             => Build(factory, entityID, implementors);
 
+        void IEntityTable.Swap(IEntityFunctions functions, in EGID egid, in ExclusiveBuildGroup groupID)
+            => Swap(functions, egid, groupID);
+
         /// <summary>
         /// Schema extensions only support remove from untyped table for now
         /// Because it is not possible to determine if it is safe to swap to other table
-        /// After Primary Key implemented it should be used instead of swap.
+        /// Primary Key should be used instead of swap if needed.
         /// </summary>
         void IEntityTable.Remove(IEntityFunctions functions, uint entityID, in ExclusiveGroupStruct groupID)
             => Remove(functions, entityID, groupID);
@@ -69,11 +53,7 @@ namespace Svelto.ECS.Schema
         public void AddPrimaryKey<TPrimaryKey>(TPrimaryKey primaryKey)
             where TPrimaryKey : IPrimaryKeyProvider<TRow>
         {
-            primaryKeys.Add(new PrimaryKeyInfo
-            {
-                id = primaryKey.PrimaryKeyID,
-                possibleKeyCount = primaryKey.PossibleKeyCount
-            });
+            primaryKeys.Add(primaryKey);
         }
 
         public void SetDefault<T>(T initialValue)
@@ -96,6 +76,11 @@ namespace Svelto.ECS.Schema
             return builder;
         }
 
+        protected override void Swap(IEntityFunctions functions, in EGID egid, in ExclusiveBuildGroup groupID)
+        {
+            functions.SwapEntityGroup<DescriptorRow<TRow>.Descriptor>(egid, groupID);
+        }
+
         protected override void Remove(IEntityFunctions functions, uint entityID, in ExclusiveGroupStruct groupID)
         {
             functions.RemoveEntity<DescriptorRow<TRow>.Descriptor>(entityID, groupID);
@@ -112,6 +97,6 @@ namespace Svelto.ECS.Schema
             get { yield return this; }
         }
 
-        LocalFasterReadOnlyList<PrimaryKeyInfo> IEntityTable<TRow>.PrimaryKeys => primaryKeys;
+        LocalFasterReadOnlyList<IEntityPrimaryKey> IEntityTable<TRow>.PrimaryKeys => primaryKeys;
     }
 }

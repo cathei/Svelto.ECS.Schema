@@ -27,22 +27,22 @@ namespace Svelto.ECS.Schema.Internal
     {
         internal readonly PredicateNative<TCondition> _predicate;
 
-        private NB<TCondition> _target;
-
         public ConditionConfigNative(PredicateNative<TCondition> predicate)
         {
             _predicate = predicate;
         }
 
+        private readonly ThreadLocal<NB<TCondition>> threadStorage = new ThreadLocal<NB<TCondition>>();
+
         internal override void Ready(EntitiesDB entitiesDB, in ExclusiveGroupStruct groupID)
         {
             // this is calling per group here, for this condition
-            (_target, _) = entitiesDB.QueryEntities<TCondition>(groupID);
+            (threadStorage.Value, _) = entitiesDB.QueryEntities<TCondition>(groupID);
         }
 
         internal override bool Evaluate(uint index)
         {
-            return _predicate(ref _target[index]);
+            return _predicate(ref threadStorage.Value[index]);
         }
     }
 
@@ -51,22 +51,22 @@ namespace Svelto.ECS.Schema.Internal
     {
         internal readonly PredicateManaged<TCondition> _predicate;
 
-        private MB<TCondition> _target;
-
         public ConditionConfigManaged(PredicateManaged<TCondition> predicate)
         {
             _predicate = predicate;
         }
 
+        private readonly ThreadLocal<MB<TCondition>> threadStorage = new ThreadLocal<MB<TCondition>>();
+
         internal override void Ready(EntitiesDB entitiesDB, in ExclusiveGroupStruct groupID)
         {
             // this is calling per group here, for this condition
-            (_target, _) = entitiesDB.QueryEntities<TCondition>(groupID);
+            (threadStorage.Value, _) = entitiesDB.QueryEntities<TCondition>(groupID);
         }
 
         internal override bool Evaluate(uint index)
         {
-            return _predicate(ref _target[index]);
+            return _predicate(ref threadStorage.Value[index]);
         }
     }
 }

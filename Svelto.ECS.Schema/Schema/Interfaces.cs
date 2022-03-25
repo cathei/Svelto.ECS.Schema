@@ -12,8 +12,14 @@ namespace Svelto.ECS.Schema
 
         public interface IEntityTable : ISchemaDefinition
         {
+            ref readonly ExclusiveGroup Group { get; }
+            int GroupRange { get; }
+
             internal EntityInitializer Build(IEntityFactory factory, uint entityID, IEnumerable<object> implementors);
+            internal void Swap(IEntityFunctions functions, in EGID egid, in ExclusiveBuildGroup groupID);
             internal void Remove(IEntityFunctions functions, uint entityID, in ExclusiveGroupStruct groupID);
+
+            internal LocalFasterReadOnlyList<IEntityPrimaryKey> PrimaryKeys { get; }
         }
 
         public interface IEntityIndex : ISchemaDefinition
@@ -21,6 +27,16 @@ namespace Svelto.ECS.Schema
             RefWrapperType ComponentType { get; }
             int IndexerID { get; }
             void AddEngines(EnginesRoot enginesRoot, IndexedDB indexedDB);
+        }
+
+        public interface IEntityPrimaryKey : ISchemaDefinition
+        {
+            int PrimaryKeyID { get; }
+            Delegate KeyToIndex { get; }
+            ushort PossibleKeyCount { get; }
+
+            internal void Ready(EntitiesDB entitiesDB, in ExclusiveGroupStruct groupID);
+            internal int QueryGroupIndex(uint index);
         }
 
         internal interface ISchemaDefinitionRangedSchema : ISchemaDefinition
@@ -42,6 +58,7 @@ namespace Svelto.ECS.Schema
 
         public interface IEntityStateMachine
         {
+            void OnConfigure();
             void AddEngines(EnginesRoot enginesRoot, IndexedDB indexedDB);
             IEntityIndex Index { get; }
         }

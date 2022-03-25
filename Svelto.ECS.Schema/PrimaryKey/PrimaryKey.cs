@@ -19,12 +19,9 @@ Primary key also have to support partial Query.
     ***/
 
     // contravariance (in) for TRow, for type check
-    public interface IPrimaryKeyProvider<in TRow>
+    public interface IPrimaryKeyProvider<in TRow> : IEntityPrimaryKey
         where TRow : class, IEntityRow
-    {
-        public int PrimaryKeyID { get; }
-        public ushort PossibleKeyCount { get; }
-    }
+    { }
 
     // contravariance (in) for TRow, for type check
     public interface IPrimaryKeyQueryable<in TRow, TComponent>
@@ -43,7 +40,7 @@ Primary key also have to support partial Query.
 
 namespace Svelto.ECS.Schema
 {
-    public class PrimaryKey<TComponent> :
+    public sealed class PrimaryKey<TComponent> :
             IPrimaryKeyProvider<IPrimaryKeyRow<TComponent>>,
             IPrimaryKeyQueryable<IPrimaryKeyRow<TComponent>, TComponent>
         where TComponent : unmanaged, IPrimaryKeyComponent
@@ -57,42 +54,19 @@ namespace Svelto.ECS.Schema
         public int PrimaryKeyID => _primaryKeyID;
         public ushort PossibleKeyCount { get; internal set; }
 
+        Delegate IEntityPrimaryKey.KeyToIndex => _keyToIndex;
         Delegate IPrimaryKeyQueryable<IPrimaryKeyRow<TComponent>, TComponent>.KeyToIndex => _keyToIndex;
-    }
 
-    public static class PrimaryKeyExtensions
-    {
-        public static void SetPossibleKeys<TComponent, TKey>(this PrimaryKey<TComponent> primaryKey, TKey[] possibleKeys)
-            where TComponent : unmanaged, IPrimaryKeyComponent<TKey>
-            where TKey : unmanaged, IEquatable<TKey>
+        private readonly ThreadLocal<NB<TComponent>> threadStorage = new ThreadLocal<NB<TComponent>>();
+
+        void IEntityPrimaryKey.Ready(EntitiesDB entitiesDB, in ExclusiveGroupStruct groupID)
         {
-            FasterDictionary<TKey, int> dict = new FasterDictionary<TKey, int>((uint)possibleKeys.Length);
-
-            for (int i = 0; i < possibleKeys.Length; ++i)
-                dict.Add(possibleKeys[i], i);
-
-            primaryKey._componentToIndex = component => dict[component.key];
-            primaryKey._keyToIndex = new Func<TKey, int>(key => dict[key]);
-
-            primaryKey.PossibleKeyCount = (ushort)dict.count;
+            (threadStorage.Value, _) = entitiesDB.QueryEntities<TComponent>(groupID);
         }
-    }
 
-    public static class PrimaryKeyEnumExtensions
-    {
-        public static void SetPossibleKeys<TComponent, TKey>(this PrimaryKey<TComponent> primaryKey, TKey[] possibleKeys)
-            where TComponent : unmanaged, IPrimaryKeyComponent<EnumKey<TKey>>
-            where TKey : unmanaged, Enum
+        int IEntityPrimaryKey.QueryGroupIndex(uint index)
         {
-            FasterDictionary<EnumKey<TKey>, int> dict = new FasterDictionary<EnumKey<TKey>, int>((uint)possibleKeys.Length);
-
-            for (int i = 0; i < possibleKeys.Length; ++i)
-                dict.Add(possibleKeys[i], i);
-
-            primaryKey._componentToIndex = component => dict[component.key];
-            primaryKey._keyToIndex = new Func<EnumKey<TKey>, int>(key => dict[key]);
-
-            primaryKey.PossibleKeyCount = (ushort)dict.count;
+            return _componentToIndex(threadStorage.Value[index]);
         }
     }
 }

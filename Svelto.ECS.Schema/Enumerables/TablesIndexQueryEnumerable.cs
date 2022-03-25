@@ -44,10 +44,10 @@ namespace Svelto.ECS.Schema
             var pk = table.PrimaryKeys[depth];
 
             // mutiply parent index
-            groupIndex *= pk.possibleKeyCount;
+            groupIndex *= pk.PossibleKeyCount;
 
             // when sub-index applied
-            if (_config.pkToValue.TryGetValue(pk.id, out var value))
+            if (_config.pkToValue.TryGetValue(pk.PrimaryKeyID, out var value))
             {
                 groupIndex += value;
                 IterateGroup(table, groupIndex, depth + 1);
@@ -55,7 +55,7 @@ namespace Svelto.ECS.Schema
             }
 
             // iterate all subgroup
-            for (int i = 0; i < pk.possibleKeyCount; ++i)
+            for (int i = 0; i < pk.PossibleKeyCount; ++i)
             {
                 IterateGroup(table, groupIndex + i, depth + 1);
             }

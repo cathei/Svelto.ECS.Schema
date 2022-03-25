@@ -11,11 +11,7 @@ namespace Svelto.ECS.Schema.Definition
             IIndexQueryable<StateMachine<TComponent>.IIndexableRow, TComponent>
         where TComponent : unmanaged, IStateMachineComponent
     {
-        public interface ITag {}
-
         internal static StateMachineConfigBase<TComponent> Config;
-
-        public IStepEngine Engine { get; internal set; }
 
         protected StateMachine()
         {
@@ -35,6 +31,8 @@ namespace Svelto.ECS.Schema.Definition
         }
 
         protected abstract void OnConfigure();
+
+        void IEntityStateMachine.OnConfigure() => OnConfigure();
 
         public interface IIndexableRow : IIndexableRow<TComponent> { }
 

@@ -11,7 +11,7 @@ using Svelto.ECS.Schema.Internal;
 namespace Svelto.ECS.Schema.Internal
 {
     // component that always exists
-    internal struct RowIdentityComponent : IEntityComponent { }
+    public struct RowIdentityComponent : IEntityComponent { }
 }
 
 namespace Svelto.ECS.Schema

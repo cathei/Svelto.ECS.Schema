@@ -36,6 +36,8 @@ namespace Svelto.ECS.Schema
         {
             registeredSchemas.Add(metadata);
 
+            enginesRoot.AddEngine(new PrimaryKeyEngine(this));
+
             var indexers = metadata.indexersToGenerateEngine;
 
             foreach (var componentType in indexers.keys)

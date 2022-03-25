@@ -27,21 +27,21 @@ namespace Svelto.ECS.Schema.Internal
     {
         internal readonly CallbackNative<TCallback> _callback;
 
-        private NB<TCallback> _target;
-
         public CallbackConfigNative(CallbackNative<TCallback> callback)
         {
             _callback = callback;
         }
 
+        private readonly ThreadLocal<NB<TCallback>> threadStorage = new ThreadLocal<NB<TCallback>>();
+
         internal override void Ready(EntitiesDB entitiesDB, in ExclusiveGroupStruct groupID)
         {
-            (_target, _) = entitiesDB.QueryEntities<TCallback>(groupID);
+            (threadStorage.Value, _) = entitiesDB.QueryEntities<TCallback>(groupID);
         }
 
         internal override void Invoke(uint index)
         {
-            _callback(ref _target[index]);
+            _callback(ref threadStorage.Value[index]);
         }
     }
 
@@ -50,21 +50,21 @@ namespace Svelto.ECS.Schema.Internal
     {
         internal readonly CallbackManaged<TCallback> _callback;
 
-        private MB<TCallback> _target;
-
         public CallbackConfigManaged(CallbackManaged<TCallback> callback)
         {
             _callback = callback;
         }
 
+        private readonly ThreadLocal<MB<TCallback>> threadStorage = new ThreadLocal<MB<TCallback>>();
+
         internal override void Ready(EntitiesDB entitiesDB, in ExclusiveGroupStruct groupID)
         {
-            (_target, _) = entitiesDB.QueryEntities<TCallback>(groupID);
+            (threadStorage.Value, _) = entitiesDB.QueryEntities<TCallback>(groupID);
         }
 
         internal override void Invoke(uint index)
         {
-            _callback(ref _target[index]);
+            _callback(ref threadStorage.Value[index]);
         }
     }
 }

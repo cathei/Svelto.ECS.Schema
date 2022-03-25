@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Svelto.DataStructures;
 using Svelto.DataStructures.Native;
 using Svelto.ECS.Internal;
+using Svelto.ECS.Schema.Definition;
 using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema
@@ -27,6 +28,8 @@ namespace Svelto.ECS.Schema
             public SharedSveltoDictionaryNative<EntityReference, IndexerEntityData<TKey>> entities
                 = new SharedSveltoDictionaryNative<EntityReference, IndexerEntityData<TKey>>(0);
         }
+
+        internal Memo<IPrimaryKeyRow> entitiesToUpdateGroup = new Memo<IPrimaryKeyRow>();
 
         internal IndexableComponentCache<TK> CreateOrGetComponentCache<TK>(in RefWrapperType componentType)
             where TK : unmanaged, IEquatable<TK>
@@ -161,15 +164,21 @@ namespace Svelto.ECS.Schema
             componentCache.entities[entityReference] = entityData;
 
             var indexers = FindIndexers(componentType, componentCache, egid.groupID);
-            var mapper = GetEGIDMapper(egid.groupID);
 
-            foreach (var indexer in indexers)
+            if (indexers.count > 0)
             {
-                ref var newGroupData = ref CreateOrGetIndexedGroupData(
-                    indexer.IndexerID, key, egid.groupID);
+                var mapper = GetEGIDMapper(egid.groupID);
 
-                newGroupData.filter.Add(egid.entityID, mapper);
+                foreach (var indexer in indexers)
+                {
+                    ref var newGroupData = ref CreateOrGetIndexedGroupData(
+                        indexer.IndexerID, key, egid.groupID);
+
+                    newGroupData.filter.Add(egid.entityID, mapper);
+                }
             }
+
+            this.Memo(entitiesToUpdateGroup).Add(egid.entityID, egid.groupID);
         }
 
         internal ref IndexerGroupData CreateOrGetIndexedGroupData<TK>(int indexerID, in TK key, in ExclusiveGroupStruct groupID)
