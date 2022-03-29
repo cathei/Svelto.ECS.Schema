@@ -20,9 +20,8 @@ namespace Svelto.ECS.Schema.Internal
     //     }
     // }
 
-    public readonly ref struct IndexedQueryResult<TResult, TRow>
+    public readonly ref struct IndexedQueryResult<TResult>
         where TResult : struct, IResultSet
-        where TRow : class, IEntityRow
     {
         public readonly TResult set;
         public readonly MultiIndexedIndices indices;

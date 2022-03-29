@@ -33,10 +33,9 @@ namespace Svelto.ECS.Schema.Internal
 
         public void Step()
         {
-            using var query = indexedDB.Select<IndexableResultSet<EGIDComponent>>()
-                .FromAll<IPrimaryKeyRow>().Where(indexedDB.entitiesToUpdateGroup);
+            using var query = indexedDB.From<IPrimaryKeyRow>().Where(indexedDB.entitiesToUpdateGroup);
 
-            foreach (var result in query)
+            foreach (var result in query.Select<IndexableResultSet<EGIDComponent>>())
             {
                 var table = indexedDB.FindTable(result.group);
 

@@ -29,19 +29,19 @@ namespace Svelto.ECS.Schema.Internal
     {
         internal MemoBase() { }
 
-        internal void Set<TIndex>(IndexedDB indexedDB, TIndex query)
+        internal void Set<TIndex>(IndexedDB indexedDB, TIndex indexQuery)
             where TIndex : IIndexQuery<TRow>
         {
             indexedDB.ClearMemo(this);
-            Union(indexedDB, query);
+            Union(indexedDB, indexQuery);
         }
 
-        internal void Union<TIndex>(IndexedDB indexedDB, TIndex query)
+        internal void Union<TIndex>(IndexedDB indexedDB, TIndex indexQuery)
             where TIndex : IIndexQuery<TRow>
         {
-            using var results = indexedDB.Select<IndexableResultSet<TComponent>>().FromAll<TRow>().Where(query);
+            using var query = indexedDB.From<TRow>().Where(indexQuery);
 
-            foreach (var result in results)
+            foreach (var result in query.Select<IndexableResultSet<TComponent>>())
             {
                 var mapper = indexedDB.GetEGIDMapper(result.group);
 
@@ -63,9 +63,10 @@ namespace Svelto.ECS.Schema.Internal
             if (originalData == null)
                 return;
 
-            using var otherQuery = indexedDB.Select<IndexableResultSet<TComponent>>().FromAll<TRow>().Where(other);
+            using var otherQuery = indexedDB.From<TRow>().Where(other);
 
-            var otherData = otherQuery.Entities();
+            // builds otherQuery
+            var otherData = otherQuery.Select<IndexableResultSet<TComponent>>();
 
             var originalDataValues = originalData.GetValues(out var originalDataCount);
 
@@ -78,7 +79,7 @@ namespace Svelto.ECS.Schema.Internal
                     continue;
 
                 // if target is empty there is no intersection
-                if (!otherData._config.temporaryGroups.ContainsKey(originalGroupData.groupID))
+                if (!otherData.config.temporaryGroups.ContainsKey(originalGroupData.groupID))
                     originalGroupData.filter.Clear();
             }
 

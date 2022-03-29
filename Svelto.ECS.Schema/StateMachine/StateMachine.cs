@@ -11,39 +11,20 @@ namespace Svelto.ECS.Schema.Definition
             IIndexQueryable<StateMachine<TComponent>.IIndexableRow, TComponent>
         where TComponent : unmanaged, IStateMachineComponent
     {
-        internal static StateMachineConfigBase<TComponent> Config;
-
-        protected StateMachine()
-        {
-            if (Config != null)
-                return;
-
-            lock (EntitySchemaLock.Lock)
-            {
-                if (Config != null)
-                    return;
-
-                OnConfigure();
-            }
-
-            if (Config == null)
-                throw new ECSException("StateMachine is not properly configured!");
-        }
-
-        protected abstract void OnConfigure();
-
-        void IEntityStateMachine.OnConfigure() => OnConfigure();
+        internal StateMachineConfigBase<TComponent> config;
 
         public interface IIndexableRow : IIndexableRow<TComponent> { }
 
-        int IIndexQueryable<IIndexableRow, TComponent>.IndexerID => Config._index._indexerId;
+        int IIndexQueryable<IIndexableRow, TComponent>.IndexerID => config._index._indexerId;
 
-        IEntityIndex IEntityStateMachine.Index => Config._index;
+        IEntityIndex IEntityStateMachine.Index => config._index;
+
+        RefWrapperType IEntityStateMachine.ComponentType => TypeRefWrapper<TComponent>.wrapper;
 
         protected StateMachineBuilder<TRow, TComponent> Configure<TRow>()
             where TRow : class, IIndexableRow
         {
-            if (Config != null)
+            if (config != null)
                 throw new ECSException("Configure should only called once!");
 
             return new StateMachineBuilder<TRow, TComponent>();

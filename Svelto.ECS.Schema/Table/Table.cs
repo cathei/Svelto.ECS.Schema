@@ -18,6 +18,7 @@ namespace Svelto.ECS.Schema.Internal
         public int GroupRange => groupRange;
 
         internal FasterList<IEntityPrimaryKey> primaryKeys = new FasterList<IEntityPrimaryKey>();
+        LocalFasterReadOnlyList<IEntityPrimaryKey> IEntityTable.PrimaryKeys => primaryKeys;
 
         internal Table() { }
 
@@ -96,7 +97,5 @@ namespace Svelto.ECS.Schema
         {
             get { yield return this; }
         }
-
-        LocalFasterReadOnlyList<IEntityPrimaryKey> IEntityTable<TRow>.PrimaryKeys => primaryKeys;
     }
 }

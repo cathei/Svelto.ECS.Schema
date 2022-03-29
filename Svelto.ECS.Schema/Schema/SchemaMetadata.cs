@@ -31,6 +31,7 @@ namespace Svelto.ECS.Schema
 
         internal readonly FasterDictionary<ExclusiveGroupStruct, TableNode> groupToTable;
         internal readonly FasterDictionary<RefWrapperType, IEntityIndex> indexersToGenerateEngine;
+        internal readonly FasterDictionary<RefWrapperType, IEntityStateMachine> stateMachinesToGenerateEngine;
 
         private static readonly Type ElementBaseType = typeof(ISchemaDefinition);
 
@@ -38,6 +39,7 @@ namespace Svelto.ECS.Schema
         {
             groupToTable = new FasterDictionary<ExclusiveGroupStruct, TableNode>();
             indexersToGenerateEngine = new FasterDictionary<RefWrapperType, IEntityIndex>();
+            stateMachinesToGenerateEngine = new FasterDictionary<RefWrapperType, IEntityStateMachine>();
 
             root = new ShardNode(null);
             GenerateChildren(root, schema, schema.GetType().FullName);
@@ -62,18 +64,16 @@ namespace Svelto.ECS.Schema
                         GenerateChildren(new ShardNode(node), element, $"{name}.{fieldInfo.Name}");
                         break;
 
-                    case ISchemaDefinitionRangedSchema rangedSchema:
-                        for (int i = 0; i < rangedSchema.Range; ++i)
-                            GenerateChildren(new ShardNode(node), rangedSchema.GetSchema(i), $"{name}.{fieldInfo.Name}.{i}");
-                        break;
-
                     case IEntityIndex indexer:
                         RegisterIndexer(node, indexer);
                         break;
 
+                    case IEntityStateMachine stateMachine:
+                        RegisterStateMachine(node, stateMachine);
+                        break;
+
                     case IEntityPrimaryKey pk:
                     case ISchemaDefinitionMemo memo:
-                    // case ISchemaDefinitionStateMachine stateMachine:
                         break;
 
                     default:
@@ -133,6 +133,19 @@ namespace Svelto.ECS.Schema
                 return;
 
             indexersToGenerateEngine[componentType] = indexer;
+        }
+
+        private void RegisterStateMachine(ShardNode node, IEntityStateMachine stateMachine)
+        {
+            node.indexers ??= new FasterList<IEntityIndex>();
+            node.indexers.Add(stateMachine.Index);
+
+            var componentType = stateMachine.ComponentType;
+
+            if (stateMachinesToGenerateEngine.ContainsKey(componentType))
+                return;
+
+            stateMachinesToGenerateEngine[componentType] = stateMachine;
         }
 
         private static IEnumerable<FieldInfo> GetSchemaElementFields(Type type)

@@ -18,7 +18,7 @@ namespace Svelto.ECS.Schema.Definition
 
         protected StateMachineConfigBase()
         {
-            _index = new Index<TComponent>();
+            _index = new();
         }
     }
 
@@ -27,14 +27,14 @@ namespace Svelto.ECS.Schema.Definition
         where TComponent : unmanaged, IStateMachineComponent<TState>
         where TState : unmanaged, IEquatable<TState>
     {
-        // this is real configuration
-        internal static StateMachineConfig<TRow, TComponent, TState> Default =
-            new StateMachineConfig<TRow, TComponent, TState>();
-
-        static StateMachineConfig()
+        public static StateMachineConfig<TRow, TComponent, TState> Get(StateMachine<TComponent> fsm)
         {
-            // propagate to state machine
-            StateMachine<TComponent>.Config = Default;
+            if (fsm.config is StateMachineConfig<TRow, TComponent, TState> result)
+                return result;
+
+            result = new StateMachineConfig<TRow, TComponent, TState>();
+            fsm.config = result;
+            return result;
         }
 
         internal readonly FasterDictionary<TState, State> _states;
@@ -42,8 +42,8 @@ namespace Svelto.ECS.Schema.Definition
 
         internal StateMachineConfig() : base()
         {
-            _states = new FasterDictionary<TState, State>();
-            _anyState = new AnyState(this);
+            _states = new();
+            _anyState = new(this);
         }
 
         internal override IStepEngine AddEngines(EnginesRoot enginesRoot, IndexedDB indexedDB)
@@ -53,7 +53,7 @@ namespace Svelto.ECS.Schema.Definition
                 StateMachine<TComponent>.IIndexableRow, TComponent, TState>(indexedDB);
 
             // this is required to validate and change state
-            var stepEngine = new TransitionEngine(indexedDB);
+            var stepEngine = new TransitionEngine(indexedDB, this);
 
             enginesRoot.AddEngine(indexingEngine);
 
@@ -76,9 +76,9 @@ namespace Svelto.ECS.Schema.Definition
                 indexedDB.Memo(states[i]._enterCandidates).Clear();
             }
 
-            using var query = indexedDB.Select<IndexableResultSet<TComponent>>().From(tables);
+            using var query = indexedDB.From<TRow>();
 
-            foreach (var result in query.Entities())
+            foreach (var result in query.Select<IndexableResultSet<TComponent>>())
             {
                 for (int i = 0; i < stateCount; ++i)
                 {

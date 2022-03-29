@@ -6,9 +6,9 @@ namespace Svelto.ECS.Schema.Definition
 {
     public partial class StateMachine<TComponent>
     {
-        void IEntityStateMachine.AddEngines(EnginesRoot enginesRoot, IndexedDB indexedDB)
+        IStepEngine IEntityStateMachine.AddEngines(EnginesRoot enginesRoot, IndexedDB indexedDB)
         {
-            Engine = Config.AddEngines(enginesRoot, indexedDB);
+            return config.AddEngines(enginesRoot, indexedDB);
         }
     }
 
@@ -17,17 +17,19 @@ namespace Svelto.ECS.Schema.Definition
         internal class TransitionEngine : IStepEngine
         {
             private readonly IndexedDB _indexedDB;
+            private readonly StateMachineConfig<TRow, TComponent, TState> _config;
 
             public string name { get; } = $"{typeof(TComponent).FullName} StateMachineEngine";
 
-            internal TransitionEngine(IndexedDB indexedDB)
+            internal TransitionEngine(IndexedDB indexedDB, StateMachineConfig<TRow, TComponent, TState> config)
             {
                 _indexedDB = indexedDB;
+                _config = config;
             }
 
             public void Step()
             {
-                Default.Process(_indexedDB);
+                _config.Process(_indexedDB);
             }
         }
     }

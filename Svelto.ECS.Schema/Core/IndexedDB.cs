@@ -17,6 +17,7 @@ namespace Svelto.ECS.Schema
 
         // indexer will be created per TComponent
         internal readonly HashSet<RefWrapperType> createdIndexerEngines = new HashSet<RefWrapperType>();
+        internal readonly HashSet<RefWrapperType> createdStateMachineEngines = new HashSet<RefWrapperType>();
 
         internal readonly FasterDictionary<int, IndexerData> indexers = new FasterDictionary<int, IndexerData>();
         internal readonly FasterDictionary<int, MemoData> memos = new FasterDictionary<int, MemoData>();
@@ -27,27 +28,52 @@ namespace Svelto.ECS.Schema
         internal IEntityFunctions entityFunctions;
         internal EntitiesDB entitiesDB;
 
+        public IStepEngine Engine { get; private set; }
+        private readonly FasterList<IStepEngine> enginesList = new FasterList<IStepEngine>();
+
         internal IndexedDB(IEntityFunctions entityFunctions)
         {
             this.entityFunctions = entityFunctions;
+
+            Engine = new IndexedDBEngine(this, enginesList);
         }
 
         internal void RegisterSchema(EnginesRoot enginesRoot, SchemaMetadata metadata)
         {
             registeredSchemas.Add(metadata);
 
-            enginesRoot.AddEngine(new PrimaryKeyEngine(this));
+            var indexers = metadata.indexersToGenerateEngine.GetValues(out var count);
 
-            var indexers = metadata.indexersToGenerateEngine;
-
-            foreach (var componentType in indexers.keys)
+            for (int i = 0; i < count; ++i)
             {
+                var componentType = metadata.indexersToGenerateEngine.unsafeKeys[i].key;
+
                 if (createdIndexerEngines.Contains(componentType))
                     continue;
 
                 createdIndexerEngines.Add(componentType);
-                indexers[componentType].AddEngines(enginesRoot, this);
+                indexers[i].AddEngines(enginesRoot, this);
             }
+
+            var stateMachines = metadata.stateMachinesToGenerateEngine.GetValues(out count);
+
+            for (int i = 0; i < count; ++i)
+            {
+                var componentType = metadata.stateMachinesToGenerateEngine.unsafeKeys[i].key;
+
+                if (createdStateMachineEngines.Contains(componentType))
+                    continue;
+
+                createdStateMachineEngines.Add(componentType);
+                var stateMachineEngine = stateMachines[i].AddEngines(enginesRoot, this);
+
+                enginesList.Add(stateMachineEngine);
+            }
+
+            var pkEngine = new PrimaryKeyEngine(this);
+
+            enginesRoot.AddEngine(pkEngine);
+            enginesList.Add(pkEngine);
         }
 
         internal void RegisterStateMachine<T>(EnginesRoot enginesRoot, T stateMachine)

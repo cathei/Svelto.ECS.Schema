@@ -23,17 +23,13 @@ namespace Svelto.ECS.Schema.Internal
 
         internal IndexedDB indexedDB;
 
-        internal FasterDictionary<int, int> pkToValue = new FasterDictionary<int, int>();
-        internal FasterList<IndexerKeyData> indexers = new FasterList<IndexerKeyData>();
+        internal FasterDictionary<int, int> pkToValue = new();
+        internal FasterList<IndexerKeyData> indexers = new();
 
-        internal SharedSveltoDictionaryNative<ExclusiveGroupStruct, ExclusiveGroupStruct> temporaryGroups =
-            new SharedSveltoDictionaryNative<ExclusiveGroupStruct, ExclusiveGroupStruct>(0);
+        internal SharedSveltoDictionaryNative<ExclusiveGroupStruct, ExclusiveGroupStruct> temporaryGroups = new(0);
+        internal NativeDynamicArrayCast<FilterGroup> temporaryFilters = new(NativeDynamicArray.Alloc<FilterGroup>());
 
-        internal NativeDynamicArrayCast<FilterGroup> temporaryFilters =
-            new NativeDynamicArrayCast<FilterGroup>(NativeDynamicArray.Alloc<FilterGroup>());
-
-        internal static ThreadLocal<Stack<ResultSetQueryConfig>> Pool =
-            new ThreadLocal<Stack<ResultSetQueryConfig>>(() => new Stack<ResultSetQueryConfig>());
+        internal static ThreadLocal<Stack<ResultSetQueryConfig>> Pool = new(() => new());
 
         internal static ResultSetQueryConfig Use()
         {
@@ -63,160 +59,143 @@ namespace Svelto.ECS.Schema.Internal
         }
     }
 
-    public readonly ref struct SelectQuery<TRow, TResult>
+    public readonly ref struct FromRowQuery<TRow>
         where TRow : class, IEntityRow
-        where TResult : struct, IResultSet
     {
         internal readonly ResultSetQueryConfig config;
 
-        internal SelectQuery(IndexedDB indexedDB)
+        internal FromRowQuery(IndexedDB indexedDB)
         {
             config = ResultSetQueryConfig.Use();
             config.indexedDB = indexedDB;
         }
 
-        public void Dispose()
+        public FromRowQuery<TRow> Where<T>(T query)
+            where T : IIndexQuery<TRow>
         {
-            ResultSetQueryConfig.Return(config);
-        }
+            if (config.temporaryGroups.count != 0)
+                throw new ECSException("Query is already in use, cannot add Where condition");
 
-        // Select -> From Tables
-        public SelectFromQuery<TResult, TTableRow> From<TTableRow>(
-                IEntityTables<TTableRow> tables)
-            where TTableRow : class, TRow
-        {
-            return new SelectFromQuery<TResult, TTableRow>(config, tables);
-        }
-
-        public SelectFromQuery<TResult, TRow> FromAll() => FromAll<TRow>();
-
-        // Select -> All
-        /// <summary>
-        /// This is shortcut for `indexedDB.Select<TR>().From(indexedDB.FindTables<TTR>());
-        /// </summary>
-        public SelectFromQuery<TResult, TTableRow> FromAll<TTableRow>()
-            where TTableRow : class, TRow
-        {
-            return new SelectFromQuery<TResult, TTableRow>(
-                config, config.indexedDB.FindTables<TTableRow>());
-        }
-    }
-
-    public readonly ref struct SelectFromQuery<TResult, TRow>
-        where TResult : struct, IResultSet
-        where TRow : class, IEntityRow
-    {
-        internal readonly ResultSetQueryConfig config;
-        internal readonly IEntityTables<TRow> table;
-
-        internal SelectFromQuery(ResultSetQueryConfig config, IEntityTables<TRow> table)
-        {
-            this.config = config;
-            this.table = table;
-        }
-
-        public void Dispose()
-        {
-            ResultSetQueryConfig.Return(config);
-        }
-
-        public TablesIndexQueryEnumerable<TResult, TRow> Entities()
-        {
-            return new TablesIndexQueryEnumerable<TResult, TRow>(config, table);
-        }
-
-        public SelectFromQuery<TResult, TRow> Where<TIndexQuery>(TIndexQuery query)
-            where TIndexQuery : IIndexQuery<TRow>
-        {
             query.Apply(config);
             return this;
         }
 
-        public TablesIndexQueryEnumerable<TResult, TRow>.RefIterator GetEnumerator()
-            => Entities().GetEnumerator();
+        public FromRowSelectQuery<TRow, T> Select<T>()
+            where T : struct, IResultSet
+        {
+            Build();
+            return new(config);
+        }
+
+        public void Dispose()
+        {
+            ResultSetQueryConfig.Return(config);
+        }
+
+        private void Build()
+        {
+            if (config.temporaryGroups.count != 0)
+                return;
+
+            var tables = config.indexedDB.FindTables<TRow>();
+            int tableCount = tables.Range;
+
+            for (int i = 0; i < tableCount; ++i)
+            {
+                var table = tables.GetTable(i);
+
+                if (table.PrimaryKeys.count == 0)
+                    config.temporaryGroups.Add(table.Group, table.Group);
+                else
+                    IterateGroup(table);
+            }
+        }
+
+        private void IterateGroup(IEntityTable<TRow> table, int groupIndex = 0, int depth = 0)
+        {
+            if (depth >= table.PrimaryKeys.count)
+            {
+                // table group index 0 is reserved for adding only
+                var group = table.Group + (uint)(groupIndex + 1);
+                config.temporaryGroups.Add(group, group);
+                return;
+            }
+
+            var pk = table.PrimaryKeys[depth];
+
+            // mutiply parent index
+            groupIndex *= pk.PossibleKeyCount;
+
+            // when sub-index applied
+            if (config.pkToValue.TryGetValue(pk.PrimaryKeyID, out var value))
+            {
+                groupIndex += value;
+                IterateGroup(table, groupIndex, depth + 1);
+                return;
+            }
+
+            // iterate all subgroup
+            for (int i = 0; i < pk.PossibleKeyCount; ++i)
+            {
+                IterateGroup(table, groupIndex + i, depth + 1);
+            }
+        }
     }
 
+    public readonly ref struct FromRowSelectQuery<TRow, TResult>
+        where TRow : class, IEntityRow
+        where TResult : struct, IResultSet
+    {
+        internal readonly ResultSetQueryConfig config;
 
-    // public readonly ref struct SelectFromTableWhereQuery<TResult, TRow, TIndex>
-    //     where TResult : struct, IResultSet
-    //     where TRow : class, IEntityRow
-    //     where TIndex : IIndexQuery
-    // {
-    //     internal readonly IndexedDB Item1;
-    //     internal readonly IEntityTable<TRow> Item3;
-    //     internal readonly TIndex Item4;
-
-    //     internal SelectFromTableWhereQuery(IndexedDB indexedDB, IEntityTable<TRow> table, TIndex indexQuery)
-    //     {
-    //         Item1 = indexedDB;
-    //         Item3 = table;
-    //         Item4 = indexQuery;
-    //     }
-
-    //     // Select -> From Table -> Where -> Indices
-    //     public IndexedIndices Indices()
-    //     {
-    //         var keyData = Item4.GetIndexerKeyData(Item1);
-    //         var group = Item3.ExclusiveGroup;
-
-    //         if (keyData.groups == null || !group.IsEnabled() ||
-    //             !keyData.groups.TryGetValue(group, out var groupData))
-    //         {
-    //             return default;
-    //         }
-
-    //         return new IndexedIndices(groupData.filter.filteredIndices);
-    //     }
-
-    //     public IndexedQueryResult<TResult, TRow> Entities()
-    //     {
-    //         ResultSetHelper<TResult>.Assign(out var result, Item1.entitiesDB, Item3.ExclusiveGroup);
-    //         return new IndexedQueryResult<TResult, TRow>(result, Indices(), Item3);
-    //     }
-    // }
-
-    // public readonly ref struct SelectFromTablesWhereQuery<TResult, TRow, TIndex>
-    //     where TResult : struct, IResultSet
-    //     where TRow : class, IEntityRow
-    //     where TIndex : IIndexQuery
-    // {
-    //     internal readonly IndexedDB Item1;
-    //     internal readonly IEntityTables<TRow> Item3;
-    //     internal readonly TIndex Item4;
-
-    //     internal SelectFromTablesWhereQuery(IndexedDB indexedDB, IEntityTables<TRow> tables, TIndex indexQuery)
-    //     {
-    //         Item1 = indexedDB;
-    //         Item3 = tables;
-    //         Item4 = indexQuery;
-    //     }
-
-    //     public TablesIndexQueryEnumerable<TResult, TRow> Entities()
-    //     {
-    //         return new TablesIndexQueryEnumerable<TResult, TRow>(
-    //             Item1, Item3, Item4.GetIndexerKeyData(Item1).groups);
-    //     }
-
-    //     public TablesIndexQueryEnumerable<TResult, TRow>.RefIterator GetEnumerator()
-    //         => Entities().GetEnumerator();
-    // }
-
-
-
-
-
-
-
+        public FromRowSelectQuery(ResultSetQueryConfig config)
+        {
+            this.config = config;
+        }
+    }
 }
 
 namespace Svelto.ECS.Schema
 {
-    public static class RowQueryExtensions
+    public static class FromRowQueryExtensions
     {
-        public static SelectQuery<IQueryableRow<TResult>, TResult> Select<TResult>(this IndexedDB indexedDB)
+        public static FromRowQuery<TRow> From<TRow>(this IndexedDB indexedDB)
+            where TRow : class, IEntityRow
+        {
+            return new(indexedDB);
+        }
+
+        public static TableQueryEnumerator<TResult> GetEnumerator<TRow, TResult>(
+                this FromRowSelectQuery<TRow, TResult> query)
+            where TRow : class, IQueryableRow<TResult>
             where TResult : struct, IResultSet
         {
-            return new SelectQuery<IQueryableRow<TResult>, TResult>(indexedDB);
+            return new(query.config);
         }
+    }
+
+    public static class FromResultSetQueryExtensions
+    {
+        public static FromRowQuery<IQueryableRow<TResult>> From<TResult>(this IndexedDB indexedDB)
+            where TResult : struct, IResultSet
+        {
+            return new(indexedDB);
+        }
+
+        public static FromRowSelectQuery<IQueryableRow<TResult>, TResult> Select<TResult>(
+                this FromRowQuery<IQueryableRow<TResult>> query)
+            where TResult : struct, IResultSet
+        {
+            return new(query.config);
+        }
+    }
+
+    public static class FromGroupQueryExtensions
+    {
+        // public static FromRowQuery<TRow> From<TRow>(this IndexedDB indexedDB)
+        //     where TRow : class, IEntityRow
+        // {
+        //     return new(indexedDB);
+        // }
     }
 }

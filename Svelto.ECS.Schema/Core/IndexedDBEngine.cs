@@ -5,8 +5,12 @@ using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema
 {
-    internal class IndexedDBEngine : IQueryingEntitiesEngine,
-        IReactOnAddAndRemove<RowIdentityComponent>, IReactOnSwap<RowIdentityComponent>, IReactOnSubmission
+    internal class IndexedDBEngine :
+        UnsortedEnginesGroup<IStepEngine>,
+        IQueryingEntitiesEngine,
+        IReactOnAddAndRemove<RowIdentityComponent>,
+        IReactOnSwap<RowIdentityComponent>,
+        IReactOnSubmission
     {
         private readonly IndexedDB _indexedDB;
 
@@ -14,7 +18,7 @@ namespace Svelto.ECS.Schema
 
         public EntitiesDB entitiesDB { private get; set; }
 
-        public IndexedDBEngine(IndexedDB indexedDB)
+        public IndexedDBEngine(IndexedDB indexedDB, FasterList<IStepEngine> engines) : base(engines)
         {
             _indexedDB = indexedDB;
         }

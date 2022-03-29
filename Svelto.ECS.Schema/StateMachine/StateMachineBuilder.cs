@@ -13,9 +13,24 @@ namespace Svelto.ECS.Schema.Internal
         where TRow : class, IEntityRow<TComponent>
         where TComponent : unmanaged, IStateMachineComponent
     {
-        public AnyStateBuilder AnyState => new AnyStateBuilder();
+        internal readonly StateMachine<TComponent> _fsm;
 
-        public readonly ref struct AnyStateBuilder { }
+        public StateMachineBuilder(StateMachine<TComponent> fsm)
+        {
+            _fsm = fsm;
+        }
+
+        public AnyStateBuilder AnyState => new AnyStateBuilder(_fsm);
+
+        public readonly ref struct AnyStateBuilder
+        {
+            internal readonly StateMachine<TComponent> _fsm;
+
+            public AnyStateBuilder(StateMachine<TComponent> fsm)
+            {
+                _fsm = fsm;
+            }
+        }
     }
 
     public readonly ref struct StateBuilder<TRow, TComponent, TState>
@@ -62,7 +77,7 @@ namespace Svelto.ECS.Schema
             where TComponent : unmanaged, IStateMachineComponent<TState>
             where TState : unmanaged, IEquatable<TState>
         {
-            var config = StateMachineConfig<TRow, TComponent, TState>.Default;
+            var config = StateMachineConfig<TRow, TComponent, TState>.Get(builder._fsm);
 
             if (config._states.ContainsKey(key))
             {
@@ -81,7 +96,7 @@ namespace Svelto.ECS.Schema
             where TComponent : unmanaged, IStateMachineComponent<TState>
             where TState : unmanaged, IEquatable<TState>
         {
-            var config = StateMachineConfig<TRow, TComponent, TState>.Default;
+            var config = StateMachineConfig<TRow, TComponent, TState>.Get(builder._fsm);
 
             var transition = new TransitionConfig<TState>(next);
             config._anyState._transitions.Add(transition);

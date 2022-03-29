@@ -39,12 +39,6 @@ namespace Svelto.ECS.Schema
             internal int QueryGroupIndex(uint index);
         }
 
-        internal interface ISchemaDefinitionRangedSchema : ISchemaDefinition
-        {
-            int Range { get; }
-            IEntitySchema GetSchema(int index);
-        }
-
         internal interface ISchemaDefinitionMemo : ISchemaDefinition
         {
             int MemoID { get; }
@@ -58,8 +52,8 @@ namespace Svelto.ECS.Schema
 
         public interface IEntityStateMachine
         {
-            void OnConfigure();
-            void AddEngines(EnginesRoot enginesRoot, IndexedDB indexedDB);
+            RefWrapperType ComponentType { get; }
+            IStepEngine AddEngines(EnginesRoot enginesRoot, IndexedDB indexedDB);
             IEntityIndex Index { get; }
         }
     }
