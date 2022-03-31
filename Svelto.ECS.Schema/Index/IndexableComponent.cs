@@ -55,11 +55,9 @@ namespace Svelto.ECS.Schema.Internal
         public NB<T> component;
         public NB<EGIDComponent> egid;
 
-        public int count { get; set; }
-
         public void Init(in EntityCollection<T, EGIDComponent> buffers)
         {
-            (component, egid, count) = buffers;
+            (component, egid, _) = buffers;
         }
     }
 }

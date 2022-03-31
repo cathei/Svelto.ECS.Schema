@@ -3,8 +3,8 @@ using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema
 {
-    public ref struct TableQueryEnumerator<TResult>
-        where TResult : struct, IResultSet
+    public ref struct FromRowQueryEnumerator<TRow>
+        where TRow : class, IEntityRow
     {
         private readonly ResultSetQueryConfig _config;
 
@@ -12,10 +12,10 @@ namespace Svelto.ECS.Schema
         private readonly uint _groupCount;
 
         private int _groupIndex;
-        private TResult _result;
         private NB<EGIDComponent> _egid;
+        private int _count;
 
-        internal TableQueryEnumerator(ResultSetQueryConfig config) : this()
+        internal FromRowQueryEnumerator(ResultSetQueryConfig config) : this()
         {
             _config = config;
             _groupIndex = -1;
@@ -47,11 +47,7 @@ namespace Svelto.ECS.Schema
 
                 if (haveAllFilters)
                 {
-                    ResultSetHelper<TResult>.Assign(out _result, _config.indexedDB.entitiesDB, currentGroup);
-
-                    if (_config.temporaryFilters.count > 0)
-                        (_egid, _) = _config.indexedDB.entitiesDB.QueryEntities<EGIDComponent>(currentGroup);
-
+                    (_egid, _count) = _config.indexedDB.entitiesDB.QueryEntities<EGIDComponent>(currentGroup);
                     moveNext = true;
                     break;
                 }
@@ -62,9 +58,13 @@ namespace Svelto.ECS.Schema
 
         public void Reset() { _groupIndex = -1; }
 
-        public void Dispose() { }
+        public void Dispose()
+        {
+            // TODO: auto-close option might be needed
+            ResultSetQueryConfig.Return(_config);
+        }
 
-        public IndexedQueryResult<TResult> Current => new(
-            _result, new(_config.temporaryFilters, _egid, _result.count), _groups[_groupIndex]);
+        public FromGroupQuery<TRow> Current =>
+            new(_config, _groups[_groupIndex], new(_config.temporaryFilters, _egid, _count));
     }
 }

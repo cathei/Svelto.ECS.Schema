@@ -9,65 +9,79 @@ namespace Svelto.ECS.Schema.Tests
 {
     public class NestedSchemaTests : SchemaTestsBase<NestedSchemaTests.TestSchema>
     {
-        public class DoofusRow : DescriptorRow<DoofusRow> { }
-        public class FoodRow : DescriptorRow<FoodRow> { }
-
         public enum TeamColor { Red, Blue, Yellow, Green, MAX }
         public enum FoodType { Rotten, Good, MAX }
         public enum StateType { Eating, NonEating, MAX }
 
-        public class StateSchema : IEntitySchema
+        public struct TeamComponent : IPrimaryKeyComponent<EnumKey<TeamColor>>
         {
-            public readonly Table<DoofusRow> Doofus = new Table<DoofusRow>();
-
-            public readonly Tables<FoodRow, FoodType> Food =
-                new Tables<FoodRow, FoodType>(FoodType.MAX, x => (int)x);
+            public EnumKey<TeamColor> key { get; set; }
         }
 
-        public class TeamSchema : IEntitySchema
+        public struct FoodComponent : IPrimaryKeyComponent<EnumKey<FoodType>>
         {
-            public readonly Ranged<StateSchema, StateType> State =
-                new Ranged<StateSchema, StateType>(StateType.MAX, x => (int)x);
+            public EnumKey<FoodType> key { get; set; }
         }
+
+        public struct StateComponent : IPrimaryKeyComponent<EnumKey<StateType>>
+        {
+            public EnumKey<StateType> key { get; set; }
+        }
+
+        public class DoofusRow : DescriptorRow<DoofusRow>,
+            IPrimaryKeyRow<TeamComponent>, IPrimaryKeyRow<StateComponent>
+        { }
+
+        public class FoodRow : DescriptorRow<FoodRow>,
+            IPrimaryKeyRow<TeamComponent>, IPrimaryKeyRow<FoodComponent>, IPrimaryKeyRow<StateComponent>
+        { }
 
         public class TestSchema : IEntitySchema
         {
-            public readonly Ranged<TeamSchema, TeamColor> Team =
-                new Ranged<TeamSchema, TeamColor>(TeamColor.MAX, x => (int)x);
+            public readonly Table<DoofusRow> Doofus = new();
+            public readonly Table<FoodRow> Food = new();
 
-            public readonly StateSchema Dead = new StateSchema();
-
-            public readonly CombinedTables<DoofusRow> EatingDoofuses;
+            public readonly PrimaryKey<TeamComponent> TeamPK = new();
+            public readonly PrimaryKey<FoodComponent> FoodPK = new();
+            public readonly PrimaryKey<StateComponent> StatePK = new();
 
             public TestSchema()
             {
-                EatingDoofuses = Team.Combine(x => x.State[StateType.Eating].Doofus);
+                Doofus.AddPrimaryKey(TeamPK);
+                Doofus.AddPrimaryKey(StatePK);
 
-                Team.Combine(x => x.State.Combine(x => x.Food));
+                Food.AddPrimaryKey(TeamPK);
+                Food.AddPrimaryKey(StatePK);
+                Food.AddPrimaryKey(FoodPK);
+
+                TeamPK.SetPossibleKeys(new TeamColor[] {
+                    TeamColor.Red, TeamColor.Blue, TeamColor.Yellow, TeamColor.Green
+                });
+
+                FoodPK.SetPossibleKeys(new FoodType[] {
+                    FoodType.Good, FoodType.Rotten
+                });
+
+                StatePK.SetPossibleKeys(new StateType[] {
+                    StateType.Eating, StateType.NonEating
+                });
             }
         }
 
         [Fact]
         public void MetadataTest()
         {
-            // child schema metadata must be null
-            Assert.Null(EntitySchemaTemplate<TeamSchema>.Metadata);
-
-            // only root metadata valid
             var metadata = EntitySchemaTemplate<TestSchema>.Metadata;
 
             Assert.NotNull(metadata);
 
-            Assert.Equal(24 + 3, metadata.groupToTable.count);
+            Assert.Equal(17 + 9, metadata.groupToTable.count);
 
-            Assert.Equal(metadata.root, metadata.groupToTable[_schema.Dead.Doofus].parent.parent);
-            Assert.Equal(metadata.root, metadata.groupToTable[_schema.Team[TeamColor.Red].State[StateType.Eating].Doofus].parent.parent.parent);
+            Assert.Equal(9, _schema.Doofus.GroupRange);
+            Assert.Equal(17, _schema.Food.GroupRange);
 
-            Assert.Equal(metadata.groupToTable[_schema.Team[TeamColor.Red].State[StateType.Eating].Doofus].parent,
-                metadata.groupToTable[_schema.Team[TeamColor.Red].State[StateType.Eating].Food[FoodType.Good].ExclusiveGroup].parent);
-
-            Assert.NotEqual(metadata.groupToTable[_schema.Team[TeamColor.Red].State[StateType.Eating].Doofus].parent,
-                metadata.groupToTable[_schema.Team[TeamColor.Blue].State[StateType.Eating].Food[FoodType.Good].ExclusiveGroup].parent);
+            Assert.Equal(metadata.groupToTable[_schema.Doofus.Group].parent,
+                metadata.groupToTable[_schema.Food.Group].parent);
 
             Assert.Null(metadata.root.indexers);
             Assert.Equal(0, metadata.indexersToGenerateEngine.count);
@@ -78,12 +92,11 @@ namespace Svelto.ECS.Schema.Tests
         {
             var schemaName = typeof(TestSchema).FullName;
 
-            Assert.Equal(ExclusiveGroup.Search($"{schemaName}.Dead.Doofus"), _schema.Dead.Doofus);
-            Assert.Equal(ExclusiveGroup.Search($"{schemaName}.Dead.Food.0"), _schema.Dead.Food[FoodType.Rotten].ExclusiveGroup);
-            Assert.Equal(ExclusiveGroup.Search($"{schemaName}.Dead.Food.1"), _schema.Dead.Food[FoodType.Good].ExclusiveGroup);
+            Assert.Equal(ExclusiveGroup.Search($"{schemaName}.Doofus-(1/9)"), _schema.Doofus.Group);
+            Assert.Equal(ExclusiveGroup.Search($"{schemaName}.Doofus-(2/9)"), _schema.Doofus.Group + 1);
 
-            Assert.Equal(ExclusiveGroup.Search($"{schemaName}.Team.0.State.0.Food.0"), _schema.Team[TeamColor.Red].State[StateType.Eating].Food[FoodType.Rotten].ExclusiveGroup);
-            Assert.Equal(ExclusiveGroup.Search($"{schemaName}.Team.2.State.1.Food.1"), _schema.Team[TeamColor.Yellow].State[StateType.NonEating].Food[FoodType.Good].ExclusiveGroup);
+            Assert.Equal(ExclusiveGroup.Search($"{schemaName}.Food-(1/17)"), _schema.Food.Group);
+            Assert.Equal(ExclusiveGroup.Search($"{schemaName}.Food-(2/17)"), _schema.Food.Group + 1);
         }
     }
 }

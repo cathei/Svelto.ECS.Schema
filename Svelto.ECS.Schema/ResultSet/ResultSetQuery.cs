@@ -63,11 +63,20 @@ namespace Svelto.ECS.Schema.Internal
         where TRow : class, IEntityRow
     {
         internal readonly ResultSetQueryConfig config;
+        internal readonly IEntityTables<TRow> tables;
 
         internal FromRowQuery(IndexedDB indexedDB)
         {
             config = ResultSetQueryConfig.Use();
             config.indexedDB = indexedDB;
+            this.tables = indexedDB.FindTables<TRow>();
+        }
+
+        internal FromRowQuery(IndexedDB indexedDB, IEntityTables<TRow> tables)
+        {
+            config = ResultSetQueryConfig.Use();
+            config.indexedDB = indexedDB;
+            this.tables = tables;
         }
 
         public FromRowQuery<TRow> Where<T>(T query)
@@ -80,24 +89,17 @@ namespace Svelto.ECS.Schema.Internal
             return this;
         }
 
-        public FromRowSelectQuery<TRow, T> Select<T>()
-            where T : struct, IResultSet
+        public FromRowQueryEnumerator<TRow> GetEnumerator()
         {
             Build();
             return new(config);
         }
 
-        public void Dispose()
-        {
-            ResultSetQueryConfig.Return(config);
-        }
-
-        private void Build()
+        internal void Build()
         {
             if (config.temporaryGroups.count != 0)
                 return;
 
-            var tables = config.indexedDB.FindTables<TRow>();
             int tableCount = tables.Range;
 
             for (int i = 0; i < tableCount; ++i)
@@ -142,15 +144,20 @@ namespace Svelto.ECS.Schema.Internal
         }
     }
 
-    public readonly ref struct FromRowSelectQuery<TRow, TResult>
+    public readonly ref struct FromGroupQuery<TRow>
         where TRow : class, IEntityRow
-        where TResult : struct, IResultSet
     {
         internal readonly ResultSetQueryConfig config;
 
-        public FromRowSelectQuery(ResultSetQueryConfig config)
+        public readonly ExclusiveGroupStruct group;
+        public readonly MultiIndexedIndices indices;
+
+        public FromGroupQuery(ResultSetQueryConfig config,
+            in ExclusiveGroupStruct group, in MultiIndexedIndices indices)
         {
             this.config = config;
+            this.group = group;
+            this.indices = indices;
         }
     }
 }
@@ -165,12 +172,18 @@ namespace Svelto.ECS.Schema
             return new(indexedDB);
         }
 
-        public static TableQueryEnumerator<TResult> GetEnumerator<TRow, TResult>(
-                this FromRowSelectQuery<TRow, TResult> query)
+        public static FromRowQuery<TRow> From<TRow>(this IndexedDB indexedDB, IEntityTables<TRow> table)
+            where TRow : class, IEntityRow
+        {
+            return new(indexedDB, table);
+        }
+
+        public static void Select<TRow, TResult>(
+                this FromGroupQuery<TRow> query, out TResult result)
             where TRow : class, IQueryableRow<TResult>
             where TResult : struct, IResultSet
         {
-            return new(query.config);
+            ResultSetHelper<TResult>.Assign(out result, query.config.indexedDB.entitiesDB, query.group);
         }
     }
 
@@ -182,20 +195,11 @@ namespace Svelto.ECS.Schema
             return new(indexedDB);
         }
 
-        public static FromRowSelectQuery<IQueryableRow<TResult>, TResult> Select<TResult>(
-                this FromRowQuery<IQueryableRow<TResult>> query)
+        public static void Select<TResult>(
+                this FromGroupQuery<IQueryableRow<TResult>> query, out TResult result)
             where TResult : struct, IResultSet
         {
-            return new(query.config);
+            ResultSetHelper<TResult>.Assign(out result, query.config.indexedDB.entitiesDB, query.group);
         }
-    }
-
-    public static class FromGroupQueryExtensions
-    {
-        // public static FromRowQuery<TRow> From<TRow>(this IndexedDB indexedDB)
-        //     where TRow : class, IEntityRow
-        // {
-        //     return new(indexedDB);
-        // }
     }
 }

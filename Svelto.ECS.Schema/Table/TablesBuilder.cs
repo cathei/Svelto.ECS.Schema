@@ -28,7 +28,7 @@ namespace Svelto.ECS.Schema
 
         public TablesBuilder(IEnumerable<IEntityTable<TRow>> items) => _tables = items;
 
-        public CombinedTables<TRow> Build() => new CombinedTables<TRow>(_tables);
+        public CombinedTables<TRow> Build() => new(_tables);
 
         public static implicit operator CombinedTables<TRow>(in TablesBuilder<TRow> builder) => builder.Build();
     }
@@ -39,7 +39,7 @@ namespace Svelto.ECS.Schema
                 this IEntityTablesBuilder<TRow> a, IEntityTablesBuilder<TRow> b)
             where TRow : class, IEntityRow
         {
-            return new TablesBuilder<TRow>(a.Tables.Concat(b.Tables));
+            return new(a.Tables.Concat(b.Tables));
         }
     }
 }

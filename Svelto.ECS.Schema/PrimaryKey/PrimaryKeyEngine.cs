@@ -33,21 +33,21 @@ namespace Svelto.ECS.Schema.Internal
 
         public void Step()
         {
-            using var query = indexedDB.From<IPrimaryKeyRow>().Where(indexedDB.entitiesToUpdateGroup);
-
-            foreach (var result in query.Select<IndexableResultSet<EGIDComponent>>())
+            foreach (var query in indexedDB.From<IPrimaryKeyRow>().Where(indexedDB.entitiesToUpdateGroup))
             {
-                var table = indexedDB.FindTable(result.group);
+                query.Select(out IndexableResultSet<EGIDComponent> result);
+
+                var table = indexedDB.FindTable(query.group);
 
                 if (table.PrimaryKeys.count == 0)
                     continue;
 
                 foreach (var pk in table.PrimaryKeys)
                 {
-                    pk.Ready(indexedDB.entitiesDB, result.group);
+                    pk.Ready(indexedDB.entitiesDB, query.group);
                 }
 
-                foreach (var i in result.indices)
+                foreach (var i in query.indices)
                 {
                     int groupIndex = 0;
 
@@ -59,7 +59,7 @@ namespace Svelto.ECS.Schema.Internal
 
                     ExclusiveBuildGroup targetGroup = table.Group + (uint)(groupIndex + 1);
 
-                    table.Swap(indexedDB.entityFunctions, result.set.egid[i].ID, targetGroup);
+                    table.Swap(indexedDB.entityFunctions, result.egid[i].ID, targetGroup);
                 }
             }
 

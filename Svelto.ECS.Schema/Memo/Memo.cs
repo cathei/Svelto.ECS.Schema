@@ -39,17 +39,17 @@ namespace Svelto.ECS.Schema.Internal
         internal void Union<TIndex>(IndexedDB indexedDB, TIndex indexQuery)
             where TIndex : IIndexQuery<TRow>
         {
-            using var query = indexedDB.From<TRow>().Where(indexQuery);
-
-            foreach (var result in query.Select<IndexableResultSet<TComponent>>())
+            foreach (var query in indexedDB.From<TRow>().Where(indexQuery))
             {
-                var mapper = indexedDB.GetEGIDMapper(result.group);
+                query.Select(out IndexableResultSet<TComponent> result);
 
-                ref var originalGroupData = ref indexedDB.CreateOrGetMemoGroup(_memoID, result.group);
+                var mapper = indexedDB.GetEGIDMapper(query.group);
 
-                foreach (var i in result.indices)
+                ref var originalGroupData = ref indexedDB.CreateOrGetMemoGroup(_memoID, query.group);
+
+                foreach (var i in query.indices)
                 {
-                    originalGroupData.filter.Add(result.set.egid[i].ID.entityID, mapper);
+                    originalGroupData.filter.Add(result.egid[i].ID.entityID, mapper);
                 }
             }
         }
@@ -63,10 +63,9 @@ namespace Svelto.ECS.Schema.Internal
             if (originalData == null)
                 return;
 
-            using var otherQuery = indexedDB.From<TRow>().Where(other);
+            var otherQuery = indexedDB.From<TRow>().Where(other);
 
-            // builds otherQuery
-            var otherData = otherQuery.Select<IndexableResultSet<TComponent>>();
+            otherQuery.Build();
 
             var originalDataValues = originalData.GetValues(out var originalDataCount);
 
@@ -79,12 +78,14 @@ namespace Svelto.ECS.Schema.Internal
                     continue;
 
                 // if target is empty there is no intersection
-                if (!otherData.config.temporaryGroups.ContainsKey(originalGroupData.groupID))
+                if (!otherQuery.config.temporaryGroups.ContainsKey(originalGroupData.groupID))
                     originalGroupData.filter.Clear();
             }
 
-            foreach (var otherGroupData in otherData)
+            foreach (var otherGroupData in otherQuery)
             {
+                otherGroupData.Select(out IndexableResultSet<TComponent> otherResult);
+
                 if (!originalData.ContainsKey(otherGroupData.group))
                     continue;
 
@@ -98,7 +99,7 @@ namespace Svelto.ECS.Schema.Internal
 
                 for (int i = indices.Count() - 1; i >= 0; --i)
                 {
-                    var entityID = otherGroupData.set.egid[indices[i]].ID.entityID;
+                    var entityID = otherResult.egid[indices[i]].ID.entityID;
 
                     if (!otherGroupData.indices.Exists(entityID))
                         originalGroupData.filter.TryRemove(entityID);

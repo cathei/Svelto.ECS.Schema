@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Svelto.DataStructures;
 using Svelto.ECS.Schema.Definition;
 using Xunit;
@@ -20,6 +21,11 @@ namespace Svelto.ECS.Schema.Tests
             {
                 key = itemOwner;
             }
+        }
+
+        public struct ItemGroupComponent : IPrimaryKeyComponent<int>
+        {
+            public int key { get; set; }
         }
 
         // result sets
@@ -48,7 +54,8 @@ namespace Svelto.ECS.Schema.Tests
         }
 
         public class ItemRow : DescriptorRow<ItemRow>,
-            IIndexableRow<ItemOwnerComponent>, IQueryableRow<ItemWithOwnerSet>, IQueryableRow<EGIDSet>
+            IIndexableRow<ItemOwnerComponent>, IPrimaryKeyRow<ItemGroupComponent>,
+            IQueryableRow<ItemWithOwnerSet>, IQueryableRow<EGIDSet>
         { }
 
         public class CharacterRow : DescriptorRow<CharacterRow>, IQueryableRow<EGIDSet>
@@ -56,10 +63,17 @@ namespace Svelto.ECS.Schema.Tests
 
         public class TestSchema : IEntitySchema
         {
-            public readonly Table<CharacterRow> Character = new Table<CharacterRow>();
-            public readonly Tables<ItemRow> Items = new Tables<ItemRow>(10);
+            public readonly Table<CharacterRow> Character = new();
+            public readonly Table<ItemRow> Item = new();
 
-            public readonly Index<ItemOwnerComponent> ItemOwner = new Index<ItemOwnerComponent>();
+            public readonly Index<ItemOwnerComponent> ItemOwner = new();
+            public readonly PrimaryKey<ItemGroupComponent> ItemGroup = new();
+
+            public TestSchema()
+            {
+                Item.AddPrimaryKey(ItemGroup);
+                ItemGroup.SetPossibleKeys(Enumerable.Range(0, 10).ToArray());
+            }
         }
 
         public MemoryTests() : base()
@@ -70,8 +84,9 @@ namespace Svelto.ECS.Schema.Tests
 
                 for (int j = 0; j < 1000; ++j)
                 {
-                    var itemBuilder = _factory.Build(_schema.Items[j / 100], (uint)((i * 1000) + j));
+                    var itemBuilder = _factory.Build(_schema.Item, (uint)((i * 1000) + j));
                     itemBuilder.Init(new ItemOwnerComponent(i));
+                    itemBuilder.Init(new ItemGroupComponent { key = j / 100 });
                 }
             }
 
@@ -82,15 +97,29 @@ namespace Svelto.ECS.Schema.Tests
         public void GroupEntitiesTest()
         {
             // warming up
-            var characterResult = _indexedDB.Select<EGIDSet>().From(_schema.Character).Entities();
-            var itemResult = _indexedDB.Select<ItemWithOwnerSet>().From(_schema.Items[0]).Entities();
+            foreach (var query in _indexedDB.From(_schema.Character))
+            {
+                query.Select(out EGIDSet result);
+            }
+
+            foreach (var query in _indexedDB.From(_schema.Item))
+            {
+                query.Select(out ItemWithOwnerSet result);
+            }
 
             long before = GC.GetAllocatedBytesForCurrentThread();
 
             for (int i = 0; i < 100; ++i)
             {
-                characterResult = _indexedDB.Select<EGIDSet>().From(_schema.Character).Entities();
-                itemResult = _indexedDB.Select<ItemWithOwnerSet>().From(_schema.Items[0]).Entities();
+                foreach (var query in _indexedDB.From(_schema.Character))
+                {
+                    query.Select(out EGIDSet result);
+                }
+
+                foreach (var query in _indexedDB.From(_schema.Item))
+                {
+                    query.Select(out ItemWithOwnerSet result);
+                }
             }
 
             Assert.True(before + 50 > GC.GetAllocatedBytesForCurrentThread());
@@ -102,11 +131,13 @@ namespace Svelto.ECS.Schema.Tests
             int loop = 0;
 
             // warming up
-            foreach (var result in _indexedDB.Select<ItemWithOwnerSet>().From(_schema.Items))
+            foreach (var query in _indexedDB.From(_schema.Item))
             {
                 ++loop;
 
-                Assert.Equal(10000, result.set.count);
+                query.Select(out ItemWithOwnerSet result);
+
+                Assert.Equal(10000, result.count);
             }
 
             Assert.True(loop > 0);
@@ -117,9 +148,11 @@ namespace Svelto.ECS.Schema.Tests
 
             for (int i = 0; i < 100; ++i)
             {
-                foreach (var result in _indexedDB.Select<ItemWithOwnerSet>().From(_schema.Items))
+                foreach (var query in _indexedDB.From(_schema.Item))
                 {
                     ++loop;
+
+                    query.Select(out ItemWithOwnerSet result);
                 }
             }
 
@@ -134,12 +167,16 @@ namespace Svelto.ECS.Schema.Tests
             int loop = 0;
 
             // warming up
-            foreach (var result in _indexedDB
-                .Select<ItemWithOwnerSet>().FromAll<ItemRow>().Where(_schema.ItemOwner.Is(0)))
+            foreach (var query in _indexedDB.From<ItemRow>().Where(_schema.ItemOwner.Is(0)))
             {
                 ++loop;
 
-                Assert.Equal(100, result.indices.Count());
+                int indicesCount = 0;
+
+                foreach (var i in query.indices)
+                    ++indicesCount;
+
+                Assert.Equal(100, indicesCount);
             }
 
             Assert.True(loop > 0);
@@ -150,8 +187,7 @@ namespace Svelto.ECS.Schema.Tests
 
             for (int i = 0; i < 100; ++i)
             {
-                foreach (var result in _indexedDB
-                    .Select<ItemWithOwnerSet>().FromAll<ItemRow>().Where(_schema.ItemOwner.Is(0)))
+                foreach (var query in _indexedDB.From<ItemRow>().Where(_schema.ItemOwner.Is(0)))
                 {
                     ++loop;
                 }

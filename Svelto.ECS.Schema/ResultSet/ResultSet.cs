@@ -25,9 +25,6 @@ namespace Svelto.ECS.Schema
 {
     public interface IResultSet
     {
-        // it is user's responsiblity to set count when Init() called
-        int count { get; }
-
         void LoadEntities(EntitiesDB entitiesDB, in ExclusiveGroupStruct groupID);
     }
 
