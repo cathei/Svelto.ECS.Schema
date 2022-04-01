@@ -17,8 +17,8 @@ namespace Svelto.ECS.Schema.Internal
         public ref readonly ExclusiveGroup Group => ref group;
         public int GroupRange => groupRange;
 
-        internal FasterList<IEntityPrimaryKey> primaryKeys = new FasterList<IEntityPrimaryKey>();
-        LocalFasterReadOnlyList<IEntityPrimaryKey> IEntityTable.PrimaryKeys => primaryKeys;
+        internal FasterDictionary<int, IEntityPrimaryKey> primaryKeys = new();
+        FasterDictionary<int, IEntityPrimaryKey> IEntityTable.PrimaryKeys => primaryKeys;
 
         internal Table() { }
 
@@ -54,7 +54,7 @@ namespace Svelto.ECS.Schema
         public void AddPrimaryKey<TPrimaryKey>(TPrimaryKey primaryKey)
             where TPrimaryKey : IPrimaryKeyProvider<TRow>
         {
-            primaryKeys.Add(primaryKey);
+            primaryKeys.Add(primaryKey.PrimaryKeyID, primaryKey);
         }
 
         public void SetDefault<T>(T initialValue)

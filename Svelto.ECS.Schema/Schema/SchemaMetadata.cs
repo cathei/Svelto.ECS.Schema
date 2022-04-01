@@ -10,26 +10,11 @@ namespace Svelto.ECS.Schema
 {
     internal sealed partial class SchemaMetadata
     {
-        internal class TableNode
-        {
-            public ShardNode parent;
-            public IEntityTable table;
-        }
+        internal readonly FasterList<IEntityTable> tables;
+        internal readonly FasterList<IEntityIndex> indexers;
 
-        internal class ShardNode
-        {
-            public ShardNode parent;
-            public FasterList<IEntityIndex> indexers;
+        internal readonly FasterDictionary<ExclusiveGroupStruct, IEntityTable> groupToTable;
 
-            public ShardNode(ShardNode parent)
-            {
-                this.parent = parent;
-            }
-        }
-
-        internal readonly ShardNode root;
-
-        internal readonly FasterDictionary<ExclusiveGroupStruct, TableNode> groupToTable;
         internal readonly FasterDictionary<RefWrapperType, IEntityIndex> indexersToGenerateEngine;
         internal readonly FasterDictionary<RefWrapperType, IEntityStateMachine> stateMachinesToGenerateEngine;
 
@@ -37,15 +22,17 @@ namespace Svelto.ECS.Schema
 
         internal SchemaMetadata(IEntitySchema schema)
         {
-            groupToTable = new FasterDictionary<ExclusiveGroupStruct, TableNode>();
+            tables = new FasterList<IEntityTable>();
+            indexers = new FasterList<IEntityIndex>();
+
+            groupToTable = new FasterDictionary<ExclusiveGroupStruct, IEntityTable>();
             indexersToGenerateEngine = new FasterDictionary<RefWrapperType, IEntityIndex>();
             stateMachinesToGenerateEngine = new FasterDictionary<RefWrapperType, IEntityStateMachine>();
 
-            root = new ShardNode(null);
-            GenerateChildren(root, schema, schema.GetType().FullName);
+            GenerateChildren(schema, schema.GetType().FullName);
         }
 
-        private void GenerateChildren(ShardNode node, object instance, string name)
+        private void GenerateChildren(object instance, string name)
         {
             foreach (var fieldInfo in GetSchemaElementFields(instance.GetType()))
             {
@@ -57,19 +44,19 @@ namespace Svelto.ECS.Schema
                 switch (element)
                 {
                     case Table table:
-                        RegisterTable(node, table, $"{name}.{fieldInfo.Name}");
+                        RegisterTable(table, $"{name}.{fieldInfo.Name}");
                         break;
 
-                    case IEntitySchema schema:
-                        GenerateChildren(new ShardNode(node), element, $"{name}.{fieldInfo.Name}");
-                        break;
+                    // case IEntitySchema schema:
+                    //     GenerateChildren(new ShardNode(node), element, $"{name}.{fieldInfo.Name}");
+                    //     break;
 
                     case IEntityIndex indexer:
-                        RegisterIndexer(node, indexer);
+                        RegisterIndexer(indexer);
                         break;
 
                     case IEntityStateMachine stateMachine:
-                        RegisterStateMachine(node, stateMachine);
+                        RegisterStateMachine(stateMachine);
                         break;
 
                     case IEntityPrimaryKey pk:
@@ -82,15 +69,17 @@ namespace Svelto.ECS.Schema
             }
         }
 
-        private void RegisterTable(ShardNode parent, Table table, string name)
+        private void RegisterTable(Table table, string name)
         {
             table.Name = name;
 
             ushort groupRange = 1;
 
-            foreach (var pk in table.primaryKeys)
+            var pks = table.primaryKeys.GetValues(out var pkCount);
+
+            for (int p = 0; p < pkCount; ++p)
             {
-                groupRange *= pk.PossibleKeyCount;
+                groupRange *= pks[p].PossibleKeyCount;
             }
 
             // group 0 reserved as build group
@@ -100,15 +89,13 @@ namespace Svelto.ECS.Schema
             table.group = new ExclusiveGroup(groupRange);
             table.groupRange = groupRange;
 
+            tables.Add(table);
+
             for (uint i = 0; i < groupRange; ++i)
             {
                 var group = table.group + i;
 
-                groupToTable[group] = new TableNode
-                {
-                    parent = parent,
-                    table = table
-                };
+                groupToTable[group] = table;
 
                 var groupName = $"{name}-({i+1}/{groupRange})";
 
@@ -122,10 +109,9 @@ namespace Svelto.ECS.Schema
             }
         }
 
-        private void RegisterIndexer(ShardNode node, IEntityIndex indexer)
+        private void RegisterIndexer(IEntityIndex indexer)
         {
-            node.indexers ??= new FasterList<IEntityIndex>();
-            node.indexers.Add(indexer);
+            indexers.Add(indexer);
 
             var componentType = indexer.ComponentType;
 
@@ -135,10 +121,9 @@ namespace Svelto.ECS.Schema
             indexersToGenerateEngine[componentType] = indexer;
         }
 
-        private void RegisterStateMachine(ShardNode node, IEntityStateMachine stateMachine)
+        private void RegisterStateMachine(IEntityStateMachine stateMachine)
         {
-            node.indexers ??= new FasterList<IEntityIndex>();
-            node.indexers.Add(stateMachine.Index);
+            indexers.Add(stateMachine.Index);
 
             var componentType = stateMachine.ComponentType;
 

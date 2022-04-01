@@ -27,7 +27,7 @@ namespace Svelto.ECS.Schema.Definition
             if (config != null)
                 throw new ECSException("Configure should only called once!");
 
-            return new StateMachineBuilder<TRow, TComponent>();
+            return new StateMachineBuilder<TRow, TComponent>(this);
         }
     }
 }

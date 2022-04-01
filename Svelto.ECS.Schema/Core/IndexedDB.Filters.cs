@@ -50,35 +50,13 @@ namespace Svelto.ECS.Schema
 
             componentCache.groupToIndexers.Add(groupID, componentIndexers);
 
-            SchemaMetadata.ShardNode node = null;
-
             foreach (var schemaMetadata in registeredSchemas)
             {
-                if (schemaMetadata.groupToTable.TryGetValue(groupID, out var table))
+                foreach (var indexer in schemaMetadata.indexers)
                 {
-                    node = table.parent;
-                    break;
+                    if (indexer.ComponentType.Equals(componentType))
+                        componentIndexers.Add(indexer);
                 }
-            }
-
-            while (node != null)
-            {
-                if (node.indexers != null)
-                {
-                    foreach (var indexer in node.indexers)
-                    {
-                        if (indexer.ComponentType.Equals(componentType))
-                            componentIndexers.Add(indexer);
-                    }
-                }
-
-                node = node.parent;
-            }
-
-            foreach (var stateMachine in registeredStateMachines)
-            {
-                if (stateMachine.Index.ComponentType.Equals(componentType))
-                    componentIndexers.Add(stateMachine.Index);
             }
 
             return componentIndexers;

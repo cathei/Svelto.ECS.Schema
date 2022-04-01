@@ -81,6 +81,7 @@ namespace Svelto.ECS.Schema.Tests
             }
 
             _submissionScheduler.SubmitEntities();
+            _indexedDB.Engine.Step();
 
             uint policeCount = 0;
 
@@ -103,6 +104,7 @@ namespace Svelto.ECS.Schema.Tests
             Assert.Equal(1000u, policeCount);
 
             _submissionScheduler.SubmitEntities();
+            _indexedDB.Engine.Step();
 
             foreach (var query in _indexedDB.From(_schema.Police))
             {

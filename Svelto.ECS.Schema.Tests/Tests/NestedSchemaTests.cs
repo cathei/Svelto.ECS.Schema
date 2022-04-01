@@ -80,10 +80,13 @@ namespace Svelto.ECS.Schema.Tests
             Assert.Equal(9, _schema.Doofus.GroupRange);
             Assert.Equal(17, _schema.Food.GroupRange);
 
-            Assert.Equal(metadata.groupToTable[_schema.Doofus.Group].parent,
-                metadata.groupToTable[_schema.Food.Group].parent);
+            Assert.Equal(metadata.groupToTable[_schema.Doofus.Group],
+                metadata.groupToTable[_schema.Doofus.Group + 1]);
 
-            Assert.Null(metadata.root.indexers);
+            Assert.Equal(metadata.groupToTable[_schema.Doofus.Group],
+                metadata.groupToTable[_schema.Food.Group]);
+
+            Assert.Equal(0, metadata.indexers.count);
             Assert.Equal(0, metadata.indexersToGenerateEngine.count);
         }
 

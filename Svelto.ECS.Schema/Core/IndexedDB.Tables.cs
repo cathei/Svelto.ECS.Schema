@@ -20,11 +20,8 @@ namespace Svelto.ECS.Schema
             {
                 foreach (var schemaMetadata in registeredSchemas)
                 {
-                    if (schemaMetadata.groupToTable.TryGetValue(groupID, out var tableNode))
-                    {
-                        table = tableNode.table;
+                    if (schemaMetadata.groupToTable.TryGetValue(groupID, out table))
                         break;
-                    }
                 }
 
                 _groupToTable[groupID] = table;
@@ -52,11 +49,9 @@ namespace Svelto.ECS.Schema
 
                 foreach (var schemaMetadata in registeredSchemas)
                 {
-                    var tableNodes = schemaMetadata.groupToTable.GetValues(out var count);
-
-                    for (int i = 0; i < count; ++i)
+                    foreach (var table in schemaMetadata.tables)
                     {
-                        if (tableNodes[i].table is IEntityTable<TR> matchingTable)
+                        if (table is IEntityTable<TR> matchingTable)
                             tablesList.Add(matchingTable);
                     }
                 }

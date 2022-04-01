@@ -72,7 +72,7 @@ namespace Svelto.ECS.Schema.Tests
                 IEntityRow<SpecialTimerComponent>
             { }
 
-            protected override void OnConfigure()
+            public CharacterFSM()
             {
                 var builder = Configure<IRow>();
 
@@ -113,37 +113,35 @@ namespace Svelto.ECS.Schema.Tests
         public class TestSchema : IEntitySchema
         {
             public readonly Table<CharacterRow> Character = new Table<CharacterRow>();
-        }
-
-        private readonly CharacterFSM _characterFSM;
-
-        public StateMachineTests() : base()
-        {
-            _characterFSM = _enginesRoot.AddStateMachine<CharacterFSM>(_indexedDB);
+            
+            public readonly CharacterFSM CharacterFSM = new();
         }
 
         private void AssertIndexer()
         {
-            var result = _indexedDB.Select<RageResultSet>().From(_schema.Character).Entities();
-
+            int count = 0;
             int totalCheckedCount = 0;
 
             for (CharacterState state = 0; state < CharacterState.MAX; ++state)
             {
-                var indices = _indexedDB.Select<RageResultSet>()
-                    .From(_schema.Character).Where(_characterFSM.Is(state)).Indices();
-
-                foreach (var i in indices)
+                foreach (var query in _indexedDB.From(_schema.Character).Where(_schema.CharacterFSM.Is(state)))
                 {
-                    // component state must match
-                    Assert.Equal(state, (CharacterState)result.set.state[i].key);
+                    query.Select(out RageResultSet result);
 
-                    ++totalCheckedCount;
+                    count = result.count;
+
+                    foreach (var i in query.indices)
+                    {
+                        // component state must match
+                        Assert.Equal(state, (CharacterState)result.state[i].key);
+
+                        ++totalCheckedCount;
+                    }
                 }
             }
 
             // all components should belong in index
-            Assert.Equal(result.set.count, totalCheckedCount);
+            Assert.Equal(count, totalCheckedCount);
         }
 
         [Fact]
@@ -157,26 +155,34 @@ namespace Svelto.ECS.Schema.Tests
 
             _submissionScheduler.SubmitEntities();
 
-            _characterFSM.Engine.Step();
+            _indexedDB.Engine.Step();
 
             AssertIndexer();
 
-            var result = _indexedDB.Select<RageResultSet>().From(_schema.Character).Entities();
-
-            foreach (var i in result.indices)
+            foreach (var query in _indexedDB.From(_schema.Character))
             {
-                Assert.Equal(CharacterState.Normal, (CharacterState)result.set.state[i].key);
-                result.set.rage[i].value = (int)(i * 2);
+                query.Select(out RageResultSet result);
+
+                foreach (var i in query.indices)
+                {
+                    Assert.Equal(CharacterState.Normal, (CharacterState)result.state[i].key);
+                    result.rage[i].value = (int)(i * 2);
+                }
             }
 
-            _characterFSM.Engine.Step();
+            _indexedDB.Engine.Step();
 
             AssertIndexer();
 
-            for (int i = 0; i < result.set.count; ++i)
+            foreach (var query in _indexedDB.From(_schema.Character))
             {
-                Assert.Equal(i < 5 ? CharacterState.Normal : CharacterState.Upset,
-                    (CharacterState)result.set.state[i].key);
+                query.Select(out RageResultSet result);
+
+                foreach (var i in query.indices)
+                {
+                    Assert.Equal(i < 5 ? CharacterState.Normal : CharacterState.Upset,
+                        (CharacterState)result.state[i].key);
+                }
             }
         }
 
@@ -192,31 +198,44 @@ namespace Svelto.ECS.Schema.Tests
 
             _submissionScheduler.SubmitEntities();
 
-            var result = _indexedDB.Select<RageResultSet>().From(_schema.Character).Entities();
-
             AssertIndexer();
 
-            foreach (var i in result.indices)
+            foreach (var query in _indexedDB.From(_schema.Character))
             {
-                Assert.Equal(CharacterState.Normal, (CharacterState)result.set.state[i].key);
+                query.Select(out RageResultSet result);
+
+                foreach (var i in query.indices)
+                {
+                    Assert.Equal(CharacterState.Normal, (CharacterState)result.state[i].key);
+                }
             }
 
-            _characterFSM.Engine.Step();
+            _indexedDB.Engine.Step();
 
             AssertIndexer();
 
-            foreach (var i in result.indices)
+            foreach (var query in _indexedDB.From(_schema.Character))
             {
-                Assert.Equal(CharacterState.Upset, (CharacterState)result.set.state[i].key);
+                query.Select(out RageResultSet result);
+
+                foreach (var i in query.indices)
+                {
+                    Assert.Equal(CharacterState.Upset, (CharacterState)result.state[i].key);
+                }
             }
 
-            _characterFSM.Engine.Step();
+            _indexedDB.Engine.Step();
 
             AssertIndexer();
 
-            foreach (var i in result.indices)
+            foreach (var query in _indexedDB.From(_schema.Character))
             {
-                Assert.Equal(CharacterState.Angry, (CharacterState)result.set.state[i].key);
+                query.Select(out RageResultSet result);
+
+                foreach (var i in query.indices)
+                {
+                    Assert.Equal(CharacterState.Angry, (CharacterState)result.state[i].key);
+                }
             }
         }
 
@@ -233,34 +252,42 @@ namespace Svelto.ECS.Schema.Tests
 
             _submissionScheduler.SubmitEntities();
 
-            var result = _indexedDB.Select<AllFourSet>().From(_schema.Character).Entities();
-
-            _characterFSM.Engine.Step();
+            _indexedDB.Engine.Step();
 
             AssertIndexer();
 
-            foreach (var i in result.indices)
+            foreach (var query in _indexedDB.From(_schema.Character))
             {
-                Assert.Equal(i % 2 == 0 ? CharacterState.Special : CharacterState.Normal, (CharacterState)result.set.state[i].key);
+                query.Select(out AllFourSet result);
 
-                // must assigned when ExecuteOnEnter
-                Assert.False(result.set.trigger[i].value);
-                Assert.Equal(i % 2 == 0 ? 1 : 0, result.set.timer[i].value);
+                foreach (var i in query.indices)
+                {
+                    Assert.Equal(i % 2 == 0 ? CharacterState.Special : CharacterState.Normal, (CharacterState)result.state[i].key);
 
-                if (i % 3 == 0)
-                    result.set.timer[i].value = 0;
+                    // must assigned when ExecuteOnEnter
+                    Assert.False(result.trigger[i].value);
+                    Assert.Equal(i % 2 == 0 ? 1 : 0, result.timer[i].value);
+
+                    if (i % 3 == 0)
+                        result.timer[i].value = 0;
+                }
             }
 
-            _characterFSM.Engine.Step();
+            _indexedDB.Engine.Step();
 
             AssertIndexer();
 
-            foreach (var i in result.indices)
+            foreach (var query in _indexedDB.From(_schema.Character))
             {
-                Assert.Equal(i % 3 != 0 && i % 2 == 0 ? CharacterState.Special : CharacterState.Normal, (CharacterState)result.set.state[i].key);
+                query.Select(out AllFourSet result);
 
-                // must assigned when ExecuteOnExit
-                Assert.Equal(i % 3 == 0 && i % 2 == 0 ? 5 : -1, result.set.rage[i].value);
+                foreach (var i in query.indices)
+                {
+                    Assert.Equal(i % 3 != 0 && i % 2 == 0 ? CharacterState.Special : CharacterState.Normal, (CharacterState)result.state[i].key);
+
+                    // must assigned when ExecuteOnExit
+                    Assert.Equal(i % 3 == 0 && i % 2 == 0 ? 5 : -1, result.rage[i].value);
+                }
             }
         }
 
@@ -276,30 +303,38 @@ namespace Svelto.ECS.Schema.Tests
             _submissionScheduler.SubmitEntities();
 
             // warming up
-            _characterFSM.Engine.Step();
+            _indexedDB.Engine.Step();
 
-            var result = _indexedDB.Select<RageResultSet>().From(_schema.Character).Entities();
-
-            foreach (var i in result.indices)
+            foreach (var query in _indexedDB.From(_schema.Character))
             {
-                Assert.Equal(CharacterState.Normal, (CharacterState)result.set.state[i].key);
-                result.set.rage[i].value = (int)i * 2;
+                query.Select(out RageResultSet result);
+
+                foreach (var i in query.indices)
+                {
+                    Assert.Equal(CharacterState.Normal, (CharacterState)result.state[i].key);
+                    result.rage[i].value = (int)i * 2;
+                }
             }
 
-            _characterFSM.Engine.Step();
+            _indexedDB.Engine.Step();
 
-            foreach (var i in result.indices)
+            foreach (var query in _indexedDB.From(_schema.Character))
             {
-                result.set.rage[i].value = 0;
+                query.Select(out RageResultSet result);
+
+                foreach (var i in query.indices)
+                {
+                    result.rage[i].value = 0;
+                }
             }
 
-            _characterFSM.Engine.Step();
+            _indexedDB.Engine.Step();
 
             long before = GC.GetAllocatedBytesForCurrentThread();
 
             for (int i = 0; i < 100; ++i)
             {
-                _characterFSM.Engine.Step();
+                _indexedDB.Engine.Step();
             }
 
             Assert.True(before + 50 > GC.GetAllocatedBytesForCurrentThread());

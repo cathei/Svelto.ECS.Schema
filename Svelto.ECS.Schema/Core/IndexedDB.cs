@@ -13,7 +13,6 @@ namespace Svelto.ECS.Schema
     public sealed partial class IndexedDB
     {
         internal readonly FasterList<SchemaMetadata> registeredSchemas = new FasterList<SchemaMetadata>();
-        internal readonly FasterList<IEntityStateMachine> registeredStateMachines = new FasterList<IEntityStateMachine>();
 
         // indexer will be created per TComponent
         internal readonly HashSet<RefWrapperType> createdIndexerEngines = new HashSet<RefWrapperType>();
@@ -74,21 +73,6 @@ namespace Svelto.ECS.Schema
 
             enginesRoot.AddEngine(pkEngine);
             enginesList.Add(pkEngine);
-        }
-
-        internal void RegisterStateMachine<T>(EnginesRoot enginesRoot, T stateMachine)
-            where T : class, IEntityStateMachine
-        {
-            registeredStateMachines.Add(stateMachine);
-
-            var componentType = stateMachine.Index.ComponentType;
-
-            // we do NOT support multiple instance of same state machine
-            if (!createdIndexerEngines.Contains(componentType))
-            {
-                createdIndexerEngines.Add(componentType);
-                stateMachine.AddEngines(enginesRoot, this);
-            }
         }
 
         public static implicit operator EntitiesDB(IndexedDB indexedDB) => indexedDB.entitiesDB;

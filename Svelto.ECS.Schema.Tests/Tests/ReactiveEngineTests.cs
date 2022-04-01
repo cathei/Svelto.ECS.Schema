@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Svelto.DataStructures;
 using Svelto.ECS.Schema.Definition;
 using Xunit;
@@ -26,6 +27,23 @@ namespace Svelto.ECS.Schema.Tests
             }
         }
 
+        public struct GroupComponent : IPrimaryKeyComponent<int>
+        {
+            public int key { get; set; }
+        }
+
+        public struct GroupSet : IResultSet<GroupComponent, EGIDComponent>
+        {
+            public NB<GroupComponent> group;
+            public NB<EGIDComponent> egid;
+            public int count;
+
+            public void Init(in EntityCollection<GroupComponent, EGIDComponent> buffers)
+            {
+                (group, egid, count) = buffers;
+            }
+        }
+
         public interface IHealthRow : IReactiveRow<HealthComponent>, IQueryableRow<HealthSet> { }
         public interface IDamageRow : IReactiveRow<DamageComponent> { }
 
@@ -38,17 +56,17 @@ namespace Svelto.ECS.Schema.Tests
             public HealthReactiveEngine(IndexedDB indexedDB) : base(indexedDB)
             { }
 
-            protected override void Add(ref HealthComponent component, IEntityTable<IHealthRow> table, uint entityID)
+            protected override void Add(ref HealthComponent component, IEntityTable<IHealthRow> table, EGID egid)
             {
                 added++;
             }
 
-            protected override void MovedTo(ref HealthComponent component, IEntityTable<IHealthRow> previousTable, IEntityTable<IHealthRow> table, uint entityID)
+            protected override void MovedTo(ref HealthComponent component, IEntityTable<IHealthRow> previousTable, IEntityTable<IHealthRow> table, EGID egid)
             {
                 moved++;
             }
 
-            protected override void Remove(ref HealthComponent component, IEntityTable<IHealthRow> table, uint entityID)
+            protected override void Remove(ref HealthComponent component, IEntityTable<IHealthRow> table, EGID egid)
             {
                 removed++;
             }
@@ -57,7 +75,8 @@ namespace Svelto.ECS.Schema.Tests
         public class RowWithHealth : DescriptorRow<RowWithHealth>, IHealthRow
         { }
 
-        public class RowWithHealth2 : DescriptorRow<RowWithHealth2>, IHealthRow, IDamageRow
+        public class RowWithHealth2 : DescriptorRow<RowWithHealth2>, IHealthRow, IDamageRow,
+            IPrimaryKeyRow<GroupComponent>, IQueryableRow<GroupSet>
         { }
 
         public class RowWithoutHealth : DescriptorRow<RowWithoutHealth>, IDamageRow
@@ -65,9 +84,18 @@ namespace Svelto.ECS.Schema.Tests
 
         public class TestSchema : IEntitySchema
         {
-            public readonly Table<RowWithHealth> Table1 = new Table<RowWithHealth>();
-            public readonly Tables<RowWithHealth2> Table2 = new Tables<RowWithHealth2>(5);
-            public readonly Table<RowWithoutHealth> Table3 = new Table<RowWithoutHealth>();
+            public readonly Table<RowWithHealth> Table1 = new();
+            public readonly Table<RowWithHealth2> Table2 = new();
+            public readonly Table<RowWithoutHealth> Table3 = new();
+
+            public readonly PrimaryKey<GroupComponent> Group = new();
+
+            public TestSchema()
+            {
+                Group.SetPossibleKeys(Enumerable.Range(0, 5).ToArray());
+
+                Table2.AddPrimaryKey(Group);
+            }
         }
 
         [Fact]
@@ -84,7 +112,8 @@ namespace Svelto.ECS.Schema.Tests
 
             for (uint i = 0; i < 100; ++i)
             {
-                _factory.Build(_schema.Table2[(int)(i % _schema.Table2.Range)], i);
+                var builder = _factory.Build(_schema.Table2, i);
+                builder.Init(new GroupComponent { key = (int)(i % _schema.Table2.GroupRange) });
             }
 
             for (uint i = 0; i < 100; ++i)
@@ -98,15 +127,24 @@ namespace Svelto.ECS.Schema.Tests
             Assert.Equal(0, engine.moved);
             Assert.Equal(0, engine.removed);
 
-            var result = _indexedDB.Select<HealthSet>().From(_schema.Table2[0]).Entities();
+            foreach (var query in _indexedDB.From(_schema.Table2))
+            {
+                query.Select(out GroupSet result);
 
-            for (int i = 0; i < result.set.count / 2; ++i)
-                _functions.Move(_schema.Table2[0], result.set.health[i].ID.entityID).To(_schema.Table2[1]);
+                for (int i = 0; i < result.count / 2; ++i)
+                    _indexedDB.Update(ref result.group[i], result.egid[i].ID, 1);
+            }
 
-            _functions.MoveAll(_schema.Table2[3]).To(_schema.Table2[4]);
+            foreach (var query in _indexedDB.From(_schema.Table2).Where(_schema.Group.Is(3)))
+            {
+                query.Select(out GroupSet result);
 
-            _functions.RemoveAll(_schema.Table1);
-            _functions.RemoveAll(_schema.Table3);
+                foreach (var i in query.indices)
+                    _indexedDB.Update(ref result.group[i], result.egid[i].ID, 4);
+            }
+
+            _indexedDB.RemoveAll(_schema.Table1);
+            _indexedDB.RemoveAll(_schema.Table3);
 
             _submissionScheduler.SubmitEntities();
 

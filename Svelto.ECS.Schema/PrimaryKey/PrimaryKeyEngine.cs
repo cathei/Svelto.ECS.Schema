@@ -7,7 +7,7 @@ using Svelto.ECS.Schema.Internal;
 namespace Svelto.ECS.Schema.Internal
 {
     internal class PrimaryKeyEngine :
-        ReactToRowEngine<IPrimaryKeyRow, RowIdentityComponent>, IStepEngine
+        ReactToRowEngine<IPrimaryKeyRow, RowIdentityComponent>, IStepEngine, IReactOnSubmission
     {
         public PrimaryKeyEngine(IndexedDB indexedDB) : base(indexedDB) { }
 
@@ -42,19 +42,21 @@ namespace Svelto.ECS.Schema.Internal
                 if (table.PrimaryKeys.count == 0)
                     continue;
 
-                foreach (var pk in table.PrimaryKeys)
+                var pks = table.PrimaryKeys.GetValues(out var pkCount);
+
+                for (int p = 0; p < pkCount; ++p)
                 {
-                    pk.Ready(indexedDB.entitiesDB, query.group);
+                    pks[p].Ready(indexedDB.entitiesDB, query.group);
                 }
 
                 foreach (var i in query.indices)
                 {
                     int groupIndex = 0;
 
-                    foreach (var pk in table.PrimaryKeys)
+                    for (int p = 0; p < pkCount; ++p)
                     {
-                        groupIndex *= pk.PossibleKeyCount;
-                        groupIndex += pk.QueryGroupIndex(i);
+                        groupIndex *= pks[p].PossibleKeyCount;
+                        groupIndex += pks[p].QueryGroupIndex(i);
                     }
 
                     ExclusiveBuildGroup targetGroup = table.Group + (uint)(groupIndex + 1);
@@ -64,6 +66,11 @@ namespace Svelto.ECS.Schema.Internal
             }
 
             indexedDB.Memo(indexedDB.entitiesToUpdateGroup).Clear();
+        }
+
+        public void EntitiesSubmitted()
+        {
+            Step();
         }
     }
 }

@@ -15,11 +15,11 @@ namespace Svelto.ECS.Schema
             ref readonly ExclusiveGroup Group { get; }
             int GroupRange { get; }
 
+            internal FasterDictionary<int, IEntityPrimaryKey> PrimaryKeys { get; }
+
             internal EntityInitializer Build(IEntityFactory factory, uint entityID, IEnumerable<object> implementors);
             internal void Swap(IEntityFunctions functions, in EGID egid, in ExclusiveBuildGroup groupID);
             internal void Remove(IEntityFunctions functions, uint entityID, in ExclusiveGroupStruct groupID);
-
-            internal LocalFasterReadOnlyList<IEntityPrimaryKey> PrimaryKeys { get; }
         }
 
         public interface IEntityIndex : ISchemaDefinition

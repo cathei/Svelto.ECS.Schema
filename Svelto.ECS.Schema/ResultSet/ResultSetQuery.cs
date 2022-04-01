@@ -106,6 +106,20 @@ namespace Svelto.ECS.Schema.Internal
             {
                 var table = tables.GetTable(i);
 
+                bool hasAllKeys = true;
+
+                foreach (var pkID in config.pkToValue.keys)
+                {
+                    if (!table.PrimaryKeys.ContainsKey(pkID))
+                    {
+                        hasAllKeys = false;
+                        break;
+                    }
+                }
+
+                if (!hasAllKeys)
+                    continue;
+
                 if (table.PrimaryKeys.count == 0)
                     config.temporaryGroups.Add(table.Group, table.Group);
                 else
@@ -123,7 +137,7 @@ namespace Svelto.ECS.Schema.Internal
                 return;
             }
 
-            var pk = table.PrimaryKeys[depth];
+            var pk = table.PrimaryKeys.unsafeValues[depth];
 
             // mutiply parent index
             groupIndex *= pk.PossibleKeyCount;
