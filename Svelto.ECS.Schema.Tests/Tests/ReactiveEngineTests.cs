@@ -113,7 +113,7 @@ namespace Svelto.ECS.Schema.Tests
             for (uint i = 0; i < 100; ++i)
             {
                 var builder = _factory.Build(_schema.Table2, i);
-                builder.Init(new GroupComponent { key = (int)(i % _schema.Table2.GroupRange) });
+                builder.Init(new GroupComponent { key = (int)(i % _schema.Group.PossibleKeyCount) });
             }
 
             for (uint i = 0; i < 100; ++i)

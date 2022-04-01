@@ -81,7 +81,6 @@ namespace Svelto.ECS.Schema.Tests
             }
 
             _submissionScheduler.SubmitEntities();
-            _indexedDB.Engine.Step();
 
             uint policeCount = 0;
 

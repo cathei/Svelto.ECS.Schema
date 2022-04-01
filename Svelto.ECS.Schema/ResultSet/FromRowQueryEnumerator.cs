@@ -35,7 +35,10 @@ namespace Svelto.ECS.Schema
 
                 for (uint i = 0; i < _config.indexers.count; ++i)
                 {
-                    if (!_config.indexers[i].groups.TryGetValue(currentGroup, out var groupData) ||
+                    var keyData = _config.indexers[i].groups;
+
+                    if (keyData == null ||
+                        !keyData.TryGetValue(currentGroup, out var groupData) ||
                         groupData.filter.filteredIndices.Count() == 0)
                     {
                         haveAllFilters = false;
