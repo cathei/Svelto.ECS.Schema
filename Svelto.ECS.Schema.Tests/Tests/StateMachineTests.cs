@@ -110,7 +110,7 @@ namespace Svelto.ECS.Schema.Tests
             CharacterFSM.IRow, IQueryableRow<RageResultSet>, IQueryableRow<AllFourSet>
         { }
 
-        public class TestSchema : IEntitySchema
+        public class TestSchema : EntitySchema
         {
             public readonly Table<CharacterRow> Character = new();
             

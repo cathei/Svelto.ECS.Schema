@@ -5,10 +5,10 @@ namespace Svelto.ECS.Schema.Internal
         private readonly uint _range;
         private uint _index;
 
-        internal RangedIndicesEnumerator(uint range)
+        internal RangedIndicesEnumerator(uint start, uint range)
         {
-            _range = range;
-            _index = 0;
+            _range = start + range;
+            _index = start;
         }
 
         public bool MoveNext()
@@ -33,12 +33,20 @@ namespace Svelto.ECS.Schema.Internal
     public readonly ref struct RangedIndices
     {
         private readonly uint _range;
+        private readonly uint _start;
 
         public RangedIndices(uint range)
         {
             _range = range;
+            _start = 0;
         }
 
-        public RangedIndicesEnumerator GetEnumerator() => new RangedIndicesEnumerator(_range);
+        public RangedIndices(uint start, uint range)
+        {
+            _range = range;
+            _start = start;
+        }
+
+        public RangedIndicesEnumerator GetEnumerator() => new(_start, _range);
     }
 }

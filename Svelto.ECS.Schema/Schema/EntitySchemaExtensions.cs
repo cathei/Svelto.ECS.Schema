@@ -10,7 +10,7 @@ namespace Svelto.ECS.Schema
     }
 
     internal static class EntitySchemaTemplate<T>
-        where T : class, IEntitySchema, new()
+        where T : EntitySchema, new()
     {
         public static T Schema { get; private set; }
         public static SchemaMetadata Metadata { get; private set; }
@@ -34,7 +34,7 @@ namespace Svelto.ECS.Schema
     public static class EntitySchemaExtensions
     {
         public static T AddSchema<T>(this EnginesRoot enginesRoot, IndexedDB indexedDB)
-            where T : class, IEntitySchema, new()
+            where T : EntitySchema, new()
         {
             // Root schema - metadata pair will not be directly created
             EntitySchemaTemplate<T>.Create();

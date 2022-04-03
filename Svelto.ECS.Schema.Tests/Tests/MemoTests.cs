@@ -48,7 +48,7 @@ namespace Svelto.ECS.Schema.Tests
             IMemorableRow
         { }
 
-        public class TestSchema : IEntitySchema
+        public class TestSchema : EntitySchema
         {
             public readonly Table<CharacterRow> Character = new();
 

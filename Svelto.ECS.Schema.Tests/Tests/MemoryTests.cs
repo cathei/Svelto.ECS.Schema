@@ -61,7 +61,7 @@ namespace Svelto.ECS.Schema.Tests
         public class CharacterRow : DescriptorRow<CharacterRow>, IQueryableRow<EGIDSet>
         { }
 
-        public class TestSchema : IEntitySchema
+        public class TestSchema : EntitySchema
         {
             public readonly Table<CharacterRow> Character = new();
             public readonly Table<ItemRow> Item = new();

@@ -82,7 +82,7 @@ namespace Svelto.ECS.Schema.Tests
         public class RowWithoutHealth : DescriptorRow<RowWithoutHealth>, IDamageRow
         { }
 
-        public class TestSchema : IEntitySchema
+        public class TestSchema : EntitySchema
         {
             public readonly Table<RowWithHealth> Table1 = new();
             public readonly Table<RowWithHealth2> Table2 = new();

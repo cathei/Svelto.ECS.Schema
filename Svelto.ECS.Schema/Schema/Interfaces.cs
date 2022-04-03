@@ -25,7 +25,10 @@ namespace Svelto.ECS.Schema
         public interface IEntityIndex : ISchemaDefinition
         {
             RefWrapperType ComponentType { get; }
+
             int IndexerID { get; }
+            CombinedFilterID FilterID { get; internal set; }
+
             void AddEngines(EnginesRoot enginesRoot, IndexedDB indexedDB);
         }
 
@@ -39,9 +42,10 @@ namespace Svelto.ECS.Schema
             internal int QueryGroupIndex(uint index);
         }
 
-        internal interface ISchemaDefinitionMemo : ISchemaDefinition
+        internal interface IEntityMemo : ISchemaDefinition
         {
             int MemoID { get; }
+            CombinedFilterID FilterID { get; internal set; }
         }
 
         public interface IEntityStateMachine : ISchemaDefinition
@@ -56,10 +60,7 @@ namespace Svelto.ECS.Schema
             int Range { get; }
             IEntityTable GetTable(int index);
         }
-    }
 
-    namespace Definition
-    {
         public interface IEntitySchema : ISchemaDefinition { }
     }
 }

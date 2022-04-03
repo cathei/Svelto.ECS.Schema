@@ -56,7 +56,7 @@ namespace Svelto.ECS.Schema.Tests
             DescriptorRow<PoliceRow>, IQueryableRow<PoliceSet>
         { }
 
-        public class TestSchema : IEntitySchema
+        public class TestSchema : EntitySchema
         {
             public readonly Table<ThiefRow> Thief = new();
             public readonly Table<PoliceRow> Police = new();

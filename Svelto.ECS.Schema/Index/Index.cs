@@ -19,12 +19,20 @@ namespace Svelto.ECS.Schema.Internal
         where TComponent : unmanaged, IKeyComponent
     {
         // equvalent to ExclusiveGroupStruct.Generate()
-        internal readonly int _indexerId = GlobalIndexCount.Generate();
+        internal readonly int _indexerID = GlobalIndexCount.Generate();
+
+        internal CombinedFilterID _filterID;
 
         RefWrapperType IEntityIndex.ComponentType => TypeRefWrapper<TComponent>.wrapper;
 
-        int IEntityIndex.IndexerID => _indexerId;
-        int IIndexQueryable<TRow, TComponent>.IndexerID => _indexerId;
+        int IEntityIndex.IndexerID => _indexerID;
+        int IIndexQueryable<TRow, TComponent>.IndexerID => _indexerID;
+
+        CombinedFilterID IEntityIndex.FilterID
+        {
+            get => _filterID;
+            set => _filterID = value;
+        }
 
         static IndexBase()
         {

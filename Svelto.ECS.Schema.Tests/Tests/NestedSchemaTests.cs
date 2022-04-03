@@ -36,7 +36,7 @@ namespace Svelto.ECS.Schema.Tests
             IPrimaryKeyRow<TeamComponent>, IPrimaryKeyRow<FoodComponent>, IPrimaryKeyRow<StateComponent>
         { }
 
-        public class TestSchema : IEntitySchema
+        public class TestSchema : EntitySchema
         {
             public readonly Table<DoofusRow> Doofus = new();
             public readonly Table<FoodRow> Food = new();

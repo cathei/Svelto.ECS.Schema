@@ -20,7 +20,7 @@ namespace Svelto.ECS.Schema
 
         private static readonly Type ElementBaseType = typeof(ISchemaDefinition);
 
-        internal SchemaMetadata(IEntitySchema schema)
+        internal SchemaMetadata(EntitySchema schema)
         {
             tables = new FasterList<IEntityTable>();
             indexers = new FasterList<IEntityIndex>();
@@ -32,11 +32,11 @@ namespace Svelto.ECS.Schema
             GenerateChildren(schema, schema.GetType().FullName);
         }
 
-        private void GenerateChildren(object instance, string name)
+        private void GenerateChildren(EntitySchema schema, string name)
         {
-            foreach (var fieldInfo in GetSchemaElementFields(instance.GetType()))
+            foreach (var fieldInfo in GetSchemaElementFields(schema.GetType()))
             {
-                var element = fieldInfo.GetValue(instance);
+                var element = fieldInfo.GetValue(schema);
 
                 if (element == null)
                     throw new ECSException("Schema element must not be null!");
@@ -47,21 +47,24 @@ namespace Svelto.ECS.Schema
                         RegisterTable(table, $"{name}.{fieldInfo.Name}");
                         break;
 
-                    // case IEntitySchema schema:
-                    //     GenerateChildren(new ShardNode(node), element, $"{name}.{fieldInfo.Name}");
-                    //     break;
-
                     case IEntityIndex indexer:
-                        RegisterIndexer(indexer);
+                        RegisterIndexer(indexer, schema.filterContextID);
                         break;
 
                     case IEntityStateMachine stateMachine:
-                        RegisterStateMachine(stateMachine);
+                        RegisterStateMachine(stateMachine, schema.filterContextID);
+                        break;
+
+                    case IEntityMemo memo:
+                        RegisterMemo(memo, schema.filterContextID);
                         break;
 
                     case IEntityPrimaryKey pk:
-                    case ISchemaDefinitionMemo memo:
                         break;
+
+                    // case IEntitySchema schema:
+                    //     GenerateChildren(new ShardNode(node), element, $"{name}.{fieldInfo.Name}");
+                    //     break;
 
                     default:
                         throw new ECSException($"Unknown type detected in schema: {fieldInfo.FieldType.Name} {fieldInfo.Name}");
@@ -109,8 +112,10 @@ namespace Svelto.ECS.Schema
             }
         }
 
-        private void RegisterIndexer(IEntityIndex indexer)
+        private void RegisterIndexer(IEntityIndex indexer, FilterContextID filterContext)
         {
+            indexer.FilterID = new CombinedFilterID(indexer.IndexerID, filterContext);
+
             indexers.Add(indexer);
 
             var componentType = indexer.ComponentType;
@@ -121,8 +126,10 @@ namespace Svelto.ECS.Schema
             indexersToGenerateEngine[componentType] = indexer;
         }
 
-        private void RegisterStateMachine(IEntityStateMachine stateMachine)
+        private void RegisterStateMachine(IEntityStateMachine stateMachine, FilterContextID filterContext)
         {
+            stateMachine.Index.FilterID = new CombinedFilterID(stateMachine.Index.IndexerID, filterContext);
+
             indexers.Add(stateMachine.Index);
 
             var componentType = stateMachine.ComponentType;
@@ -131,6 +138,11 @@ namespace Svelto.ECS.Schema
                 return;
 
             stateMachinesToGenerateEngine[componentType] = stateMachine;
+        }
+
+        private void RegisterMemo(IEntityMemo memo, FilterContextID filterContext)
+        {
+            memo.FilterID = new CombinedFilterID(memo.MemoID, filterContext);
         }
 
         private static IEnumerable<FieldInfo> GetSchemaElementFields(Type type)

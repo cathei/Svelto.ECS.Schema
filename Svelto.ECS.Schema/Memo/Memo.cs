@@ -13,12 +13,12 @@ namespace Svelto.ECS.Schema.Internal
         public static int Generate() => Interlocked.Increment(ref Count);
     }
 
-    public abstract class MemoBase : ISchemaDefinitionMemo
+    public abstract class MemoBase : IEntityMemo
     {
         // equvalent to ExclusiveGroupStruct.Generate()
         internal readonly int _memoID = GlobalMemoCount.Generate();
 
-        int ISchemaDefinitionMemo.MemoID => _memoID;
+        int IEntityMemo.MemoID => _memoID;
 
         internal MemoBase() { }
     }
