@@ -26,29 +26,21 @@ namespace Svelto.ECS.Schema.Tests
             public NB<HealthComponent> health;
             public NB<DefenseComponent> defense;
 
-            public int count { get; set; }
-
             public void Init(in EntityCollection<HealthComponent, DefenseComponent> buffers)
-            {
-                (health, defense, count) = buffers;
-            }
+                => (health, defense, _) = buffers;
         }
 
         public struct MovableSet : IResultSet<PositionComponent>
         {
             public NB<PositionComponent> position;
-            public int count { get; set; }
 
             public void Init(in EntityCollection<PositionComponent> buffers)
-            {
-                (position, count) = buffers;
-            }
+                => (position, _) = buffers;
         }
 
-        public struct CharacterControllerComponent : IIndexableComponent<int>
+        public struct CharacterControllerComponent : IKeyComponent<int>
         {
             public int key { get; set; }
-            public EGID ID { get; set; }
         }
 
         public sealed class CharacterRow : DescriptorRow<CharacterRow>,

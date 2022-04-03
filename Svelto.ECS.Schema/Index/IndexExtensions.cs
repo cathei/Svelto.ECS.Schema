@@ -17,7 +17,7 @@ namespace Svelto.ECS.Schema
 
         public static void Update<TComponent, TKey>(
                 this IndexedDB indexedDB, ref TComponent component, in EGID egid, in TKey key)
-            where TComponent : unmanaged, IIndexableComponent<TKey>
+            where TComponent : unmanaged, IKeyComponent<TKey>
             where TKey : unmanaged, IEquatable<TKey>
         {
             component.key = key;
@@ -27,7 +27,7 @@ namespace Svelto.ECS.Schema
 
         public static void Update<TComponent, TKey>(
                 this IndexedDB indexedDB, ref TComponent component, in EGID egid, in EnumKey<TKey> key)
-            where TComponent : unmanaged, IIndexableComponent<EnumKey<TKey>>
+            where TComponent : unmanaged, IKeyComponent<EnumKey<TKey>>
             where TKey : unmanaged, Enum
         {
             component.key = key;

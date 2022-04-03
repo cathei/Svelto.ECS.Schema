@@ -68,7 +68,7 @@ namespace Svelto.ECS.Schema
         public static IndexQuery<TRow, TKey> Is<TRow, TComponent, TKey>(
                 this IIndexQueryable<TRow, TComponent> queryable, TKey key)
             where TRow : class, IIndexableRow<TComponent>
-            where TComponent : unmanaged, IIndexableComponent<TKey>
+            where TComponent : unmanaged, IKeyComponent<TKey>
             where TKey : unmanaged, IEquatable<TKey>
         {
             return new IndexQuery<TRow, TKey>(queryable.IndexerID, key);
@@ -80,7 +80,7 @@ namespace Svelto.ECS.Schema
         public static IndexQuery<TRow, EnumKey<TKey>> Is<TRow, TComponent, TKey>(
                 this IIndexQueryable<TRow, TComponent> queryable, TKey key)
             where TRow : class, IIndexableRow<TComponent>
-            where TComponent : unmanaged, IIndexableComponent<EnumKey<TKey>>
+            where TComponent : unmanaged, IKeyComponent<EnumKey<TKey>>
             where TKey : unmanaged, Enum
         {
             return new IndexQuery<TRow, EnumKey<TKey>>(queryable.IndexerID, key);

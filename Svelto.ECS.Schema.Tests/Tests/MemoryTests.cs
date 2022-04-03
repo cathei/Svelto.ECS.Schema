@@ -12,7 +12,7 @@ namespace Svelto.ECS.Schema.Tests
     public class MemoryTests : SchemaTestsBase<MemoryTests.TestSchema>
     {
         // components
-        public struct ItemOwnerComponent : IIndexableComponent<int>
+        public struct ItemOwnerComponent : IKeyComponent<int>
         {
             public EGID ID { get; set; }
             public int key { get; set; }
@@ -23,7 +23,7 @@ namespace Svelto.ECS.Schema.Tests
             }
         }
 
-        public struct ItemGroupComponent : IPrimaryKeyComponent<int>
+        public struct ItemGroupComponent : IKeyComponent<int>
         {
             public int key { get; set; }
         }

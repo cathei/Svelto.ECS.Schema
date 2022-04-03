@@ -43,7 +43,7 @@ namespace Svelto.ECS.Schema
     public sealed class PrimaryKey<TComponent> :
             IPrimaryKeyProvider<IPrimaryKeyRow<TComponent>>,
             IPrimaryKeyQueryable<IPrimaryKeyRow<TComponent>, TComponent>
-        where TComponent : unmanaged, IPrimaryKeyComponent
+        where TComponent : unmanaged, IKeyComponent
     {
         // equvalent to ExclusiveGroupStruct.Generate()
         internal readonly int _primaryKeyID = GlobalPrimaryKeyCount.Generate();

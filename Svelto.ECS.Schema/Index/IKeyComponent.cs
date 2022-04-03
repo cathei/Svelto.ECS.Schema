@@ -6,7 +6,7 @@ using Svelto.ECS.Schema.Internal;
 namespace Svelto.ECS.Schema.Internal
 {
     internal static class IndexableComponentHelper<TComponent>
-        where TComponent : unmanaged, IIndexableComponent
+        where TComponent : unmanaged, IKeyComponent
     {
         internal abstract class EngineHandlerBase
         {
@@ -27,7 +27,7 @@ namespace Svelto.ECS.Schema.Internal
             {
                 EngineHandler = new EngineHandlerImpl();
 
-                var getMethod = typeof(TComponent).GetProperty(nameof(IIndexableComponent<TKey>.key)).GetMethod;
+                var getMethod = typeof(TComponent).GetProperty(nameof(IKeyComponent<TKey>.key)).GetMethod;
                 Getter = (GetterDelegate)Delegate.CreateDelegate(typeof(GetterDelegate), getMethod);
             }
 
@@ -44,33 +44,15 @@ namespace Svelto.ECS.Schema.Internal
         }
     }
 
-    public interface IIndexableComponent : IEntityComponent
+    public interface IKeyComponent : IEntityComponent
     {
-        internal void Warmup<TComponent>() where TComponent : unmanaged, IIndexableComponent;
-    }
-
-    public struct IndexableResultSet<T> : IResultSet<T, EGIDComponent>
-        where T : unmanaged, IEntityComponent
-    {
-        public NB<T> component;
-        public NB<EGIDComponent> egid;
-
-        public void Init(in EntityCollection<T, EGIDComponent> buffers)
-        {
-            (component, egid, _) = buffers;
-        }
+        internal void Warmup<TComponent>() where TComponent : unmanaged, IKeyComponent;
     }
 }
 
 namespace Svelto.ECS.Schema
 {
-    public interface IIndexableRow<TComponent> :
-            IReactiveRow<TComponent>,
-            IQueryableRow<IndexableResultSet<TComponent>>
-        where TComponent : unmanaged, IEntityComponent
-    { }
-
-    public interface IIndexableComponent<TKey> : IIndexableComponent
+    public interface IKeyComponent<TKey> : IKeyComponent
         where TKey : unmanaged, IEquatable<TKey>
     {
         /// <summary>
@@ -79,10 +61,9 @@ namespace Svelto.ECS.Schema
         /// </summary>
         TKey key { get; set; }
 
-        void IIndexableComponent.Warmup<TComponent>()
+        void IKeyComponent.Warmup<TComponent>()
         {
             IndexableComponentHelper<TComponent>.KeyGetter<TKey>.Warmup();
         }
     }
-
 }

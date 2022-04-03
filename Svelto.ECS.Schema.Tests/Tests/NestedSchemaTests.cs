@@ -13,17 +13,17 @@ namespace Svelto.ECS.Schema.Tests
         public enum FoodType { Rotten, Good, MAX }
         public enum StateType { Eating, NonEating, MAX }
 
-        public struct TeamComponent : IPrimaryKeyComponent<EnumKey<TeamColor>>
+        public struct TeamComponent : IKeyComponent<EnumKey<TeamColor>>
         {
             public EnumKey<TeamColor> key { get; set; }
         }
 
-        public struct FoodComponent : IPrimaryKeyComponent<EnumKey<FoodType>>
+        public struct FoodComponent : IKeyComponent<EnumKey<FoodType>>
         {
             public EnumKey<FoodType> key { get; set; }
         }
 
-        public struct StateComponent : IPrimaryKeyComponent<EnumKey<StateType>>
+        public struct StateComponent : IKeyComponent<EnumKey<StateType>>
         {
             public EnumKey<StateType> key { get; set; }
         }

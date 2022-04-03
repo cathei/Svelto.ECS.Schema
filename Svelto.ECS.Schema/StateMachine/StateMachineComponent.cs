@@ -4,10 +4,10 @@ using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema
 {
-    public interface IStateMachineComponent : IIndexableComponent { }
+    public interface IStateMachineComponent : IKeyComponent { }
 
     public interface IStateMachineComponent<TState> :
-            IStateMachineComponent, IIndexableComponent<TState>
+            IStateMachineComponent, IKeyComponent<TState>
         where TState : unmanaged, IEquatable<TState>
     { }
 }

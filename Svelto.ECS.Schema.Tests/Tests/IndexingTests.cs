@@ -9,7 +9,7 @@ namespace Svelto.ECS.Schema.Tests
     public class IndexingTests : SchemaTestsBase<IndexingTests.TestSchema>
     {
         // components
-        public struct ItemOwnerComponent : IIndexableComponent<int>, INeedEGID
+        public struct ItemOwnerComponent : IKeyComponent<int>, INeedEGID
         {
             public EGID ID { get; set; }
             public int key { get; set; }
@@ -20,7 +20,7 @@ namespace Svelto.ECS.Schema.Tests
             }
         }
 
-        public struct PlayerComponent : IPrimaryKeyComponent<int>
+        public struct PlayerComponent : IKeyComponent<int>
         {
             public int key { get; set; }
 

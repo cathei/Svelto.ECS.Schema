@@ -8,7 +8,7 @@ namespace Svelto.ECS.Schema
     public static class PrimaryKeyExtensions
     {
         public static void SetPossibleKeys<TComponent, TKey>(this PrimaryKey<TComponent> primaryKey, TKey[] possibleKeys)
-            where TComponent : unmanaged, IPrimaryKeyComponent<TKey>
+            where TComponent : unmanaged, IKeyComponent<TKey>
             where TKey : unmanaged, IEquatable<TKey>
         {
             FasterDictionary<TKey, int> dict = new FasterDictionary<TKey, int>((uint)possibleKeys.Length);
@@ -26,7 +26,7 @@ namespace Svelto.ECS.Schema
     public static class PrimaryKeyEnumExtensions
     {
         public static void SetPossibleKeys<TComponent, TKey>(this PrimaryKey<TComponent> primaryKey, TKey[] possibleKeys)
-            where TComponent : unmanaged, IPrimaryKeyComponent<EnumKey<TKey>>
+            where TComponent : unmanaged, IKeyComponent<EnumKey<TKey>>
             where TKey : unmanaged, Enum
         {
             FasterDictionary<EnumKey<TKey>, int> dict = new FasterDictionary<EnumKey<TKey>, int>((uint)possibleKeys.Length);

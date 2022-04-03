@@ -12,7 +12,7 @@ namespace Svelto.ECS.Schema.Tests
             public uint proof;
         }
 
-        public struct PartitionComponent : IPrimaryKeyComponent<int>
+        public struct PartitionComponent : IKeyComponent<int>
         {
             public int key { get; set; }
         }

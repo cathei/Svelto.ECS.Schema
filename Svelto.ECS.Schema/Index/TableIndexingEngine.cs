@@ -11,7 +11,7 @@ namespace Svelto.ECS.Schema.Internal
             : ReactToRowEngine<TR, TC>
             // : IReactRowAddAndRemove<TR, TC>, IReactRowSwap<TR, TC>
         where TR : class, IReactiveRow<TC>
-        where TC : unmanaged, IIndexableComponent
+        where TC : unmanaged, IKeyComponent
         where TK : unmanaged, IEquatable<TK>
     {
         public TableIndexingEngine(IndexedDB indexedDB) : base(indexedDB)

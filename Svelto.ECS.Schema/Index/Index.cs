@@ -16,7 +16,7 @@ namespace Svelto.ECS.Schema.Internal
 
     public class IndexBase<TRow, TComponent> : IEntityIndex, IIndexQueryable<TRow, TComponent>
         where TRow : class, IReactiveRow<TComponent>
-        where TComponent : unmanaged, IIndexableComponent
+        where TComponent : unmanaged, IKeyComponent
     {
         // equvalent to ExclusiveGroupStruct.Generate()
         internal readonly int _indexerId = GlobalIndexCount.Generate();
@@ -44,6 +44,6 @@ namespace Svelto.ECS.Schema.Internal
 namespace Svelto.ECS.Schema.Definition
 {
     public sealed class Index<TComponent> : IndexBase<IIndexableRow<TComponent>, TComponent>
-        where TComponent : unmanaged, IIndexableComponent
+        where TComponent : unmanaged, IKeyComponent
     { }
 }

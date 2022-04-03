@@ -27,7 +27,7 @@ namespace Svelto.ECS.Schema.Tests
             }
         }
 
-        public struct GroupComponent : IPrimaryKeyComponent<int>
+        public struct GroupComponent : IKeyComponent<int>
         {
             public int key { get; set; }
         }

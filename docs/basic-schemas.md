@@ -8,19 +8,17 @@ public struct DamagableSet : IResultSet<HealthComponent, DefenseComponent>
 {
     public NB<HealthComponent> health;
     public NB<DefenseComponent> defense;
-    public int count { get; set; }
 
     public void Init(EntityCollection<HealthComponent, DefenseComponent> collection)
-        => (health, defense, count) = collection;
+        => (health, defense, _) = collection;
 }
 
 public struct StackableSet : IResultSet<AmountComponent>
 {
     public NB<AmountComponent> stack;
-    public int count { get; set; }
 
     public void Init(EntityCollection<AmountComponent> collection)
-        => (stack, count) = collection;
+        => (stack, _) = collection;
 }
 
 public sealed class CharacterRow : DescriptorRow<CharacterRow>, IQueryable<DamagableSet> {}

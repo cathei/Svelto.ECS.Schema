@@ -36,7 +36,7 @@ namespace Svelto.ECS.Schema
         public static PrimaryKeyQuery<TRow> Is<TRow, TComponent, TKey>(
                 this IPrimaryKeyQueryable<TRow, TComponent> queryable, TKey key)
             where TRow : class, IPrimaryKeyRow<TComponent>
-            where TComponent : unmanaged, IPrimaryKeyComponent<TKey>
+            where TComponent : unmanaged, IKeyComponent<TKey>
             where TKey : unmanaged, IEquatable<TKey>
         {
             var keyToIndex = (Func<TKey, int>)queryable.KeyToIndex;
@@ -49,7 +49,7 @@ namespace Svelto.ECS.Schema
         public static PrimaryKeyQuery<TRow> Is<TRow, TComponent, TKey>(
                 this IPrimaryKeyQueryable<TRow, TComponent> queryable, TKey key)
             where TRow : class, IPrimaryKeyRow<TComponent>
-            where TComponent : unmanaged, IPrimaryKeyComponent<EnumKey<TKey>>
+            where TComponent : unmanaged, IKeyComponent<EnumKey<TKey>>
             where TKey : unmanaged, Enum
         {
             var keyToIndex = (Func<EnumKey<TKey>, int>)queryable.KeyToIndex;

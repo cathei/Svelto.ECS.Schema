@@ -9,18 +9,18 @@ namespace Svelto.ECS.Schema.Tests
     {
         public enum CharacterState { Happy, Sad, Angry, MAX };
 
-        public struct CharacterControllerComponent : IIndexableComponent<int>
+        public struct CharacterControllerComponent : IKeyComponent<int>
         {
             public EGID ID { get; set; }
             public int key { get; set; }
         }
 
-        public struct CharacterGroupComponent : IPrimaryKeyComponent<int>
+        public struct CharacterGroupComponent : IKeyComponent<int>
         {
             public int key { get; set; }
         }
 
-        public struct CharacterStateComponent : IIndexableComponent<EnumKey<CharacterState>>
+        public struct CharacterStateComponent : IKeyComponent<EnumKey<CharacterState>>
         {
             public EGID ID { get; set; }
             public EnumKey<CharacterState> key { get; set; }
