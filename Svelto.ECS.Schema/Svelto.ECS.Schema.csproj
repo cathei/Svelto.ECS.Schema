@@ -19,14 +19,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Svelto.ECS" Version="3.2.5" />
-    <PackageReference Include="Svelto.Common" Version="3.2.3" />
+    <ProjectReference Include="..\com.sebaslab.svelto.ecs\Svelto.ECS.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Svelto.ECS.Schema.Generator\Svelto.ECS.Schema.Generator.csproj"
-                    OutputItemType="Analyzer"
-                    ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\Svelto.ECS.Schema.Generator\Svelto.ECS.Schema.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     <Compile Remove="Generated\**\*.cs" />
   </ItemGroup>
   
