@@ -124,9 +124,9 @@ namespace Svelto.ECS.Schema.Internal
 namespace Svelto.ECS.Schema.Definition
 {
     // TODO soon IMemorableRow will be deprecated and all row can be memorable
-    public interface IMemorableRow : IIndexableRow<EGIDComponent> { }
+    public interface IMemorableRow : IIndexableRow<RowIdentityComponent> { }
 
-    public sealed class Memo<TRow> : MemoBase<TRow, EGIDComponent>
+    public sealed class Memo<TRow> : MemoBase<TRow, RowIdentityComponent>
         where TRow : class, IMemorableRow
     { }
 }

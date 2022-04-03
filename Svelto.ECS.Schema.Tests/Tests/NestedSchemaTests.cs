@@ -83,7 +83,7 @@ namespace Svelto.ECS.Schema.Tests
             Assert.Equal(metadata.groupToTable[_schema.Doofus.Group],
                 metadata.groupToTable[_schema.Doofus.Group + 1]);
 
-            Assert.Equal(metadata.groupToTable[_schema.Doofus.Group],
+            Assert.NotEqual(metadata.groupToTable[_schema.Doofus.Group],
                 metadata.groupToTable[_schema.Food.Group]);
 
             Assert.Equal(0, metadata.indexers.count);

@@ -19,7 +19,7 @@ namespace Svelto.ECS.Schema
         where TKey : unmanaged, IEquatable<TKey>
     { }
 
-    public interface IPrimaryKeyRow<TComponent> : IPrimaryKeyRow
+    public interface IPrimaryKeyRow<TComponent> : IPrimaryKeyRow, IEntityRow<TComponent>
         where TComponent : unmanaged, IPrimaryKeyComponent
     { }
 }

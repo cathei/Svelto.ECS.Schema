@@ -38,7 +38,7 @@ namespace Svelto.ECS.Schema
                 void addComponentBuilders(Type interfaceType)
                 {
                     var componentBuildersField = interfaceType.GetField(
-                        nameof(IEntityRow<EGIDComponent>.componentBuilders),
+                        nameof(IEntityRow<RowIdentityComponent>.componentBuilders),
                         BindingFlags.Static | BindingFlags.NonPublic);
 
                     var componentBuilders = (IComponentBuilder[])componentBuildersField.GetValue(null);
@@ -61,8 +61,11 @@ namespace Svelto.ECS.Schema
 
                     var genericDefinition = interfaceType.GetGenericTypeDefinition();
 
-                    if (genericDefinition == typeof(IEntityRow<>))
+                    if (genericDefinition == typeof(IEntityRow<>) ||
+                        genericDefinition == typeof(IReactiveRow<>))
+                    {
                         addComponentBuilders(interfaceType);
+                    }
 
                     if (genericDefinition == typeof(IQueryableRow<>))
                     {

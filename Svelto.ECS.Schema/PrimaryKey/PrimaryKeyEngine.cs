@@ -35,6 +35,9 @@ namespace Svelto.ECS.Schema.Internal
         {
             var keyData = indexedDB.entitiesToUpdateGroup.GetIndexerKeyData(indexedDB);
 
+            if (keyData.groups == null || keyData.groups.count == 0)
+                return;
+
             for (int filterIndex = 0; filterIndex < keyData.groups.count; ++filterIndex)
             {
                 var group = keyData.groups.unsafeKeys[filterIndex].key;

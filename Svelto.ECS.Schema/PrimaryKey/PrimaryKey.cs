@@ -57,7 +57,7 @@ namespace Svelto.ECS.Schema
         Delegate IEntityPrimaryKey.KeyToIndex => _keyToIndex;
         Delegate IPrimaryKeyQueryable<IPrimaryKeyRow<TComponent>, TComponent>.KeyToIndex => _keyToIndex;
 
-        private readonly ThreadLocal<NB<TComponent>> threadStorage = new ThreadLocal<NB<TComponent>>();
+        private readonly ThreadLocal<NB<TComponent>> threadStorage = new();
 
         void IEntityPrimaryKey.Ready(EntitiesDB entitiesDB, in ExclusiveGroupStruct groupID)
         {

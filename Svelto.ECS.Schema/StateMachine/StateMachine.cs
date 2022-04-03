@@ -13,7 +13,7 @@ namespace Svelto.ECS.Schema.Definition
     {
         internal StateMachineConfigBase<TComponent> config;
 
-        public interface IIndexableRow : IIndexableRow<TComponent> { }
+        public interface IIndexableRow : IIndexableRow<TComponent>, IEntityRow<TComponent> { }
 
         int IIndexQueryable<IIndexableRow, TComponent>.IndexerID => config._index._indexerId;
 
