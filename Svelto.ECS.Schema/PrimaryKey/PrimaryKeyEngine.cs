@@ -19,7 +19,7 @@ namespace Svelto.ECS.Schema.Internal
             if (egid.groupID != table.Group)
                 return;
 
-            indexedDB.Memo(indexedDB.entitiesToUpdateGroup).Add(egid.entityID, egid.groupID);
+            ProcessSingle(table, egid);
         }
 
         protected override void MovedTo(ref RowIdentityComponent entityComponent, IEntityTable<IPrimaryKeyRow> previousTable, IEntityTable<IPrimaryKeyRow> table, EGID egid)
@@ -28,7 +28,36 @@ namespace Svelto.ECS.Schema.Internal
             if (egid.groupID != table.Group)
                 return;
 
-            indexedDB.Memo(indexedDB.entitiesToUpdateGroup).Add(egid.entityID, egid.groupID);
+            ProcessSingle(table, egid);
+        }
+
+        // TODO AddEx will improve performance
+        public void ProcessSingle(IEntityTable<IPrimaryKeyRow> table, EGID egid)
+        {
+            if (table.PrimaryKeys.count == 0)
+                return;
+
+            var pks = table.PrimaryKeys.GetValues(out var pkCount);
+
+            for (int p = 0; p < pkCount; ++p)
+            {
+                pks[p].Ready(indexedDB.entitiesDB, egid.groupID);
+            }
+
+            indexedDB.TryGetEntityIndex(egid.entityID, egid.groupID, out var entityIndex);
+
+            int groupIndex = 0;
+
+            for (int p = 0; p < pkCount; ++p)
+            {
+                groupIndex *= pks[p].PossibleKeyCount;
+                groupIndex += pks[p].QueryGroupIndex(entityIndex);
+            }
+
+            ExclusiveGroupStruct targetGroup = table.Group + (uint)(groupIndex + 1);
+
+            if (egid.groupID.id != targetGroup.id)
+                table.Swap(indexedDB.entityFunctions, egid, targetGroup);
         }
 
         public void Step()
@@ -69,9 +98,10 @@ namespace Svelto.ECS.Schema.Internal
                         groupIndex += pks[p].QueryGroupIndex(i);
                     }
 
-                    ExclusiveBuildGroup targetGroup = table.Group + (uint)(groupIndex + 1);
+                    ExclusiveGroupStruct targetGroup = table.Group + (uint)(groupIndex + 1);
 
-                    table.Swap(indexedDB.entityFunctions, egid[i].ID, targetGroup);
+                    if (egid[i].ID.groupID.id != targetGroup.id)
+                        table.Swap(indexedDB.entityFunctions, egid[i].ID, targetGroup);
                 }
             }
 
@@ -80,7 +110,10 @@ namespace Svelto.ECS.Schema.Internal
 
         public void EntitiesSubmitted()
         {
-            Step();
+            // this needs to be cleared otherwise it will be invalidated
+            // that means if user has any Update on it's iteration,
+            // they need to call Step() before entity submission
+            indexedDB.Memo(indexedDB.entitiesToUpdateGroup).Clear();
         }
     }
 }

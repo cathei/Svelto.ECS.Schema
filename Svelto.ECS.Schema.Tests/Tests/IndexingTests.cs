@@ -9,7 +9,7 @@ namespace Svelto.ECS.Schema.Tests
     public class IndexingTests : SchemaTestsBase<IndexingTests.TestSchema>
     {
         // components
-        public struct ItemOwnerComponent : IIndexableComponent<int>
+        public struct ItemOwnerComponent : IIndexableComponent<int>, INeedEGID
         {
             public EGID ID { get; set; }
             public int key { get; set; }
@@ -165,7 +165,7 @@ namespace Svelto.ECS.Schema.Tests
             Assert.DoesNotContain(10u, queriedComponents.Select(x => x.ID.entityID));
             Assert.Contains(20u, queriedComponents.Select(x => x.ID.entityID));
 
-            AssertIndexer(0, null, 1, out queriedComponents);
+            AssertIndexer(1, null, 1, out queriedComponents);
 
             Assert.Equal(10, queriedComponents.Count);
 

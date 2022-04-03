@@ -127,7 +127,7 @@ namespace Svelto.ECS.Schema.Tests
             Assert.Equal(0, engine.moved);
             Assert.Equal(0, engine.removed);
 
-            foreach (var query in _indexedDB.From(_schema.Table2))
+            foreach (var query in _indexedDB.From(_schema.Table2).Where(_schema.Group.Is(0)))
             {
                 query.Select(out GroupSet result);
 
