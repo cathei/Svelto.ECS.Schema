@@ -3,104 +3,75 @@ using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema
 {
-    /// <summary>
-    /// For now, interface versions are not working due to Svelto bug
-    /// IF we use interface it addes twice
-    /// Hope it get fixed in 3.3
-    /// </summary>
-    public abstract class ReactToRowEngine<TRow, TComponent>
-             : IReactOnAddAndRemove<TComponent>, IReactOnSwap<TComponent>
-        where TRow : class, IReactiveRow<TComponent>
-        where TComponent : struct, IEntityComponent
+    public interface IReactRowAdd<TRow, TResultSet> : IReactOnAddEx<RowIdentityComponent>
+        where TRow : class, IQueryableRow<TResultSet>
+        where TResultSet : struct, IResultSet
     {
-        protected ReactToRowEngine(IndexedDB indexedDB)
+        IndexedDB indexedDB { get; }
+
+        void Add(in TResultSet resultSet, RangedIndices indices, ExclusiveGroupStruct group);
+
+        void IReactOnAddEx<RowIdentityComponent>.Add(
+            (uint start, uint end) rangeOfEntities,
+            in EntityCollection<RowIdentityComponent> collection,
+            ExclusiveGroupStruct groupID)
         {
-            this.indexedDB = indexedDB;
-        }
-
-        protected IndexedDB indexedDB { get; }
-
-        protected virtual void Add(ref TComponent entityComponent, IEntityTable<TRow> table, EGID egid) { }
-        protected virtual void Remove(ref TComponent entityComponent, IEntityTable<TRow> table, EGID egid) { }
-        protected virtual void MovedTo(ref TComponent entityComponent, IEntityTable<TRow> previousTable, IEntityTable<TRow> table, EGID egid) { }
-
-        void IReactOnAddAndRemove<TComponent>.Add(ref TComponent component, EGID egid)
-        {
-            var table = indexedDB.FindTable<TRow>(egid.groupID);
+            var table = indexedDB.FindTable<TRow>(groupID);
             if (table == null)
                 return;
 
-            Add(ref component, table, egid);
-        }
+            ResultSetHelper<TResultSet>.Assign(out var result, indexedDB.entitiesDB, groupID);
 
-        void IReactOnAddAndRemove<TComponent>.Remove(ref TComponent component, EGID egid)
-        {
-            var table = indexedDB.FindTable<TRow>(egid.groupID);
-            if (table == null)
-                return;
-
-            Remove(ref component, table, egid);
-        }
-
-        void IReactOnSwap<TComponent>.MovedTo(ref TComponent component, ExclusiveGroupStruct previousGroup, EGID egid)
-        {
-            var previousTable = indexedDB.FindTable<TRow>(previousGroup);
-            var table = indexedDB.FindTable<TRow>(egid.groupID);
-
-            if (previousTable == null || table == null)
-                return;
-
-            MovedTo(ref component, previousTable, table, egid);
+            Add(result, new(rangeOfEntities.start, rangeOfEntities.end - rangeOfEntities.start), groupID);
         }
     }
 
+    public interface IReactRowRemove<TRow, TResultSet> : IReactOnRemoveEx<RowIdentityComponent>
+        where TRow : class, IQueryableRow<TResultSet>
+        where TResultSet : struct, IResultSet
+    {
+        IndexedDB indexedDB { get; }
 
+        void Remove(in TResultSet resultSet, RangedIndices indices, ExclusiveGroupStruct group);
 
-    // public interface IReactRowAddAndRemove<in TRow, TComponent> : IReactOnAddAndRemove<TComponent>
-    //     where TRow : class, IReactiveRow<TComponent>
-    //     where TComponent : struct, IEntityComponent
-    // {
-    //     IndexedDB indexedDB { get; }
+        void IReactOnRemoveEx<RowIdentityComponent>.Remove(
+            (uint start, uint end) rangeOfEntities,
+            in EntityCollection<RowIdentityComponent> collection,
+            ExclusiveGroupStruct groupID)
+        {
+            var table = indexedDB.FindTable<TRow>(groupID);
+            if (table == null)
+                return;
 
-    //     void Add(ref TComponent entityComponent, IEntityTable<TRow> table, uint entityID);
-    //     void Remove(ref TComponent entityComponent, IEntityTable<TRow> table, uint entityID);
+            ResultSetHelper<TResultSet>.Assign(out var result, indexedDB.entitiesDB, groupID);
 
-    //     void IReactOnAddAndRemove<TComponent>.Add(ref TComponent component, EGID egid)
-    //     {
-    //         var table = indexedDB.FindTable<TRow>(egid.groupID);
-    //         if (table == null)
-    //             return;
+            Remove(result, new(rangeOfEntities.start, rangeOfEntities.end - rangeOfEntities.start), groupID);
+        }
+    }
 
-    //         Add(ref component, table, egid.entityID);
-    //     }
+    public interface IReactRowSwap<TRow, TResultSet> : IReactOnSwapEx<RowIdentityComponent>
+        where TRow : class, IQueryableRow<TResultSet>
+        where TResultSet : struct, IResultSet
+    {
+        IndexedDB indexedDB { get; }
 
-    //     void IReactOnAddAndRemove<TComponent>.Remove(ref TComponent component, EGID egid)
-    //     {
-    //         var table = indexedDB.FindTable<TRow>(egid.groupID);
-    //         if (table == null)
-    //             return;
+        void MovedTo(in TResultSet resultSet, RangedIndices indices, ExclusiveGroupStruct fromGroup, ExclusiveGroupStruct toGroup);
 
-    //         Remove(ref component, table, egid.entityID);
-    //     }
-    // }
+        void IReactOnSwapEx<RowIdentityComponent>.MovedTo(
+            (uint start, uint end) rangeOfEntities,
+            in EntityCollection<RowIdentityComponent> collection,
+            ExclusiveGroupStruct fromGroup,
+            ExclusiveGroupStruct toGroup)
+        {
+            var fromTable = indexedDB.FindTable<TRow>(fromGroup);
+            var toTable = indexedDB.FindTable<TRow>(toGroup);
 
-    // public interface IReactRowSwap<in TRow, TComponent> : IReactOnSwap<TComponent>
-    //     where TRow : class, IReactiveRow<TComponent>
-    //     where TComponent : struct, IEntityComponent
-    // {
-    //     IndexedDB indexedDB { get; }
+            if (fromTable == null || toTable == null)
+                return;
 
-    //     void IReactOnSwap<TComponent>.MovedTo(ref TComponent component, ExclusiveGroupStruct previousGroup, EGID egid)
-    //     {
-    //         var previousTable = indexedDB.FindTable<TRow>(previousGroup);
-    //         var table = indexedDB.FindTable<TRow>(egid.groupID);
+            ResultSetHelper<TResultSet>.Assign(out var result, indexedDB.entitiesDB, toGroup);
 
-    //         if (previousTable == null || table == null)
-    //             return;
-
-    //         MovedTo(ref component, previousTable, table, egid.entityID);
-    //     }
-
-    //     void MovedTo(ref TComponent entityComponent, IEntityTable<TRow> previousTable, IEntityTable<TRow> table, uint entityID);
-    // }
+            MovedTo(result, new(rangeOfEntities.start, rangeOfEntities.end - rangeOfEntities.start), fromGroup, toGroup);
+        }
+    }
 }
