@@ -124,8 +124,10 @@ namespace Svelto.ECS.Schema.Tests
             _submissionScheduler.SubmitEntities();
 
             Assert.Equal(200, engine.added);
-            Assert.Equal(0, engine.moved);
+            Assert.Equal(100, engine.moved);
             Assert.Equal(0, engine.removed);
+
+            engine.added = engine.moved = engine.removed = 0;
 
             foreach (var query in _indexedDB.From(_schema.Table2).Where(_schema.Group.Is(0)))
             {
@@ -146,6 +148,7 @@ namespace Svelto.ECS.Schema.Tests
             _indexedDB.RemoveAll(_schema.Table1);
             _indexedDB.RemoveAll(_schema.Table3);
 
+            _indexedDB.Engine.Step();
             _submissionScheduler.SubmitEntities();
 
             Assert.Equal(30, engine.moved);

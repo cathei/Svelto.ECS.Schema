@@ -33,19 +33,19 @@ namespace Svelto.ECS.Schema
 
                 bool haveAllFilters = true;
 
-                for (uint i = 0; i < _config.indexers.count; ++i)
+                for (int i = 0; i < _config.indexers.count; ++i)
                 {
-                    var keyData = _config.indexers[i].groups;
+                    var keyData = _config.indexers[i];
 
-                    if (keyData == null ||
-                        !keyData.TryGetValue(currentGroup, out var groupData) ||
+                    if (keyData.groups == null ||
+                        !keyData.groups.TryGetValue(currentGroup, out var groupData) ||
                         groupData.filter.filteredIndices.Count() == 0)
                     {
                         haveAllFilters = false;
                         break;
                     }
 
-                    _config.temporaryFilters.AddAt(i) = groupData.filter;
+                    _config.temporaryFilters.AddAt((uint)i) = groupData.filter;
                 }
 
                 if (haveAllFilters)

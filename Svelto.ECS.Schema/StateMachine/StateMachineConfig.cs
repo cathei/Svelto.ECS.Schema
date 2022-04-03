@@ -64,7 +64,6 @@ namespace Svelto.ECS.Schema.Definition
 
         internal override void Process(IndexedDB indexedDB)
         {
-            var tables = indexedDB.FindTables<TRow>();
             var states = _states.GetValues(out var stateCount);
 
             // clear all filters before proceed

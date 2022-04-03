@@ -40,7 +40,7 @@ namespace Svelto.ECS.Schema.Definition
             {
                 var keyData = _config._index.Is(_key).GetIndexerKeyData(indexedDB);
 
-                if (!keyData.groups.TryGetValue(query.group, out var groupData))
+                if (keyData.groups == null || !keyData.groups.TryGetValue(query.group, out var groupData))
                     return;
 
                 var indices = new IndexedIndices(groupData.filter.filteredIndices);
@@ -83,7 +83,7 @@ namespace Svelto.ECS.Schema.Definition
 
                 var keyData = _exitCandidates.GetIndexerKeyData(indexedDB);
 
-                if (!keyData.groups.TryGetValue(query.group, out var groupData))
+                if (keyData.groups == null || !keyData.groups.TryGetValue(query.group, out var groupData))
                     return;
 
                 var indices = new IndexedIndices(groupData.filter.filteredIndices);
@@ -105,7 +105,7 @@ namespace Svelto.ECS.Schema.Definition
             {
                 var keyData = _enterCandidates.GetIndexerKeyData(indexedDB);
 
-                if (!keyData.groups.TryGetValue(query.group, out var groupData))
+                if (keyData.groups == null || !keyData.groups.TryGetValue(query.group, out var groupData))
                     return;
 
                 var indices = new IndexedIndices(groupData.filter.filteredIndices);

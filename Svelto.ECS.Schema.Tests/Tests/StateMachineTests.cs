@@ -112,7 +112,7 @@ namespace Svelto.ECS.Schema.Tests
 
         public class TestSchema : IEntitySchema
         {
-            public readonly Table<CharacterRow> Character = new Table<CharacterRow>();
+            public readonly Table<CharacterRow> Character = new();
             
             public readonly CharacterFSM CharacterFSM = new();
         }

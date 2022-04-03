@@ -72,21 +72,28 @@ namespace Svelto.ECS.Schema.Tests
             public TestSchema()
             {
                 Item.AddPrimaryKey(ItemGroup);
-                ItemGroup.SetPossibleKeys(Enumerable.Range(0, 10).ToArray());
+                ItemGroup.SetPossibleKeys(Enumerable.Range(0, ItemGroupCount).ToArray());
             }
         }
 
+        // Currently some performance issue for Swap calls
+        private const int CharacterCount = 10;//100;
+        private const int ItemPerCharacter = 10;//1000;
+        private const int ItemGroupCount = 10;
+
+        private const int ItemPerGroup = CharacterCount * ItemPerCharacter / ItemGroupCount;
+
         public MemoryTests() : base()
         {
-            for (int i = 0; i < 100; ++i)
+            for (int i = 0; i < CharacterCount; ++i)
             {
                 _factory.Build(_schema.Character, (uint)i);
 
-                for (int j = 0; j < 1000; ++j)
+                for (int j = 0; j < ItemPerCharacter; ++j)
                 {
-                    var itemBuilder = _factory.Build(_schema.Item, (uint)((i * 1000) + j));
+                    var itemBuilder = _factory.Build(_schema.Item, (uint)((i * ItemPerCharacter) + j));
                     itemBuilder.Init(new ItemOwnerComponent(i));
-                    itemBuilder.Init(new ItemGroupComponent { key = j / 100 });
+                    itemBuilder.Init(new ItemGroupComponent { key = j / (ItemPerCharacter / ItemGroupCount) });
                 }
             }
 
@@ -137,7 +144,7 @@ namespace Svelto.ECS.Schema.Tests
 
                 query.Select(out ItemWithOwnerSet result);
 
-                Assert.Equal(10000, result.count);
+                Assert.Equal(ItemPerGroup, result.count);
             }
 
             Assert.True(loop > 0);
@@ -159,29 +166,28 @@ namespace Svelto.ECS.Schema.Tests
             Assert.True(before + 50 > GC.GetAllocatedBytesForCurrentThread());
 
             Assert.True(loop > 0);
-       }
+        }
 
         [Fact]
         public void IndexEntitiesTest()
         {
             int loop = 0;
+            int indicesCount = 0;
 
             // warming up
             foreach (var query in _indexedDB.From<ItemRow>().Where(_schema.ItemOwner.Is(0)))
             {
                 ++loop;
 
-                int indicesCount = 0;
-
-                foreach (var i in query.indices)
+                foreach (var index in query.indices)
                     ++indicesCount;
-
-                Assert.Equal(100, indicesCount);
             }
 
             Assert.True(loop > 0);
+            Assert.Equal(ItemPerCharacter, indicesCount);
 
             loop = 0;
+            indicesCount = 0;
 
             long before = GC.GetAllocatedBytesForCurrentThread();
 
@@ -190,12 +196,16 @@ namespace Svelto.ECS.Schema.Tests
                 foreach (var query in _indexedDB.From<ItemRow>().Where(_schema.ItemOwner.Is(0)))
                 {
                     ++loop;
+
+                    foreach (var index in query.indices)
+                        ++indicesCount;
                 }
             }
 
             Assert.True(before + 50 > GC.GetAllocatedBytesForCurrentThread());
 
             Assert.True(loop > 0);
+            Assert.True(indicesCount > 0);
         }
     }
 }

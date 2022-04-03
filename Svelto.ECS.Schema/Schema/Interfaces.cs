@@ -44,17 +44,17 @@ namespace Svelto.ECS.Schema
             int MemoID { get; }
         }
 
-        public interface IEntityTables
-        {
-            int Range { get; }
-            IEntityTable GetTable(int index);
-        }
-
-        public interface IEntityStateMachine
+        public interface IEntityStateMachine : ISchemaDefinition
         {
             RefWrapperType ComponentType { get; }
             IStepEngine AddEngines(EnginesRoot enginesRoot, IndexedDB indexedDB);
             IEntityIndex Index { get; }
+        }
+
+        public interface IEntityTables
+        {
+            int Range { get; }
+            IEntityTable GetTable(int index);
         }
     }
 
