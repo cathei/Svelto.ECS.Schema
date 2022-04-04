@@ -48,17 +48,14 @@ namespace Svelto.ECS.Schema
                         break;
 
                     case IEntityIndex indexer:
-                        RegisterIndexer(indexer, schema.filterContextID);
+                        RegisterIndexer(indexer);
                         break;
 
                     case IEntityStateMachine stateMachine:
-                        RegisterStateMachine(stateMachine, schema.filterContextID);
+                        RegisterStateMachine(stateMachine);
                         break;
 
                     case IEntityMemo memo:
-                        RegisterMemo(memo, schema.filterContextID);
-                        break;
-
                     case IEntityPrimaryKey pk:
                         break;
 
@@ -112,10 +109,8 @@ namespace Svelto.ECS.Schema
             }
         }
 
-        private void RegisterIndexer(IEntityIndex indexer, FilterContextID filterContext)
+        private void RegisterIndexer(IEntityIndex indexer)
         {
-            indexer.FilterID = new CombinedFilterID(indexer.IndexerID, filterContext);
-
             indexers.Add(indexer);
 
             var componentType = indexer.ComponentType;
@@ -126,10 +121,8 @@ namespace Svelto.ECS.Schema
             indexersToGenerateEngine[componentType] = indexer;
         }
 
-        private void RegisterStateMachine(IEntityStateMachine stateMachine, FilterContextID filterContext)
+        private void RegisterStateMachine(IEntityStateMachine stateMachine)
         {
-            stateMachine.Index.FilterID = new CombinedFilterID(stateMachine.Index.IndexerID, filterContext);
-
             indexers.Add(stateMachine.Index);
 
             var componentType = stateMachine.ComponentType;

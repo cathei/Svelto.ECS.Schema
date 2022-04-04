@@ -11,7 +11,7 @@ namespace Svelto.ECS.Schema.Internal
         internal abstract class EngineHandlerBase
         {
             public abstract void AddEngines<TRow>(EnginesRoot enginesRoot, IndexedDB indexedDB)
-                where TRow : class, IReactiveRow<TComponent>;
+                where TRow : class, IQueryableRow<ResultSet<TComponent>>;
         }
 
         internal static EngineHandlerBase EngineHandler;

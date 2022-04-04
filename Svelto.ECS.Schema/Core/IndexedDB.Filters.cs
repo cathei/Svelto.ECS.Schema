@@ -27,7 +27,7 @@ namespace Svelto.ECS.Schema
             public SharedSveltoDictionaryNative<EntityReference, TKey> previousKeys = new(0);
         }
 
-        internal Memo<IPrimaryKeyRow> entitiesToUpdateGroup = new Memo<IPrimaryKeyRow>();
+        internal Memo<IPrimaryKeyRow> entitiesToUpdateGroup = new();
 
         internal IndexableComponentCache<TK> CreateOrGetComponentCache<TK>(in RefWrapperType componentType)
             where TK : unmanaged, IEquatable<TK>
@@ -79,6 +79,8 @@ namespace Svelto.ECS.Schema
             var entityReference = entitiesDB.GetEntityReference(egid);
             var componentCache = CreateOrGetComponentCache<TK>(componentType);
 
+            var indexers = FindIndexers(componentType, componentCache);
+
             // has previous record
             if (componentCache.previousKeys.TryGetValue(entityReference, out var previousKey))
             {
@@ -88,101 +90,39 @@ namespace Svelto.ECS.Schema
                     return;
                 }
 
-                var oldIndexers = FindIndexers(componentType, componentCache);
-
-                foreach (var indexer in oldIndexers)
+                foreach (var indexer in indexers)
                 {
-                    // ref var oldGroupData = ref CreateOrGetIndexedGroupData(
-                    //     indexer.IndexerID, entityData.previousKey, entityData.previousEGID.groupID);
+                    ref var filter = ref GetFilter(indexer.IndexerID, previousKey);
 
-                    var filter = oldIndexers.GetFilter();
-
-                    oldGroupData.filter.Remove(entityData.previousEGID.entityID);
+                    filter.Remove(egid);
                 }
-
-
-                // if (entityData.previousEGID.Equals(egid) &&
-                //     entityData.previousKey.Equals(key))
-                // {
-                //     // no changes, nothing to update
-                //     return;
-                // }
-
-                // var oldIndexers = FindIndexers(componentType, componentCache, entityData.previousEGID.groupID);
-
-                // foreach (var indexer in oldIndexers)
-                // {
-                //     ref var oldGroupData = ref CreateOrGetIndexedGroupData(
-                //         indexer.IndexerID, entityData.previousKey, entityData.previousEGID.groupID);
-
-                //     oldGroupData.filter.Remove(entityData.previousEGID.entityID);
-                // }
             }
 
             // update record
-            entityData.previousEGID = egid;
-            entityData.previousKey = key;
-            componentCache.entities[entityReference] = entityData;
-
-            var indexers = FindIndexers(componentType, componentCache, egid.groupID);
+            componentCache.previousKeys[entityReference] = key;
 
             if (indexers.count > 0)
             {
-                var mapper = GetEGIDMapper(egid.groupID);
+                var mapper = GetNativeEGIDMapper(egid.groupID);
 
                 foreach (var indexer in indexers)
                 {
-                    ref var newGroupData = ref CreateOrGetIndexedGroupData(
-                        indexer.IndexerID, key, egid.groupID);
+                    ref var filter = ref GetFilter(indexer.IndexerID, key);
 
-                    newGroupData.filter.Add(egid.entityID, mapper);
+                    filter.Add(egid, mapper);
                 }
             }
 
             this.Memo(entitiesToUpdateGroup).Add(egid.entityID, egid.groupID);
         }
 
-        internal ref IndexerGroupData CreateOrGetIndexedGroupData<TK>(int indexerID, in TK key, in ExclusiveGroupStruct groupID)
-            where TK : unmanaged, IEquatable<TK>
+        internal ref EntityFilterCollection GetFilter<TKey>(FilterContextID indexerID, TKey key)
+            where TKey : unmanaged, IEquatable<TKey>
         {
-            var indexerData = CreateOrGetIndexedData<TK>(indexerID);
+            var data = indexers.GetOrAdd(indexerID.id, () => new IndexerData<TKey>()) as IndexerData<TKey>;
+            var filterID = new CombinedFilterID(data.Get(key), indexerID);
 
-            var groupDict = indexerData.CreateOrGet(key).groups;
-
-            if (!groupDict.ContainsKey(groupID))
-            {
-                groupDict[groupID] = new IndexerGroupData
-                {
-                    groupID = groupID,
-                    filter = entitiesDB.GetFilters()
-                        .CreateOrGetFilterForGroup<RowIdentityComponent>(GenerateFilterId(), groupID)
-                };
-            }
-
-            return ref groupDict.GetValueByRef(groupID);
-        }
-
-        private IndexerData<TK> CreateOrGetIndexedData<TK>(int indexerId)
-            where TK : unmanaged, IEquatable<TK>
-        {
-            IndexerData<TK> indexerData;
-
-            if (!indexers.ContainsKey(indexerId))
-            {
-                indexerData = new IndexerData<TK>();
-                indexers[indexerId] = indexerData;
-            }
-            else
-            {
-                indexerData = (IndexerData<TK>)indexers[indexerId];
-            }
-
-            return indexerData;
-        }
-
-        private int GenerateFilterId()
-        {
-            return filterIdCounter++;
+            return ref GetOrAddPersistentFilter(filterID);
         }
     }
 }

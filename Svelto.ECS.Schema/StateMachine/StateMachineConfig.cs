@@ -67,8 +67,7 @@ namespace Svelto.ECS.Schema.Definition
             var states = _states.GetValues(out var stateCount);
 
             // clear all filters before proceed
-            // maybe not needed with new filter system
-            // but again we have to make sure because engine can called multiple times
+            // we'll have to make sure because engine can called multiple times
             for (int i = 0; i < stateCount; ++i)
             {
                 indexedDB.Memo(states[i]._exitCandidates).Clear();

@@ -7,8 +7,8 @@ using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema.Internal
 {
-    public class IndexBase<TRow, TComponent> : IEntityIndex, IIndexQueryable<TRow, TComponent>
-        where TRow : class, IReactiveRow<TComponent>
+    public abstract class IndexBase<TRow, TComponent> : IEntityIndex, IIndexQueryable<TRow, TComponent>
+        where TRow : class, IQueryableRow<ResultSet<TComponent>>
         where TComponent : unmanaged, IKeyComponent
     {
         // equvalent to ExclusiveGroupStruct.Generate()

@@ -12,13 +12,13 @@ namespace Svelto.ECS.Schema
     /// </summary>
     public sealed partial class IndexedDB
     {
-        internal readonly FasterList<SchemaMetadata> registeredSchemas = new FasterList<SchemaMetadata>();
+        internal readonly FasterList<SchemaMetadata> registeredSchemas = new();
 
         // indexer will be created per TComponent
-        internal readonly HashSet<RefWrapperType> createdIndexerEngines = new HashSet<RefWrapperType>();
-        internal readonly HashSet<RefWrapperType> createdStateMachineEngines = new HashSet<RefWrapperType>();
+        internal readonly HashSet<RefWrapperType> createdIndexerEngines = new();
+        internal readonly HashSet<RefWrapperType> createdStateMachineEngines = new();
 
-        internal readonly FasterDictionary<int, IndexerData> indexers = new FasterDictionary<int, IndexerData>();
+        internal readonly FasterDictionary<uint, IndexerData> indexers = new();
 
         // well... let's have some space for user defined filter
         private int filterIdCounter = 10000;
@@ -27,7 +27,7 @@ namespace Svelto.ECS.Schema
         internal EntitiesDB entitiesDB;
 
         public IStepEngine Engine { get; private set; }
-        private readonly FasterList<IStepEngine> enginesList = new FasterList<IStepEngine>();
+        private readonly FasterList<IStepEngine> enginesList = new();
 
         internal IndexedDB(IEntityFunctions entityFunctions)
         {

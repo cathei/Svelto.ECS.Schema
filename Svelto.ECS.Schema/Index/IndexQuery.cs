@@ -45,7 +45,7 @@ namespace Svelto.ECS.Schema.Internal
 
         internal ref EntityFilterCollection GetFilter(IndexedDB indexedDB)
         {
-            return ref indexedDB.GetOrAddPersistentFilter(_indexerID);
+            return ref indexedDB.GetFilter(_indexerID, _key);
         }
     }
 }
@@ -63,7 +63,7 @@ namespace Svelto.ECS.Schema
             where TComponent : unmanaged, IKeyComponent<TKey>
             where TKey : unmanaged, IEquatable<TKey>
         {
-            return new IndexQuery<TRow, TKey>(queryable.FilterID, key);
+            return new IndexQuery<TRow, TKey>(queryable.IndexerID, key);
         }
     }
 
@@ -75,7 +75,7 @@ namespace Svelto.ECS.Schema
             where TComponent : unmanaged, IKeyComponent<EnumKey<TKey>>
             where TKey : unmanaged, Enum
         {
-            return new IndexQuery<TRow, EnumKey<TKey>>(queryable.FilterID, key);
+            return new IndexQuery<TRow, EnumKey<TKey>>(queryable.IndexerID, key);
         }
     }
 }

@@ -9,7 +9,7 @@ namespace Svelto.ECS.Schema.Tests
     // because Svelto EntityComponentIDMap.Register is not threadsafe.
     [Collection("Schema Test Collection")]
     public class SchemaTestsBase<T> : IDisposable
-        where T : class, EntitySchema, new()
+        where T : EntitySchema, new()
     {
         protected SimpleEntitiesSubmissionScheduler _submissionScheduler;
         protected EnginesRoot _enginesRoot;
