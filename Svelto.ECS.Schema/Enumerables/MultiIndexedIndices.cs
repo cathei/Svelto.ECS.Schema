@@ -1,34 +1,35 @@
 using System;
 using Svelto.DataStructures;
 using Svelto.ECS.DataStructures;
+using Svelto.ECS.Internal;
 using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema
 {
     public ref struct MultiIndexedIndicesEnumerator
     {
-        private readonly NativeDynamicArrayCast<FilterGroup> _filters;
-        private readonly NB<EGIDComponent> _egid;
+        private readonly NativeDynamicArrayCast<EntityFilterCollection.GroupFilters> _filters;
+        private readonly NativeEntityIDs _entityIDs;
 
         private int _index;
         private uint _current;
 
         private readonly int _maxCount;
-        private FilteredIndices _indices;
+        private EntityFilterIndices _indices;
 
         internal MultiIndexedIndicesEnumerator(
-            NativeDynamicArrayCast<FilterGroup> filters, NB<EGIDComponent> egid, int count) : this()
+            NativeDynamicArrayCast<EntityFilterCollection.GroupFilters> filters, NativeEntityIDs entityIDs, int count) : this()
         {
             _filters = filters;
-            _egid = egid;
+            _entityIDs = entityIDs;
 
             _index = -1;
             _current = 0;
 
             if (filters.count > 0)
             {
-                _indices = filters[0].filteredIndices;
-                _maxCount = _indices.Count();
+                _indices = filters[0].indices;
+                _maxCount = (int)_indices.count;
             }
             else
             {
@@ -48,7 +49,7 @@ namespace Svelto.ECS.Schema
 
                     for (int i = 1; i < _filters.count; ++i)
                     {
-                        if (_filters[i].Exists(_egid[_current].ID.entityID))
+                        if (_filters[i].Exists(_entityIDs[_current]))
                         {
                             haveAllFilters = false;
                             break;
@@ -83,15 +84,15 @@ namespace Svelto.ECS.Schema
     // To iterate over FilteredIndices with foreach
     public readonly ref struct MultiIndexedIndices
     {
-        private readonly NativeDynamicArrayCast<FilterGroup> _filters;
-        private readonly NB<EGIDComponent> _egid;
+        private readonly NativeDynamicArrayCast<EntityFilterCollection.GroupFilters> _filters;
+        internal readonly NativeEntityIDs _entityIDs;
         private readonly int _count;
 
         public MultiIndexedIndices(
-            NativeDynamicArrayCast<FilterGroup> filters, NB<EGIDComponent> egid, int count)
+            NativeDynamicArrayCast<EntityFilterCollection.GroupFilters> filters, NativeEntityIDs entityIDs, int count)
         {
             _filters = filters;
-            _egid = egid;
+            _entityIDs = entityIDs;
             _count = count;
         }
 
@@ -109,7 +110,6 @@ namespace Svelto.ECS.Schema
             return true;
         }
 
-        public MultiIndexedIndicesEnumerator GetEnumerator() =>
-            new MultiIndexedIndicesEnumerator(_filters, _egid, _count);
+        public MultiIndexedIndicesEnumerator GetEnumerator() => new(_filters, _entityIDs, _count);
     }
 }

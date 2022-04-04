@@ -1,28 +1,27 @@
 using System;
 using System.Collections.Generic;
 using Svelto.DataStructures;
+using Svelto.ECS.Internal;
 using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema.Internal
 {
-    public struct IndexableResultSet<T> : IResultSet<T, EGIDComponent>
+    public struct ResultSet<T> : IResultSet<T>
         where T : unmanaged, IEntityComponent
     {
         public NB<T> component;
-        public NB<EGIDComponent> egid;
+        public NativeEntityIDs entityIDs;
 
-        public void Init(in EntityCollection<T, EGIDComponent> buffers)
+        public void Init(in EntityCollection<T> buffers)
         {
-            (component, egid, _) = buffers;
+            (component, entityIDs, _) = buffers;
         }
     }
 }
 
 namespace Svelto.ECS.Schema
 {
-    public interface IIndexableRow<TComponent> :
-            IReactiveRow<TComponent>,
-            IQueryableRow<IndexableResultSet<TComponent>>
+    public interface IIndexableRow<TComponent> : IQueryableRow<ResultSet<TComponent>>
         where TComponent : unmanaged, IEntityComponent
     { }
 }

@@ -13,13 +13,12 @@ namespace Svelto.ECS.Schema.Internal
         where TRow : class, IEntityRow
         where TComponent : unmanaged, IEntityComponent
     {
-        public int IndexerID { get; }
+        public FilterContextID IndexerID { get; }
     }
 
     public interface IIndexQuery
     {
         internal void Apply(ResultSetQueryConfig config);
-        // internal IndexerKeyData GetIndexerKeyData(IndexedDB indexedDB);
     }
 
     /// <summary>
@@ -30,12 +29,10 @@ namespace Svelto.ECS.Schema.Internal
     public readonly struct IndexQuery<TRow, TKey> : IIndexQuery<TRow>
         where TKey : unmanaged, IEquatable<TKey>
     {
-        internal readonly int _indexerID;
+        internal readonly FilterContextID _indexerID;
         internal readonly TKey _key;
 
-        // internal readonly IndexerKeyData _keyData;
-
-        internal IndexQuery(int indexerID, TKey key)
+        internal IndexQuery(FilterContextID indexerID, TKey key)
         {
             _indexerID = indexerID;
             _key = key;
@@ -43,17 +40,12 @@ namespace Svelto.ECS.Schema.Internal
 
         void IIndexQuery.Apply(ResultSetQueryConfig config)
         {
-            config.indexers.Add(GetIndexerKeyData(config.indexedDB));
+            config.filters.Add(GetFilter(config.indexedDB));
         }
 
-        internal IndexerKeyData GetIndexerKeyData(IndexedDB indexedDB)
+        internal ref EntityFilterCollection GetFilter(IndexedDB indexedDB)
         {
-            if (!indexedDB.indexers.ContainsKey(_indexerID))
-                return default;
-
-            var indexerData = (IndexerData<TKey>)indexedDB.indexers[_indexerID];
-            indexerData.TryGetValue(_key, out var result);
-            return result;
+            return ref indexedDB.GetOrAddPersistentFilter(_indexerID);
         }
     }
 }
@@ -71,7 +63,7 @@ namespace Svelto.ECS.Schema
             where TComponent : unmanaged, IKeyComponent<TKey>
             where TKey : unmanaged, IEquatable<TKey>
         {
-            return new IndexQuery<TRow, TKey>(queryable.IndexerID, key);
+            return new IndexQuery<TRow, TKey>(queryable.FilterID, key);
         }
     }
 
@@ -83,7 +75,7 @@ namespace Svelto.ECS.Schema
             where TComponent : unmanaged, IKeyComponent<EnumKey<TKey>>
             where TKey : unmanaged, Enum
         {
-            return new IndexQuery<TRow, EnumKey<TKey>>(queryable.IndexerID, key);
+            return new IndexQuery<TRow, EnumKey<TKey>>(queryable.FilterID, key);
         }
     }
 }

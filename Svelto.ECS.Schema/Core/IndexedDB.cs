@@ -19,7 +19,6 @@ namespace Svelto.ECS.Schema
         internal readonly HashSet<RefWrapperType> createdStateMachineEngines = new HashSet<RefWrapperType>();
 
         internal readonly FasterDictionary<int, IndexerData> indexers = new FasterDictionary<int, IndexerData>();
-        internal readonly FasterDictionary<int, MemoData> memos = new FasterDictionary<int, MemoData>();
 
         // well... let's have some space for user defined filter
         private int filterIdCounter = 10000;

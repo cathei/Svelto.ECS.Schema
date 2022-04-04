@@ -7,6 +7,7 @@ using Svelto.DataStructures;
 using Svelto.DataStructures.Native;
 using Svelto.ECS.DataStructures;
 using Svelto.ECS.Hybrid;
+using Svelto.ECS.Internal;
 using Svelto.ECS.Schema.Definition;
 using Svelto.ECS.Schema.Internal;
 using Svelto.ObjectPool;
@@ -24,10 +25,10 @@ namespace Svelto.ECS.Schema.Internal
         internal IndexedDB indexedDB;
 
         internal FasterDictionary<int, int> pkToValue = new();
-        internal FasterList<IndexerKeyData> indexers = new();
+        internal FasterList<EntityFilterCollection> filters = new();
 
         internal SharedSveltoDictionaryNative<ExclusiveGroupStruct, ExclusiveGroupStruct> temporaryGroups = new(0);
-        internal NativeDynamicArrayCast<FilterGroup> temporaryFilters = new(NativeDynamicArray.Alloc<FilterGroup>());
+        internal NativeDynamicArrayCast<EntityFilterCollection.GroupFilters> temporaryFilters = new(NativeDynamicArray.Alloc<EntityFilterCollection.GroupFilters>());
 
         internal static ThreadLocal<Stack<ResultSetQueryConfig>> Pool = new(() => new());
 
@@ -50,7 +51,7 @@ namespace Svelto.ECS.Schema.Internal
             config.isReturned = true;
             config.indexedDB = null;
             config.pkToValue.FastClear();
-            config.indexers.FastClear();
+            config.filters.FastClear();
 
             config.temporaryGroups.FastClear();
             config.temporaryFilters.Clear();
@@ -165,6 +166,7 @@ namespace Svelto.ECS.Schema.Internal
 
         public readonly ExclusiveGroupStruct group;
         public readonly MultiIndexedIndices indices;
+        public readonly NativeEntityIDs entityIDs => indices._entityIDs;
 
         public FromGroupQuery(ResultSetQueryConfig config,
             in ExclusiveGroupStruct group, in MultiIndexedIndices indices)

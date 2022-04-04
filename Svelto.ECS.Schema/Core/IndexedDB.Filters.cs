@@ -11,13 +11,12 @@ namespace Svelto.ECS.Schema
     public sealed partial class IndexedDB
     {
         // dictionary for each group
-        private readonly FasterDictionary<RefWrapperType, IndexableComponentCache> _componentCaches
-            = new FasterDictionary<RefWrapperType, IndexableComponentCache>();
+        private readonly FasterDictionary<RefWrapperType, IndexableComponentCache> _componentCaches = new();
 
         internal class IndexableComponentCache
         {
-            public FasterDictionary<ExclusiveGroupStruct, FasterList<IEntityIndex>> groupToIndexers
-                = new FasterDictionary<ExclusiveGroupStruct, FasterList<IEntityIndex>>();
+            // cached when called
+            public FasterList<IEntityIndex> indexers = null;
         }
 
         // cache for indexer update
@@ -25,8 +24,7 @@ namespace Svelto.ECS.Schema
             where TKey : unmanaged, IEquatable<TKey>
         {
             // we have own structure to track previous state of indexed component
-            public SharedSveltoDictionaryNative<EntityReference, IndexerEntityData<TKey>> entities
-                = new SharedSveltoDictionaryNative<EntityReference, IndexerEntityData<TKey>>(0);
+            public SharedSveltoDictionaryNative<EntityReference, TKey> previousKeys = new(0);
         }
 
         internal Memo<IPrimaryKeyRow> entitiesToUpdateGroup = new Memo<IPrimaryKeyRow>();
@@ -34,21 +32,19 @@ namespace Svelto.ECS.Schema
         internal IndexableComponentCache<TK> CreateOrGetComponentCache<TK>(in RefWrapperType componentType)
             where TK : unmanaged, IEquatable<TK>
         {
-            return (IndexableComponentCache<TK>)_componentCaches.GetOrCreate(
+            return (IndexableComponentCache<TK>)_componentCaches.GetOrAdd(
                 componentType, () => new IndexableComponentCache<TK>());
         }
 
         internal FasterList<IEntityIndex> FindIndexers(
-            in RefWrapperType componentType, IndexableComponentCache componentCache, in ExclusiveGroupStruct groupID)
+            in RefWrapperType componentType, IndexableComponentCache componentCache)
         {
-            if (componentCache.groupToIndexers.TryGetValue(groupID, out var result))
-                return result;
+            if (componentCache.indexers != null)
+                return componentCache.indexers;
 
             // Cache doesn't exists, let's build one
             // We don't support dynamic addition of Schemas and StateMachines
             var componentIndexers = new FasterList<IEntityIndex>();
-
-            componentCache.groupToIndexers.Add(groupID, componentIndexers);
 
             foreach (var schemaMetadata in registeredSchemas)
             {
@@ -59,26 +55,8 @@ namespace Svelto.ECS.Schema
                 }
             }
 
+            componentCache.indexers = componentIndexers;
             return componentIndexers;
-        }
-
-        /// <summary>
-        /// We need to rebuild all groups that has structural change
-        /// This can be safely removed as new Filters system applied
-        /// </summary>
-        internal void RebuildFilters(HashSet<ExclusiveGroupStruct> groups)
-        {
-            foreach (var group in groups)
-            {
-                var mapper = GetEGIDMapper(group);
-
-                var indexerValues = indexers.GetValues(out var count);
-
-                for (int i = 0; i < count; ++i)
-                {
-                    indexerValues[i].RebuildFilters(group, mapper);
-                }
-            }
         }
 
         // remove
@@ -89,22 +67,8 @@ namespace Svelto.ECS.Schema
             var entityReference = entitiesDB.GetEntityReference(egid);
             var componentCache = CreateOrGetComponentCache<TK>(componentType);
 
-            if (componentCache.entities.TryGetValue(entityReference, out var entityData))
-            {
-                // remove old indexers
-                var oldIndexers = FindIndexers(componentType, componentCache, entityData.previousEGID.groupID);
-
-                foreach (var indexer in oldIndexers)
-                {
-                    ref var oldGroupData = ref CreateOrGetIndexedGroupData(
-                        indexer.IndexerID, entityData.previousKey, entityData.previousEGID.groupID);
-
-                    oldGroupData.filter.Remove(entityData.previousEGID.entityID);
-                }
-
-                // remove reference entry
-                componentCache.entities.Remove(entityReference);
-            }
+            // persistent filters will be cleared automatically, we need to remove cache tho
+            componentCache.previousKeys.Remove(entityReference);
         }
 
         // add or update
@@ -116,24 +80,43 @@ namespace Svelto.ECS.Schema
             var componentCache = CreateOrGetComponentCache<TK>(componentType);
 
             // has previous record
-            if (componentCache.entities.TryGetValue(entityReference, out var entityData))
+            if (componentCache.previousKeys.TryGetValue(entityReference, out var previousKey))
             {
-                if (entityData.previousEGID.Equals(egid) &&
-                    entityData.previousKey.Equals(key))
+                if (previousKey.Equals(key))
                 {
                     // no changes, nothing to update
                     return;
                 }
 
-                var oldIndexers = FindIndexers(componentType, componentCache, entityData.previousEGID.groupID);
+                var oldIndexers = FindIndexers(componentType, componentCache);
 
                 foreach (var indexer in oldIndexers)
                 {
-                    ref var oldGroupData = ref CreateOrGetIndexedGroupData(
-                        indexer.IndexerID, entityData.previousKey, entityData.previousEGID.groupID);
+                    // ref var oldGroupData = ref CreateOrGetIndexedGroupData(
+                    //     indexer.IndexerID, entityData.previousKey, entityData.previousEGID.groupID);
+
+                    var filter = oldIndexers.GetFilter();
 
                     oldGroupData.filter.Remove(entityData.previousEGID.entityID);
                 }
+
+
+                // if (entityData.previousEGID.Equals(egid) &&
+                //     entityData.previousKey.Equals(key))
+                // {
+                //     // no changes, nothing to update
+                //     return;
+                // }
+
+                // var oldIndexers = FindIndexers(componentType, componentCache, entityData.previousEGID.groupID);
+
+                // foreach (var indexer in oldIndexers)
+                // {
+                //     ref var oldGroupData = ref CreateOrGetIndexedGroupData(
+                //         indexer.IndexerID, entityData.previousKey, entityData.previousEGID.groupID);
+
+                //     oldGroupData.filter.Remove(entityData.previousEGID.entityID);
+                // }
             }
 
             // update record

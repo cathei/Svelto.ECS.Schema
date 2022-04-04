@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Svelto.DataStructures;
+using Svelto.ECS.Internal;
+using Svelto.ECS.Native;
 using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema
@@ -12,6 +14,11 @@ namespace Svelto.ECS.Schema
         internal EGIDMapper<RowIdentityComponent> GetEGIDMapper(in ExclusiveGroupStruct groupID)
         {
             return entitiesDB.QueryMappedEntities<RowIdentityComponent>(groupID);
+        }
+
+        internal NativeEGIDMapper<RowIdentityComponent> GetNativeEGIDMapper(in ExclusiveGroupStruct groupID)
+        {
+            return entitiesDB.QueryNativeMappedEntities<RowIdentityComponent>(groupID);
         }
 
         public bool Exists(uint entityID, in ExclusiveGroup groupID)
@@ -44,5 +51,11 @@ namespace Svelto.ECS.Schema
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public EntityReference GetEntityReference(uint entityID, in ExclusiveGroupStruct groupID)
             => entitiesDB.GetEntityReference(new EGID(entityID, groupID));
+
+        public (NativeEntityIDs, int) QueryEntityIDs(in ExclusiveGroupStruct groupID)
+        {
+            var (_, entityIDs, count) = entitiesDB.QueryEntities<RowIdentityComponent>(groupID);
+            return (entityIDs, count);
+        }
     }
 }

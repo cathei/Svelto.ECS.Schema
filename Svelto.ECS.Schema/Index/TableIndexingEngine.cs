@@ -5,35 +5,37 @@ using Svelto.ECS.Internal;
 
 namespace Svelto.ECS.Schema.Internal
 {
-    // TODO: if apply new filter system, we can remove handling for 'MovedTo' and 'Remove'
-    // but we still need 'Add' to make sure new entities are included in index
-    internal class TableIndexingEngine<TR, TC, TK>
-            : ReactToRowEngine<TR, TC>
-            // : IReactRowAddAndRemove<TR, TC>, IReactRowSwap<TR, TC>
-        where TR : class, IReactiveRow<TC>
+    internal class TableIndexingEngine<TR, TC, TK> :
+            IReactRowAdd<TR, ResultSet<TC>>,
+            IReactRowRemove<TR, ResultSet<TC>>
+        where TR : class, IQueryableRow<ResultSet<TC>>
         where TC : unmanaged, IKeyComponent
         where TK : unmanaged, IEquatable<TK>
     {
-        public TableIndexingEngine(IndexedDB indexedDB) : base(indexedDB)
-        { }
+        public TableIndexingEngine(IndexedDB indexedDB)
+        {
+            this.indexedDB = indexedDB;
+        }
 
         private static readonly RefWrapperType ComponentType = TypeRefWrapper<TC>.wrapper;
 
-        protected override void Add(ref TC component, IEntityTable<TR> table, EGID egid)
+        public IndexedDB indexedDB { get; }
+
+        public void Add(in ResultSet<TC> resultSet, RangedIndices indices, ExclusiveGroupStruct group)
         {
-            indexedDB.UpdateIndexableComponent(ComponentType, egid,
-                IndexableComponentHelper<TC>.KeyGetter<TK>.Getter(ref component));
+            foreach (var i in indices)
+            {
+                indexedDB.UpdateIndexableComponent(ComponentType, new EGID(resultSet.entityIDs[i], group),
+                    IndexableComponentHelper<TC>.KeyGetter<TK>.Getter(ref resultSet.component[i]));
+            }
         }
 
-        protected override void MovedTo(ref TC component, IEntityTable<TR> previousTable, IEntityTable<TR> table, EGID egid)
+        public void Remove(in ResultSet<TC> resultSet, RangedIndices indices, ExclusiveGroupStruct group)
         {
-            indexedDB.UpdateIndexableComponent(ComponentType, egid,
-                IndexableComponentHelper<TC>.KeyGetter<TK>.Getter(ref component));
-        }
-
-        protected override void Remove(ref TC component, IEntityTable<TR> table, EGID egid)
-        {
-            indexedDB.RemoveIndexableComponent<TK>(ComponentType, egid);
+            foreach (var i in indices)
+            {
+                indexedDB.RemoveIndexableComponent<TK>(ComponentType, new EGID(resultSet.entityIDs[i], group));
+            }
         }
     }
 }

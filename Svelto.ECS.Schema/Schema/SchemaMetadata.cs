@@ -140,11 +140,6 @@ namespace Svelto.ECS.Schema
             stateMachinesToGenerateEngine[componentType] = stateMachine;
         }
 
-        private void RegisterMemo(IEntityMemo memo, FilterContextID filterContext)
-        {
-            memo.FilterID = new CombinedFilterID(memo.MemoID, filterContext);
-        }
-
         private static IEnumerable<FieldInfo> GetSchemaElementFields(Type type)
         {
             var fieldInfos = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);

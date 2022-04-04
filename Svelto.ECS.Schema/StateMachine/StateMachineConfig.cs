@@ -77,7 +77,7 @@ namespace Svelto.ECS.Schema.Definition
 
             foreach (var query in indexedDB.From<TRow>())
             {
-                query.Select(out IndexableResultSet<TComponent> result);
+                query.Select(out ResultSet<TComponent> result);
 
                 for (int i = 0; i < stateCount; ++i)
                 {

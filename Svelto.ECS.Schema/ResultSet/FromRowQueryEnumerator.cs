@@ -1,4 +1,5 @@
 using Svelto.DataStructures;
+using Svelto.ECS.Internal;
 using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema
@@ -12,7 +13,7 @@ namespace Svelto.ECS.Schema
         private readonly uint _groupCount;
 
         private int _groupIndex;
-        private NB<EGIDComponent> _egid;
+        private NativeEntityIDs _entityIDs;
         private int _count;
 
         internal FromRowQueryEnumerator(ResultSetQueryConfig config) : this()
@@ -33,24 +34,23 @@ namespace Svelto.ECS.Schema
 
                 bool haveAllFilters = true;
 
-                for (int i = 0; i < _config.indexers.count; ++i)
+                for (int i = 0; i < _config.filters.count; ++i)
                 {
-                    var keyData = _config.indexers[i];
+                    var filter = _config.filters[i];
+                    var groupFilter = filter.GetGroupFilter(currentGroup);
 
-                    if (keyData.groups == null ||
-                        !keyData.groups.TryGetValue(currentGroup, out var groupData) ||
-                        groupData.filter.filteredIndices.Count() == 0)
+                    if (groupFilter.count == 0)
                     {
                         haveAllFilters = false;
                         break;
                     }
 
-                    _config.temporaryFilters.AddAt((uint)i) = groupData.filter;
+                    _config.temporaryFilters.AddAt((uint)i) = groupFilter;
                 }
 
                 if (haveAllFilters)
                 {
-                    (_egid, _count) = _config.indexedDB.entitiesDB.QueryEntities<EGIDComponent>(currentGroup);
+                    (_, _entityIDs, _count) = _config.indexedDB.entitiesDB.QueryEntities<RowIdentityComponent>(currentGroup);
                     moveNext = true;
                     break;
                 }
@@ -68,6 +68,6 @@ namespace Svelto.ECS.Schema
         }
 
         public FromGroupQuery<TRow> Current =>
-            new(_config, _groups[_groupIndex], new(_config.temporaryFilters, _egid, _count));
+            new(_config, _groups[_groupIndex], new(_config.temporaryFilters, _entityIDs, _count));
     }
 }

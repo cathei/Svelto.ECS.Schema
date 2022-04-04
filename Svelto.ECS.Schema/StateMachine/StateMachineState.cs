@@ -36,7 +36,7 @@ namespace Svelto.ECS.Schema.Definition
                 _onEnter = new FasterList<CallbackConfig>();
             }
 
-            internal void Evaluate(IndexedDB indexedDB, in FromGroupQuery<TRow> query, in IndexableResultSet<TComponent> result)
+            internal void Evaluate(IndexedDB indexedDB, in FromGroupQuery<TRow> query, in ResultSet<TComponent> result)
             {
                 var keyData = _config._index.Is(_key).GetIndexerKeyData(indexedDB);
 
@@ -76,7 +76,7 @@ namespace Svelto.ECS.Schema.Definition
                 }
             }
 
-            internal void ProcessExit(IndexedDB indexedDB, in FromGroupQuery<TRow> query, in IndexableResultSet<TComponent> result)
+            internal void ProcessExit(IndexedDB indexedDB, in FromGroupQuery<TRow> query, in ResultSet<TComponent> result)
             {
                 if (_onExit.count == 0)
                     return;
@@ -101,7 +101,7 @@ namespace Svelto.ECS.Schema.Definition
                 }
             }
 
-            internal void ProcessEnter(IndexedDB indexedDB, in FromGroupQuery<TRow> query, in IndexableResultSet<TComponent> result)
+            internal void ProcessEnter(IndexedDB indexedDB, in FromGroupQuery<TRow> query, in ResultSet<TComponent> result)
             {
                 var keyData = _enterCandidates.GetIndexerKeyData(indexedDB);
 
@@ -142,7 +142,7 @@ namespace Svelto.ECS.Schema.Definition
                 _transitions = new FasterList<TransitionConfig<TState>>();
             }
 
-            internal void Evaluate(IndexedDB indexedDB, in FromGroupQuery<TRow> query, in IndexableResultSet<TComponent> result)
+            internal void Evaluate(IndexedDB indexedDB, in FromGroupQuery<TRow> query, in ResultSet<TComponent> result)
             {
                 for (int i = 0; i < _transitions.count; ++i)
                     _transitions[i].Ready(indexedDB.entitiesDB, query.group);

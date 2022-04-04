@@ -8,57 +8,39 @@ namespace Svelto.ECS.Schema
 {
     public partial class IndexedDB
     {
-        internal void AddMemo<TR, TC>(MemoBase<TR, TC> memo, uint entityID, in ExclusiveGroupStruct groupID)
-            where TR : class, IIndexableRow<TC>
-            where TC : unmanaged, IEntityComponent
+        internal void AddMemo<TR>(MemoBase<TR> memo, uint entityID, in ExclusiveGroupStruct groupID)
+            where TR : class, IEntityRow
         {
             if (FindTable<TR>(groupID) == null)
                 return;
 
-            var mapper = GetEGIDMapper(groupID);
+            var filter = memo.GetFilter(this);
+            var mapper = GetNativeEGIDMapper(groupID);
 
-            ref var groupData = ref CreateOrGetMemoGroup(memo._memoID, groupID);
-
-            groupData.filter.Add(entityID, mapper);
+            filter.Add(new EGID(entityID, groupID), mapper);
         }
 
-        internal void RemoveMemo<TR, TC>(MemoBase<TR, TC> memo, uint entityID, in ExclusiveGroupStruct groupID)
-            where TR : class, IIndexableRow<TC>
-            where TC : unmanaged, IEntityComponent
+        internal void RemoveMemo<TR>(MemoBase<TR> memo, uint entityID, in ExclusiveGroupStruct groupID)
+            where TR : class, IEntityRow
         {
-            ref var groupData = ref CreateOrGetMemoGroup(memo._memoID, groupID);
-
-            groupData.filter.TryRemove(entityID);
+            var filter = memo.GetFilter(this);
+            filter.Remove(new EGID(entityID, groupID));
         }
 
         internal void ClearMemo(MemoBase memo)
         {
-            if (memos.TryGetValue(memo._memoID, out var memoData))
-                memoData.Clear();
+            var filter = memo.GetFilter(this);
+            filter.Clear();
         }
 
-        internal void ClearMemos()
+        internal ref EntityFilterCollection GetOrAddPersistentFilter(CombinedFilterID filterID)
         {
-            var values = memos.GetValues(out var count);
-            for (int i = 0; i < count; ++i)
-                values[i].Clear();
+            return ref entitiesDB.GetFilters().GetOrCreatePersistentFilter<RowIdentityComponent>(filterID);
         }
 
-        internal ref IndexerGroupData CreateOrGetMemoGroup(int memoID, in ExclusiveGroupStruct groupID)
+        internal ref EntityFilterCollection GetOrAddTransientFilter(CombinedFilterID filterID)
         {
-            var memoData = memos.GetOrCreate(memoID, () => new MemoData());
-
-            if (!memoData.keyData.groups.ContainsKey(groupID))
-            {
-                memoData.keyData.groups[groupID] = new IndexerGroupData
-                {
-                    groupID = groupID,
-                    filter = entitiesDB.GetFilters().CreateOrGetFilterForGroup<RowIdentityComponent>(
-                        GenerateFilterId(), groupID)
-                };
-            }
-
-            return ref memoData.keyData.groups.GetValueByRef(groupID);
+            return ref entitiesDB.GetFilters().GetOrCreateTransientFilter<RowIdentityComponent>(filterID);
         }
     }
 }

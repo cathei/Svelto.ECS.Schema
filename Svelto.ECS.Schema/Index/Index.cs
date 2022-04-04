@@ -7,32 +7,17 @@ using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema.Internal
 {
-    internal static class GlobalIndexCount
-    {
-        private static int Count = 0;
-
-        public static int Generate() => Interlocked.Increment(ref Count);
-    }
-
     public class IndexBase<TRow, TComponent> : IEntityIndex, IIndexQueryable<TRow, TComponent>
         where TRow : class, IReactiveRow<TComponent>
         where TComponent : unmanaged, IKeyComponent
     {
         // equvalent to ExclusiveGroupStruct.Generate()
-        internal readonly int _indexerID = GlobalIndexCount.Generate();
-
-        internal CombinedFilterID _filterID;
+        internal readonly FilterContextID _indexerID = EntitiesDB.SveltoFilters.GetNewContextID();
 
         RefWrapperType IEntityIndex.ComponentType => TypeRefWrapper<TComponent>.wrapper;
 
-        int IEntityIndex.IndexerID => _indexerID;
-        int IIndexQueryable<TRow, TComponent>.IndexerID => _indexerID;
-
-        CombinedFilterID IEntityIndex.FilterID
-        {
-            get => _filterID;
-            set => _filterID = value;
-        }
+        FilterContextID IEntityIndex.IndexerID => _indexerID;
+        FilterContextID IIndexQueryable<TRow, TComponent>.IndexerID => _indexerID;
 
         static IndexBase()
         {

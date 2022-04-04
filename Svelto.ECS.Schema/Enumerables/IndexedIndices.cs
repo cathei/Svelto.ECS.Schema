@@ -5,10 +5,10 @@ namespace Svelto.ECS.Schema
 {
     public ref struct IndexedIndicesEnumerator
     {
-        private readonly FilteredIndices _indices;
+        private readonly EntityFilterIndices _indices;
         private int _index;
 
-        internal IndexedIndicesEnumerator(in FilteredIndices indices)
+        internal IndexedIndicesEnumerator(in EntityFilterIndices indices)
         {
             _indices = indices;
             _index = -1;
@@ -16,7 +16,7 @@ namespace Svelto.ECS.Schema
 
         public bool MoveNext()
         {
-            return ++_index < _indices.Count();
+            return ++_index < _indices.count;
         }
 
         public void Reset()
@@ -29,23 +29,23 @@ namespace Svelto.ECS.Schema
         public uint Current => _indices[_index];
     }
 
-    // To iterate over FilteredIndices with foreach
+    // To iterate over EntityFilterIndices with foreach
     public readonly ref struct IndexedIndices
     {
-        internal readonly FilteredIndices _indices;
+        internal readonly EntityFilterIndices _indices;
 
-        public int Count() => _indices.Count();
+        public uint count => _indices.count;
 
         public uint this[uint index] => _indices[index];
         public uint this[int index] => _indices[index];
 
         public uint Get(uint index) => _indices[index];
 
-        public IndexedIndices(in FilteredIndices indices)
+        public IndexedIndices(in EntityFilterIndices indices)
         {
             _indices = indices;
         }
 
-        public IndexedIndicesEnumerator GetEnumerator() => new IndexedIndicesEnumerator(_indices);
+        public IndexedIndicesEnumerator GetEnumerator() => new(_indices);
     }
 }

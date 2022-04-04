@@ -25,9 +25,7 @@ namespace Svelto.ECS.Schema
         public interface IEntityIndex : ISchemaDefinition
         {
             RefWrapperType ComponentType { get; }
-
-            int IndexerID { get; }
-            CombinedFilterID FilterID { get; internal set; }
+            FilterContextID IndexerID { get; }
 
             void AddEngines(EnginesRoot enginesRoot, IndexedDB indexedDB);
         }
@@ -44,8 +42,7 @@ namespace Svelto.ECS.Schema
 
         internal interface IEntityMemo : ISchemaDefinition
         {
-            int MemoID { get; }
-            CombinedFilterID FilterID { get; internal set; }
+            CombinedFilterID FilterID { get; }
         }
 
         public interface IEntityStateMachine : ISchemaDefinition
