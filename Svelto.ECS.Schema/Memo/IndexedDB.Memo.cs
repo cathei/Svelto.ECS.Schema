@@ -8,23 +8,23 @@ namespace Svelto.ECS.Schema
 {
     public partial class IndexedDB
     {
-        internal void AddMemo<TR>(MemoBase<TR> memo, uint entityID, in ExclusiveGroupStruct groupID)
+        internal void AddMemo<TR>(MemoBase<TR> memo, in EGID egid)
             where TR : class, IEntityRow
         {
-            if (FindTable<TR>(groupID) == null)
+            if (FindTable<TR>(egid.groupID) == null)
                 return;
 
             var filter = memo.GetFilter(this);
-            var mapper = GetNativeEGIDMapper(groupID);
+            var mapper = GetNativeEGIDMapper(egid.groupID);
 
-            filter.Add(new EGID(entityID, groupID), mapper);
+            filter.Add(egid, mapper);
         }
 
-        internal void RemoveMemo<TR>(MemoBase<TR> memo, uint entityID, in ExclusiveGroupStruct groupID)
+        internal void RemoveMemo<TR>(MemoBase<TR> memo, in EGID egid)
             where TR : class, IEntityRow
         {
             var filter = memo.GetFilter(this);
-            filter.Remove(new EGID(entityID, groupID));
+            filter.Remove(egid);
         }
 
         internal void ClearMemo(MemoBase memo)

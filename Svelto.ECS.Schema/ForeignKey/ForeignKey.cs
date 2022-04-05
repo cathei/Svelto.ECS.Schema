@@ -8,14 +8,9 @@ namespace Svelto.ECS.Schema
     /// Foreign key is used to mimic Join operation
     /// Foreign key backend is special filter to map groups so join work
     /// </summary>
-    public sealed class ForeignKey<TComponent>
+    public sealed class ForeignKey<TComponent> : IEntityForeignKey
         where TComponent : unmanaged, IForeignKeyComponent
     {
-        // static ForeignKey()
-        // {
-        //     // ForeignKeyHelperImpl<TComponent>.Warmup();
-        // }
-
         internal sealed class Index : IEntityIndex
         {
             // equvalent to ExclusiveGroupStruct.Generate()
@@ -23,12 +18,17 @@ namespace Svelto.ECS.Schema
 
             public FilterContextID IndexerID => _indexerID;
 
+            // use foreign key type to avoid conflict with regular index
             public RefWrapperType ComponentType => TypeRefWrapper<ForeignKey<TComponent>>.wrapper;
 
             public void AddEngines(EnginesRoot enginesRoot, IndexedDB indexedDB) { }
         }
 
         internal Index _index = new();
+
+        public RefWrapperType ComponentType => TypeRefWrapper<TComponent>.wrapper;
+
+        IEntityIndex IEntityForeignKey.Index => _index;
 
         public void AddEngines(EnginesRoot enginesRoot, IndexedDB indexedDB)
         {

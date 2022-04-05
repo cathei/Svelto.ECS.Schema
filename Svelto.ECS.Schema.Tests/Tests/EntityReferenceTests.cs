@@ -91,7 +91,7 @@ namespace Svelto.ECS.Schema.Tests
 
                     builder.Init(new PoliceComponent
                     {
-                        target = _indexedDB.GetEntityReference(result.entityIDs[i], result.group),
+                        target = _indexedDB.GetEntityReference(result.egid[i]),
                         proof = result.set.thief[i].proof
                     });
                 }

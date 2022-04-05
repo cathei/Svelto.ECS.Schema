@@ -57,9 +57,11 @@ namespace Svelto.ECS.Schema
             }
         }
 
-        internal void UpdateForeignKeyComponent<TComponent>(RefWrapperType fkType, in EGID egid, in EntityReference other)
+        internal void UpdateForeignKeyComponent<TComponent>(in EGID egid, in EntityReference other)
             where TComponent : unmanaged, IForeignKeyComponent
         {
+            var fkType = TypeRefWrapper<ForeignKey<TComponent>>.wrapper;
+
             // we need to compare with previous key with reference because it's only reliable value
             var entityReference = entitiesDB.GetEntityReference(egid);
 
@@ -88,8 +90,11 @@ namespace Svelto.ECS.Schema
             }
         }
 
-        internal void RemoveForeignKeyComponent(RefWrapperType fkType, in EGID egid)
+        internal void RemoveForeignKeyComponent<TComponent>(in EGID egid)
+            where TComponent : unmanaged, IForeignKeyComponent
         {
+            var fkType = TypeRefWrapper<ForeignKey<TComponent>>.wrapper;
+
             // we need to compare with previous key with reference because it's only reliable value
             var entityReference = entitiesDB.GetEntityReference(egid);
             var componentCache = GetOrAddComponentCache<ExclusiveGroupStruct>(fkType);
@@ -99,9 +104,11 @@ namespace Svelto.ECS.Schema
             RemoveForeignKeyFromCacheInternal(fkType, entityReference);
         }
 
-        internal void UpdateReferencedComponent<TComponent>(RefWrapperType fkType, in EntityReference other)
+        internal void UpdateReferencedComponent<TComponent>(in EntityReference other)
             where TComponent : unmanaged, IForeignKeyComponent
         {
+            var fkType = TypeRefWrapper<ForeignKey<TComponent>>.wrapper;
+
             var fkCache = GetOrAddForeignKeyCache(fkType);
             var componentCache = GetOrAddComponentCache<ExclusiveGroupStruct>(fkType);
 
@@ -127,8 +134,11 @@ namespace Svelto.ECS.Schema
             }
         }
 
-        internal void RemoveReferencedComponent<TComponent>(RefWrapperType fkType, in EntityReference other)
+        internal void RemoveReferencedComponent<TComponent>(in EntityReference other)
+            where TComponent : unmanaged, IForeignKeyComponent
         {
+            var fkType = TypeRefWrapper<ForeignKey<TComponent>>.wrapper;
+
             var fkCache = GetOrAddForeignKeyCache(fkType);
             var componentCache = GetOrAddComponentCache<ExclusiveGroupStruct>(fkType);
 

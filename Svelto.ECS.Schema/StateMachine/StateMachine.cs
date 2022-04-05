@@ -13,7 +13,9 @@ namespace Svelto.ECS.Schema.Definition
     {
         internal StateMachineConfigBase<TComponent> config;
 
-        public interface IIndexableRow : IIndexableRow<TComponent> { }
+        public interface IIndexableRow :
+            IIndexableRow<TComponent>, IQueryableRow<StateMachineSet<TComponent>>
+        { }
 
         FilterContextID IIndexQueryable<IIndexableRow, TComponent>.IndexerID => config._index._indexerID;
 
@@ -28,6 +30,11 @@ namespace Svelto.ECS.Schema.Definition
                 throw new ECSException("Configure should only called once!");
 
             return new StateMachineBuilder<TRow, TComponent>(this);
+        }
+
+        IStepEngine IEntityStateMachine.AddEngines(EnginesRoot enginesRoot, IndexedDB indexedDB)
+        {
+            return config.AddEngines(enginesRoot, indexedDB);
         }
     }
 }

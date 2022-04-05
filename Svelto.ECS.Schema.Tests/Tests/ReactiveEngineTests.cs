@@ -139,13 +139,13 @@ namespace Svelto.ECS.Schema.Tests
             foreach (var result in _indexedDB.Select<GroupSet>().From(_schema.Table2).Where(_schema.Group.Is(0)))
             {
                 for (int i = 0; i < result.set.count / 2; ++i)
-                    _indexedDB.Update(ref result.set.group[i], new EGID(result.entityIDs[i], result.group), 1);
+                    _indexedDB.Update(ref result.set.group[i], result.egid[i], 1);
             }
 
             foreach (var result in _indexedDB.Select<GroupSet>().From(_schema.Table2).Where(_schema.Group.Is(3)))
             {
                 foreach (var i in result.indices)
-                    _indexedDB.Update(ref result.set.group[i], new EGID(result.entityIDs[i], result.group), 4);
+                    _indexedDB.Update(ref result.set.group[i], result.egid[i], 4);
             }
 
             _indexedDB.RemoveAll(_schema.Table1);

@@ -52,6 +52,10 @@ namespace Svelto.ECS.Schema
         public EntityReference GetEntityReference(uint entityID, in ExclusiveGroupStruct groupID)
             => entitiesDB.GetEntityReference(new EGID(entityID, groupID));
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public EntityReference GetEntityReference(in EGID egid)
+            => entitiesDB.GetEntityReference(egid);
+
         public (NativeEntityIDs, int) QueryEntityIDs(in ExclusiveGroupStruct groupID)
         {
             var (_, entityIDs, count) = entitiesDB.QueryEntities<RowIdentityComponent>(groupID);

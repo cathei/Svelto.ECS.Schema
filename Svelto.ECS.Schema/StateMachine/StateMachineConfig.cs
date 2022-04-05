@@ -3,9 +3,11 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using Svelto.DataStructures;
 using Svelto.ECS.Hybrid;
+using Svelto.ECS.Internal;
+using Svelto.ECS.Schema.Definition;
 using Svelto.ECS.Schema.Internal;
 
-namespace Svelto.ECS.Schema.Definition
+namespace Svelto.ECS.Schema.Internal
 {
     internal abstract class StateMachineConfigBase<TComponent>
         where TComponent : unmanaged, IStateMachineComponent
@@ -19,6 +21,18 @@ namespace Svelto.ECS.Schema.Definition
         protected StateMachineConfigBase()
         {
             _index = new();
+        }
+    }
+
+    public struct StateMachineSet<TComponent> : IResultSet<TComponent>
+        where TComponent : unmanaged, IEntityComponent
+    {
+        public NB<TComponent> component;
+        public NativeEntityIDs entityIDs;
+
+        public void Init(in EntityCollection<TComponent> buffers)
+        {
+            (component, entityIDs, _) = buffers;
         }
     }
 
@@ -48,14 +62,8 @@ namespace Svelto.ECS.Schema.Definition
 
         internal override IStepEngine AddEngines(EnginesRoot enginesRoot, IndexedDB indexedDB)
         {
-            // this is required to handle added or removed entities
-            var indexingEngine = new TableIndexingEngine<
-                StateMachine<TComponent>.IIndexableRow, TComponent>(indexedDB);
-
-            // this is required to validate and change state
+            // required to validate and change state
             var stepEngine = new TransitionEngine(indexedDB, this);
-
-            enginesRoot.AddEngine(indexingEngine);
 
             enginesRoot.AddEngine(stepEngine);
 
@@ -74,7 +82,7 @@ namespace Svelto.ECS.Schema.Definition
                 indexedDB.Memo(states[i]._enterCandidates).Clear();
             }
 
-            foreach (var result in indexedDB.Select<ResultSet<TComponent>>().From<TRow>())
+            foreach (var result in indexedDB.Select<StateMachineSet<TComponent>>().From<TRow>())
             {
                 for (int i = 0; i < stateCount; ++i)
                 {

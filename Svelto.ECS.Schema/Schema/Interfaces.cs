@@ -45,6 +45,13 @@ namespace Svelto.ECS.Schema
             CombinedFilterID FilterID { get; }
         }
 
+        public interface IEntityForeignKey : ISchemaDefinition
+        {
+            RefWrapperType ComponentType { get; }
+            void AddEngines(EnginesRoot enginesRoot, IndexedDB indexedDB);
+            IEntityIndex Index { get; }
+        }
+
         public interface IEntityStateMachine : ISchemaDefinition
         {
             RefWrapperType ComponentType { get; }

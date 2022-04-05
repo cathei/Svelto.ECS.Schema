@@ -14,8 +14,9 @@ namespace Svelto.ECS.Schema
     {
         internal readonly FasterList<SchemaMetadata> registeredSchemas = new();
 
-        // indexer will be created per TComponent
+        // engines will be created per TComponent
         internal readonly HashSet<RefWrapperType> createdIndexerEngines = new();
+        internal readonly HashSet<RefWrapperType> createdForeignKeyEngines = new();
         internal readonly HashSet<RefWrapperType> createdStateMachineEngines = new();
 
         internal readonly FasterDictionary<uint, IndexerData> indexers = new();
@@ -39,31 +40,40 @@ namespace Svelto.ECS.Schema
 
             _groupToTable.Union(metadata.groupToTable);
 
-            var indexers = metadata.indexersToGenerateEngine.GetValues(out var count);
-
-            for (int i = 0; i < count; ++i)
+            foreach (var indexer in metadata.indexers)
             {
-                var componentType = metadata.indexersToGenerateEngine.unsafeKeys[i].key;
+                var componentType = indexer.ComponentType;
 
                 if (createdIndexerEngines.Contains(componentType))
                     continue;
 
                 createdIndexerEngines.Add(componentType);
-                indexers[i].AddEngines(enginesRoot, this);
+
+                indexer.AddEngines(enginesRoot, this);
             }
 
-            var stateMachines = metadata.stateMachinesToGenerateEngine.GetValues(out count);
-
-            for (int i = 0; i < count; ++i)
+            foreach (var fk in metadata.foreignKeys)
             {
-                var componentType = metadata.stateMachinesToGenerateEngine.unsafeKeys[i].key;
+                var componentType = fk.ComponentType;
+
+                if (createdForeignKeyEngines.Contains(componentType))
+                    continue;
+
+                createdForeignKeyEngines.Add(componentType);
+
+                fk.AddEngines(enginesRoot, this);
+            }
+
+            foreach (var stateMachine in metadata.stateMachines)
+            {
+                var componentType = stateMachine.ComponentType;
 
                 if (createdStateMachineEngines.Contains(componentType))
                     continue;
 
                 createdStateMachineEngines.Add(componentType);
-                var stateMachineEngine = stateMachines[i].AddEngines(enginesRoot, this);
 
+                var stateMachineEngine = stateMachine.AddEngines(enginesRoot, this);
                 enginesList.Add(stateMachineEngine);
             }
 

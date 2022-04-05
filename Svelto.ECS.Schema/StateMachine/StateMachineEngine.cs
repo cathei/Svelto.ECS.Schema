@@ -2,16 +2,8 @@ using System;
 using Svelto.DataStructures;
 using Svelto.ECS.Schema.Internal;
 
-namespace Svelto.ECS.Schema.Definition
+namespace Svelto.ECS.Schema.Internal
 {
-    public partial class StateMachine<TComponent>
-    {
-        IStepEngine IEntityStateMachine.AddEngines(EnginesRoot enginesRoot, IndexedDB indexedDB)
-        {
-            return config.AddEngines(enginesRoot, indexedDB);
-        }
-    }
-
     partial class StateMachineConfig<TRow, TComponent, TState>
     {
         internal class TransitionEngine : IStepEngine

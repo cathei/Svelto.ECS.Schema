@@ -82,9 +82,9 @@ namespace Svelto.ECS.Schema.Internal
 
         public void Step()
         {
-            foreach (var query in indexedDB.From<IPrimaryKeyRow>().Where(indexedDB.entitiesToUpdateGroup))
+            foreach (var result in indexedDB.From<IPrimaryKeyRow>().Where(indexedDB.entitiesToUpdateGroup))
             {
-                var group = query.group;
+                var group = result.group;
                 var table = indexedDB.FindTable(group);
 
                 if (table.PrimaryKeys.count == 0)
@@ -97,7 +97,7 @@ namespace Svelto.ECS.Schema.Internal
                     pks[p].Ready(indexedDB.entitiesDB, group);
                 }
 
-                foreach (var i in query.indices)
+                foreach (var i in result.indices)
                 {
                     int groupIndex = 0;
 
@@ -110,7 +110,7 @@ namespace Svelto.ECS.Schema.Internal
                     ExclusiveGroupStruct targetGroup = table.Group + (uint)(groupIndex + 1);
 
                     if (group.id != targetGroup.id)
-                        table.Swap(indexedDB.entityFunctions, new EGID(query.entityIDs[i], group), targetGroup);
+                        table.Swap(indexedDB.entityFunctions, result.egid[i], targetGroup);
                 }
             }
 

@@ -140,7 +140,7 @@ namespace Svelto.ECS.Schema.Tests
                 .From(_schema.Item).Where(_schema.Player.Is(0)))
             {
                 foreach (var i in result.indices)
-                    _indexedDB.Update(ref result.set.itemOwner[i], new EGID(result.entityIDs[i], result.group), 1);
+                    _indexedDB.Update(ref result.set.itemOwner[i], result.egid[i], 1);
             }
 
             AssertIndexer(0, null, 2, out queriedComponents);
@@ -200,7 +200,7 @@ namespace Svelto.ECS.Schema.Tests
             foreach (var result in _indexedDB.Select<ItemWithOwnerSet>().From(_schema.Item).Where(_schema.Player.Is(-1)))
             {
                 for (int i = 0; i < result.set.count / 2; ++i)
-                    _indexedDB.Update(ref result.set.player[i], new EGID(result.entityIDs[i], result.group), 1);
+                    _indexedDB.Update(ref result.set.player[i], result.egid[i], 1);
             }
 
             _indexedDB.Engine.Step();

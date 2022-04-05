@@ -10,25 +10,17 @@ namespace Svelto.ECS.Schema
 {
     internal sealed partial class SchemaMetadata
     {
-        internal readonly FasterList<IEntityTable> tables;
-        internal readonly FasterList<IEntityIndex> indexers;
+        internal readonly FasterList<IEntityTable> tables = new();
+        internal readonly FasterList<IEntityIndex> indexers = new();
+        internal readonly FasterList<IEntityForeignKey> foreignKeys = new();
+        internal readonly FasterList<IEntityStateMachine> stateMachines = new();
 
-        internal readonly FasterDictionary<ExclusiveGroupStruct, IEntityTable> groupToTable;
-
-        internal readonly FasterDictionary<RefWrapperType, IEntityIndex> indexersToGenerateEngine;
-        internal readonly FasterDictionary<RefWrapperType, IEntityStateMachine> stateMachinesToGenerateEngine;
+        internal readonly FasterDictionary<ExclusiveGroupStruct, IEntityTable> groupToTable = new();
 
         private static readonly Type ElementBaseType = typeof(ISchemaDefinition);
 
         internal SchemaMetadata(EntitySchema schema)
         {
-            tables = new FasterList<IEntityTable>();
-            indexers = new FasterList<IEntityIndex>();
-
-            groupToTable = new FasterDictionary<ExclusiveGroupStruct, IEntityTable>();
-            indexersToGenerateEngine = new FasterDictionary<RefWrapperType, IEntityIndex>();
-            stateMachinesToGenerateEngine = new FasterDictionary<RefWrapperType, IEntityStateMachine>();
-
             GenerateChildren(schema, schema.GetType().FullName);
         }
 
@@ -49,6 +41,10 @@ namespace Svelto.ECS.Schema
 
                     case IEntityIndex indexer:
                         RegisterIndexer(indexer);
+                        break;
+
+                    case IEntityForeignKey fk:
+                        RegisterForeignKey(fk);
                         break;
 
                     case IEntityStateMachine stateMachine:
@@ -112,25 +108,18 @@ namespace Svelto.ECS.Schema
         private void RegisterIndexer(IEntityIndex indexer)
         {
             indexers.Add(indexer);
+        }
 
-            var componentType = indexer.ComponentType;
-
-            if (indexersToGenerateEngine.ContainsKey(componentType))
-                return;
-
-            indexersToGenerateEngine[componentType] = indexer;
+        private void RegisterForeignKey(IEntityForeignKey fk)
+        {
+            indexers.Add(fk.Index);
+            foreignKeys.Add(fk);
         }
 
         private void RegisterStateMachine(IEntityStateMachine stateMachine)
         {
             indexers.Add(stateMachine.Index);
-
-            var componentType = stateMachine.ComponentType;
-
-            if (stateMachinesToGenerateEngine.ContainsKey(componentType))
-                return;
-
-            stateMachinesToGenerateEngine[componentType] = stateMachine;
+            stateMachines.Add(stateMachine);
         }
 
         private static IEnumerable<FieldInfo> GetSchemaElementFields(Type type)

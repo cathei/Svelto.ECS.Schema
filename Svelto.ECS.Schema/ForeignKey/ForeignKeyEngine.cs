@@ -19,9 +19,6 @@ namespace Svelto.ECS.Schema.Internal
 
         public IndexedDB indexedDB { get; }
 
-        // this can help use reuse index backend without affecting other indexers
-        private static readonly RefWrapperType ForeignKeyType = TypeRefWrapper<ForeignKey<TComponent>>.wrapper;
-
         public void Add(in EntityCollection<TComponent> collection, RangedIndices indices, ExclusiveGroupStruct group)
         {
             var (component, entityIDs, _) = collection;
@@ -29,17 +26,17 @@ namespace Svelto.ECS.Schema.Internal
             foreach (var i in indices)
             {
                 indexedDB.UpdateForeignKeyComponent<TComponent>(
-                    ForeignKeyType, new(entityIDs[i], group), component[i].reference);
+                    new(entityIDs[i], group), component[i].reference);
             }
         }
 
         public void Remove(in EntityCollection<TComponent> collection, RangedIndices indices, ExclusiveGroupStruct group)
         {
-            var (component, entityIDs, _) = collection;
+            var (_, entityIDs, _) = collection;
 
             foreach (var i in indices)
             {
-                indexedDB.RemoveForeignKeyComponent(ForeignKeyType, new(entityIDs[i], group));
+                indexedDB.RemoveForeignKeyComponent<TComponent>(new(entityIDs[i], group));
             }
         }
 
@@ -49,7 +46,8 @@ namespace Svelto.ECS.Schema.Internal
 
             foreach (var i in indices)
             {
-
+                var other = indexedDB.GetEntityReference(entityIDs[i], toGroup);
+                indexedDB.UpdateReferencedComponent<TComponent>(other);
             }
         }
 
@@ -59,6 +57,8 @@ namespace Svelto.ECS.Schema.Internal
 
             foreach (var i in indices)
             {
+                var other = indexedDB.GetEntityReference(entityIDs[i], group);
+                indexedDB.RemoveReferencedComponent<TComponent>(other);
             }
         }
     }

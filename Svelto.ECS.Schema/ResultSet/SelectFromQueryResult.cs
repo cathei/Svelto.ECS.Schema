@@ -20,7 +20,8 @@ namespace Svelto.ECS.Schema.Internal
         public readonly TResult set;
         public readonly ExclusiveGroupStruct group;
         public readonly MultiIndexedIndices indices;
-        public readonly NativeEntityIDs entityIDs => indices._entityIDs;
+
+        public readonly EGIDBuilder egid => new(indices._entityIDs, group);
 
         public SelectFromQueryResult(TResult set,
             in ExclusiveGroupStruct group, in MultiIndexedIndices indices)

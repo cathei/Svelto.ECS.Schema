@@ -17,13 +17,25 @@ namespace Svelto.ECS.Schema.Internal
 
         public MemoQuery<TRow> Add(uint entityID, in ExclusiveGroupStruct groupID)
         {
-            _indexedDB.AddMemo(_memo, entityID, groupID);
+            _indexedDB.AddMemo(_memo, new EGID(entityID, groupID));
             return this;
         }
 
         public MemoQuery<TRow> Remove(uint entityID, in ExclusiveGroupStruct groupID)
         {
-            _indexedDB.RemoveMemo(_memo, entityID, groupID);
+            _indexedDB.RemoveMemo(_memo, new EGID(entityID, groupID));
+            return this;
+        }
+
+        public MemoQuery<TRow> Add(in EGID egid)
+        {
+            _indexedDB.AddMemo(_memo, egid);
+            return this;
+        }
+
+        public MemoQuery<TRow> Remove(in EGID egid)
+        {
+            _indexedDB.RemoveMemo(_memo, egid);
             return this;
         }
 
