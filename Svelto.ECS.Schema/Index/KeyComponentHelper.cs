@@ -6,51 +6,46 @@ using Svelto.ECS.Schema.Internal;
 namespace Svelto.ECS.Schema.Internal
 {
     internal static class KeyComponentHelper<TComponent>
-        where TComponent : unmanaged, IEntityComponent
+        where TComponent : unmanaged, IKeyComponent
     {
-        internal interface IComponentHandler
+        internal interface IHandler
         {
-            void AddEngines<TRow>(EnginesRoot enginesRoot, IndexedDB indexedDB)
-                where TRow : class, IQueryableRow<ResultSet<TComponent>>;
-
             void Update(IndexedDB indexedDB, ref TComponent component, in EGID egid);
             void Remove(IndexedDB indexedDB, in EGID egid);
         }
 
-        internal static IComponentHandler Handler;
+        internal static IHandler Handler;
     }
 
-    internal static class KeyComponentHelper<TComponent, TKey>
-        where TComponent : unmanaged, IKeyComponent<TKey>
+    internal class KeyComponentHelperImpl<TComponent, TKey> : KeyComponentHelper<TComponent>.IHandler
+        where TComponent : unmanaged, IKeyComponent
         where TKey : unmanaged, IEquatable<TKey>
     {
-        static KeyComponentHelper()
+        static KeyComponentHelperImpl()
         {
-            KeyComponentHelper<TComponent>.Handler = new HandlerImpl();
-        }
+            KeyComponentHelper<TComponent>.Handler = new KeyComponentHelperImpl<TComponent, TKey>();
 
-        private static readonly RefWrapperType ComponentType = TypeRefWrapper<TComponent>.wrapper;
+            var getMethod = typeof(TComponent).GetProperty(nameof(IKeyComponent<TKey>.key)).GetMethod;
+            KeyGetter = (GetterDelegate)Delegate.CreateDelegate(typeof(GetterDelegate), getMethod);
+        }
 
         // just trigger for static constructor
         public static void Warmup() { }
 
-        private class HandlerImpl : KeyComponentHelper<TComponent>.IComponentHandler
+        private static readonly RefWrapperType ComponentType = TypeRefWrapper<TComponent>.wrapper;
+
+        internal delegate TKey GetterDelegate(ref TComponent component);
+
+        internal static readonly GetterDelegate KeyGetter;
+
+        public void Update(IndexedDB indexedDB, ref TComponent component, in EGID egid)
         {
-            public void AddEngines<TRow>(EnginesRoot enginesRoot, IndexedDB indexedDB)
-                where TRow : class, IQueryableRow<ResultSet<TComponent>>
-            {
-                enginesRoot.AddEngine(new TableIndexingEngine<TRow, TComponent>(indexedDB));
-            }
+            indexedDB.UpdateIndexableComponent(ComponentType, egid, KeyGetter(ref component));
+        }
 
-            public void Update(IndexedDB indexedDB, ref TComponent component, in EGID egid)
-            {
-                indexedDB.UpdateIndexableComponent(ComponentType, egid, component.key);
-            }
-
-            public void Remove(IndexedDB indexedDB, in EGID egid)
-            {
-                indexedDB.RemoveIndexableComponent<TKey>(ComponentType, egid);
-            }
+        public void Remove(IndexedDB indexedDB, in EGID egid)
+        {
+            indexedDB.RemoveIndexableComponent<TKey>(ComponentType, egid);
         }
     }
 }

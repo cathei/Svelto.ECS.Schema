@@ -50,7 +50,7 @@ namespace Svelto.ECS.Schema.Definition
         {
             // this is required to handle added or removed entities
             var indexingEngine = new TableIndexingEngine<
-                StateMachine<TComponent>.IIndexableRow, TComponent, TState>(indexedDB);
+                StateMachine<TComponent>.IIndexableRow, TComponent>(indexedDB);
 
             // this is required to validate and change state
             var stepEngine = new TransitionEngine(indexedDB, this);

@@ -18,6 +18,14 @@ namespace Svelto.ECS.Schema
         };
     }
 
+    public interface IReactiveRow<T> : IEntityRow
+        where T : struct, IEntityComponent
+    {
+        internal static IComponentBuilder[] componentBuilders = new IComponentBuilder[] {
+            new ComponentBuilder<T>(),
+        };
+    }
+
     public interface IQueryableRow<T> : IEntityRow
         where T : struct, IResultSet
     { }

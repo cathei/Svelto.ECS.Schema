@@ -16,18 +16,7 @@ namespace Svelto.ECS.Schema
 
         public IEntityTable FindTable(in ExclusiveGroupStruct groupID)
         {
-            if (!_groupToTable.TryGetValue(groupID, out var table))
-            {
-                foreach (var schemaMetadata in registeredSchemas)
-                {
-                    if (schemaMetadata.groupToTable.TryGetValue(groupID, out table))
-                        break;
-                }
-
-                _groupToTable[groupID] = table;
-            }
-
-            return table;
+            return _groupToTable[groupID];
         }
 
         public IEntityTable<TR> FindTable<TR>(in ExclusiveGroupStruct groupID)

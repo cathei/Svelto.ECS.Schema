@@ -24,7 +24,7 @@ namespace Svelto.ECS.Schema
 
         void IKeyComponent.Warmup<TComponent>()
         {
-            KeyComponentHelperIndex<TComponent, TKey>.Warmup();
+            KeyComponentHelperImpl<TComponent, TKey>.Warmup();
         }
     }
 }

@@ -3,75 +3,70 @@ using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema
 {
-    public interface IReactRowAdd<TRow, TResultSet> : IReactOnAddEx<RowIdentityComponent>
-        where TRow : class, IQueryableRow<TResultSet>
-        where TResultSet : struct, IResultSet
+    public interface IReactRowAdd<TRow, TComponent> : IReactOnAddEx<TComponent>
+        where TRow : class, IReactiveRow<TComponent>
+        where TComponent : struct, IEntityComponent
     {
         IndexedDB indexedDB { get; }
 
-        void Add(in TResultSet resultSet, RangedIndices indices, ExclusiveGroupStruct group);
+        void Add(in EntityCollection<TComponent> collection, RangedIndices indices, ExclusiveGroupStruct group);
 
-        void IReactOnAddEx<RowIdentityComponent>.Add(
+        void IReactOnAddEx<TComponent>.Add(
             (uint start, uint end) rangeOfEntities,
-            in EntityCollection<RowIdentityComponent> collection,
+            in EntityCollection<TComponent> collection,
             ExclusiveGroupStruct groupID)
         {
             var table = indexedDB.FindTable<TRow>(groupID);
             if (table == null)
                 return;
 
-            ResultSetHelper<TResultSet>.Assign(out var result, indexedDB.entitiesDB, groupID);
-
-            Add(result, new(rangeOfEntities.start, rangeOfEntities.end - rangeOfEntities.start), groupID);
+            Add(collection, new(rangeOfEntities.start, rangeOfEntities.end - rangeOfEntities.start), groupID);
         }
     }
 
-    public interface IReactRowRemove<TRow, TResultSet> : IReactOnRemoveEx<RowIdentityComponent>
-        where TRow : class, IQueryableRow<TResultSet>
-        where TResultSet : struct, IResultSet
+    public interface IReactRowRemove<TRow, TComponent> : IReactOnRemoveEx<TComponent>
+        where TRow : class, IReactiveRow<TComponent>
+        where TComponent : struct, IEntityComponent
     {
         IndexedDB indexedDB { get; }
 
-        void Remove(in TResultSet resultSet, RangedIndices indices, ExclusiveGroupStruct group);
+        void Remove(in EntityCollection<TComponent> collection, RangedIndices indices, ExclusiveGroupStruct group);
 
-        void IReactOnRemoveEx<RowIdentityComponent>.Remove(
+        void IReactOnRemoveEx<TComponent>.Remove(
             (uint start, uint end) rangeOfEntities,
-            in EntityCollection<RowIdentityComponent> collection,
+            in EntityCollection<TComponent> collection,
             ExclusiveGroupStruct groupID)
         {
             var table = indexedDB.FindTable<TRow>(groupID);
             if (table == null)
                 return;
 
-            ResultSetHelper<TResultSet>.Assign(out var result, indexedDB.entitiesDB, groupID);
-
-            Remove(result, new(rangeOfEntities.start, rangeOfEntities.end - rangeOfEntities.start), groupID);
+            Remove(collection, new(rangeOfEntities.start, rangeOfEntities.end - rangeOfEntities.start), groupID);
         }
     }
 
-    public interface IReactRowSwap<TRow, TResultSet> : IReactOnSwapEx<RowIdentityComponent>
-        where TRow : class, IQueryableRow<TResultSet>
-        where TResultSet : struct, IResultSet
+    public interface IReactRowSwap<TRow, TComponent> : IReactOnSwapEx<TComponent>
+        where TRow : class, IReactiveRow<TComponent>
+        where TComponent : struct, IEntityComponent
     {
         IndexedDB indexedDB { get; }
 
-        void MovedTo(in TResultSet resultSet, RangedIndices indices, ExclusiveGroupStruct fromGroup, ExclusiveGroupStruct toGroup);
+        void MovedTo(in EntityCollection<TComponent> collection, RangedIndices indices, ExclusiveGroupStruct fromGroup, ExclusiveGroupStruct toGroup);
 
-        void IReactOnSwapEx<RowIdentityComponent>.MovedTo(
+        void IReactOnSwapEx<TComponent>.MovedTo(
             (uint start, uint end) rangeOfEntities,
-            in EntityCollection<RowIdentityComponent> collection,
+            in EntityCollection<TComponent> collection,
             ExclusiveGroupStruct fromGroup,
             ExclusiveGroupStruct toGroup)
         {
             var fromTable = indexedDB.FindTable<TRow>(fromGroup);
             var toTable = indexedDB.FindTable<TRow>(toGroup);
 
-            if (fromTable == null || toTable == null)
+            // return if neither of group is Table<TRow>
+            if (fromTable == null && toTable == null)
                 return;
 
-            ResultSetHelper<TResultSet>.Assign(out var result, indexedDB.entitiesDB, toGroup);
-
-            MovedTo(result, new(rangeOfEntities.start, rangeOfEntities.end - rangeOfEntities.start), fromGroup, toGroup);
+            MovedTo(collection, new(rangeOfEntities.start, rangeOfEntities.end - rangeOfEntities.start), fromGroup, toGroup);
         }
     }
 }

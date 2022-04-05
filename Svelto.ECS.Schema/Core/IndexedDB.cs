@@ -37,6 +37,8 @@ namespace Svelto.ECS.Schema
         {
             registeredSchemas.Add(metadata);
 
+            _groupToTable.Union(metadata.groupToTable);
+
             var indexers = metadata.indexersToGenerateEngine.GetValues(out var count);
 
             for (int i = 0; i < count; ++i)

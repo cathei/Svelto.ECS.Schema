@@ -8,8 +8,8 @@ using Svelto.ECS.Schema.Internal;
 namespace Svelto.ECS.Schema.Internal
 {
     internal class PrimaryKeyEngine :
-        IReactRowAdd<IPrimaryKeyRow, ResultSet<RowIdentityComponent>>,
-        IReactRowSwap<IPrimaryKeyRow, ResultSet<RowIdentityComponent>>,
+        IReactRowAdd<IPrimaryKeyRow, RowIdentityComponent>,
+        IReactRowSwap<IPrimaryKeyRow, RowIdentityComponent>,
         IStepEngine
     {
         public PrimaryKeyEngine(IndexedDB indexedDB)
@@ -21,7 +21,7 @@ namespace Svelto.ECS.Schema.Internal
 
         public string name { get; } = nameof(PrimaryKeyEngine);
 
-        public void Add(in ResultSet<RowIdentityComponent> resultSet,
+        public void Add(in EntityCollection<RowIdentityComponent> collection,
             RangedIndices indices, ExclusiveGroupStruct group)
         {
             // process only build group (no. 0)
@@ -30,10 +30,12 @@ namespace Svelto.ECS.Schema.Internal
             if (group != table.Group)
                 return;
 
-            Process(resultSet.entityIDs, indices, group);
+            var (_, entityIDs, _) = collection;
+
+            Process(entityIDs, indices, group);
         }
 
-        public void MovedTo(in ResultSet<RowIdentityComponent> resultSet,
+        public void MovedTo(in EntityCollection<RowIdentityComponent> collection,
             RangedIndices indices, ExclusiveGroupStruct fromGroup, ExclusiveGroupStruct toGroup)
         {
             // process only build group (no. 0)
@@ -42,7 +44,9 @@ namespace Svelto.ECS.Schema.Internal
             if (toGroup != table.Group)
                 return;
 
-            Process(resultSet.entityIDs, indices, toGroup);
+            var (_, entityIDs, _) = collection;
+
+            Process(entityIDs, indices, toGroup);
         }
 
         public void Process(NativeEntityIDs entityIDs, in RangedIndices indices, ExclusiveGroupStruct group)

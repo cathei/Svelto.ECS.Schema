@@ -32,7 +32,7 @@ namespace Svelto.ECS.Schema
         // they need to call IndexedDB.Engine.Step() before entity submission
         internal Memo<IPrimaryKeyRow> entitiesToUpdateGroup = new();
 
-        internal IndexableComponentCache<TK> CreateOrGetComponentCache<TK>(in RefWrapperType componentType)
+        internal IndexableComponentCache<TK> GetOrAddComponentCache<TK>(in RefWrapperType componentType)
             where TK : unmanaged, IEquatable<TK>
         {
             return (IndexableComponentCache<TK>)_componentCaches.GetOrAdd(
@@ -62,26 +62,11 @@ namespace Svelto.ECS.Schema
             return componentIndexers;
         }
 
-        // remove
-        internal void RemoveIndexableComponent<TK>(RefWrapperType componentType, in EGID egid)
+        private void UpdateFilterInternal<TK>(RefWrapperType componentType,
+                IndexableComponentCache<TK> componentCache,
+                in EGID egid, in EntityReference entityReference, in TK key)
             where TK : unmanaged, IEquatable<TK>
         {
-            // we need to compare with previous key with reference because it's only reliable value
-            var entityReference = entitiesDB.GetEntityReference(egid);
-            var componentCache = CreateOrGetComponentCache<TK>(componentType);
-
-            // persistent filters will be cleared automatically, we need to remove cache tho
-            componentCache.previousKeys.Remove(entityReference);
-        }
-
-        // add or update
-        internal void UpdateIndexableComponent<TK>(RefWrapperType componentType, in EGID egid, in TK key)
-            where TK : unmanaged, IEquatable<TK>
-        {
-            // we need to compare with previous key with reference because it's only reliable value
-            var entityReference = entitiesDB.GetEntityReference(egid);
-            var componentCache = CreateOrGetComponentCache<TK>(componentType);
-
             var indexers = FindIndexers(componentType, componentCache);
 
             // has previous record
@@ -115,33 +100,31 @@ namespace Svelto.ECS.Schema
                     filter.Add(egid, mapper);
                 }
             }
-
-            this.Memo(entitiesToUpdateGroup).Add(egid.entityID, egid.groupID);
         }
 
-        internal void UpdateForeignKeyComponent(RefWrapperType foreignKeyType, in EGID egid, in EntityReference other)
+        // remove
+        internal void RemoveIndexableComponent<TK>(RefWrapperType componentType, in EGID egid)
+            where TK : unmanaged, IEquatable<TK>
         {
             // we need to compare with previous key with reference because it's only reliable value
-            // var entityReference = entitiesDB.GetEntityReference(egid);
+            var entityReference = entitiesDB.GetEntityReference(egid);
+            var componentCache = GetOrAddComponentCache<TK>(componentType);
 
-            if (other != EntityReference.Invalid && TryGetEGID(other, out var otherID))
-            {
-                UpdateIndexableComponent(foreignKeyType, egid, otherID.groupID);
-            }
-            else
-            {
-                RemoveForeignKeyComponent(foreignKeyType, egid, other);
-            }
+            // persistent filters will be cleared automatically, we need to remove cache tho
+            componentCache.previousKeys.Remove(entityReference);
         }
 
-        internal void RemoveForeignKeyComponent(RefWrapperType foreignKeyType, in EGID egid, in EntityReference other)
+        // add or update
+        internal void UpdateIndexableComponent<TK>(RefWrapperType componentType, in EGID egid, in TK key)
+            where TK : unmanaged, IEquatable<TK>
         {
-            RemoveIndexableComponent<ExclusiveGroupStruct>(foreignKeyType, egid);
+            // we need to compare with previous key with reference because it's only reliable value
+            var entityReference = entitiesDB.GetEntityReference(egid);
+            var componentCache = GetOrAddComponentCache<TK>(componentType);
 
-            // if (other != EntityReference.Invalid && TryGetEGID(other, out var otherID))
-            // {
+            UpdateFilterInternal(componentType, componentCache, egid, entityReference, key);
 
-            // }
+            this.Memo(entitiesToUpdateGroup).Add(egid.entityID, egid.groupID);
         }
 
         internal ref EntityFilterCollection GetFilter<TKey>(FilterContextID indexerID, TKey key)
