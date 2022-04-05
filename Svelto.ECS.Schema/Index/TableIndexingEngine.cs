@@ -5,36 +5,33 @@ using Svelto.ECS.Internal;
 
 namespace Svelto.ECS.Schema.Internal
 {
-    internal class TableIndexingEngine<TR, TC, TK> :
-            IReactRowAdd<TR, ResultSet<TC>>,
-            IReactRowRemove<TR, ResultSet<TC>>
-        where TR : class, IQueryableRow<ResultSet<TC>>
-        where TC : unmanaged, IKeyComponent
-        where TK : unmanaged, IEquatable<TK>
+    internal class TableIndexingEngine<TRow, TComponent> :
+            IReactRowAdd<TRow, ResultSet<TComponent>>,
+            IReactRowRemove<TRow, ResultSet<TComponent>>
+        where TRow : class, IQueryableRow<ResultSet<TComponent>>
+        where TComponent : unmanaged, IKeyComponent
     {
         public TableIndexingEngine(IndexedDB indexedDB)
         {
             this.indexedDB = indexedDB;
         }
 
-        private static readonly RefWrapperType ComponentType = TypeRefWrapper<TC>.wrapper;
-
         public IndexedDB indexedDB { get; }
 
-        public void Add(in ResultSet<TC> resultSet, RangedIndices indices, ExclusiveGroupStruct group)
+        public void Add(in ResultSet<TComponent> resultSet, RangedIndices indices, ExclusiveGroupStruct group)
         {
             foreach (var i in indices)
             {
-                indexedDB.UpdateIndexableComponent(ComponentType, new EGID(resultSet.entityIDs[i], group),
-                    IndexableComponentHelper<TC>.KeyGetter<TK>.Getter(ref resultSet.component[i]));
+                KeyComponentHelper<TComponent>.Handler.Update(indexedDB, ref resultSet.component[i],
+                    new EGID(resultSet.entityIDs[i], group));
             }
         }
 
-        public void Remove(in ResultSet<TC> resultSet, RangedIndices indices, ExclusiveGroupStruct group)
+        public void Remove(in ResultSet<TComponent> resultSet, RangedIndices indices, ExclusiveGroupStruct group)
         {
             foreach (var i in indices)
             {
-                indexedDB.RemoveIndexableComponent<TK>(ComponentType, new EGID(resultSet.entityIDs[i], group));
+                KeyComponentHelper<TComponent>.Handler.Remove(indexedDB, new EGID(resultSet.entityIDs[i], group));
             }
         }
     }

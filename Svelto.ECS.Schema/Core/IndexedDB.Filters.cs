@@ -119,6 +119,31 @@ namespace Svelto.ECS.Schema
             this.Memo(entitiesToUpdateGroup).Add(egid.entityID, egid.groupID);
         }
 
+        internal void UpdateForeignKeyComponent(RefWrapperType foreignKeyType, in EGID egid, in EntityReference other)
+        {
+            // we need to compare with previous key with reference because it's only reliable value
+            // var entityReference = entitiesDB.GetEntityReference(egid);
+
+            if (other != EntityReference.Invalid && TryGetEGID(other, out var otherID))
+            {
+                UpdateIndexableComponent(foreignKeyType, egid, otherID.groupID);
+            }
+            else
+            {
+                RemoveForeignKeyComponent(foreignKeyType, egid, other);
+            }
+        }
+
+        internal void RemoveForeignKeyComponent(RefWrapperType foreignKeyType, in EGID egid, in EntityReference other)
+        {
+            RemoveIndexableComponent<ExclusiveGroupStruct>(foreignKeyType, egid);
+
+            // if (other != EntityReference.Invalid && TryGetEGID(other, out var otherID))
+            // {
+
+            // }
+        }
+
         internal ref EntityFilterCollection GetFilter<TKey>(FilterContextID indexerID, TKey key)
             where TKey : unmanaged, IEquatable<TKey>
         {

@@ -1,5 +1,10 @@
 using Svelto.ECS.Schema.Internal;
 
+namespace Svelto.ECS.Schema.Internal
+{
+    public interface IEntityRowBase {}
+}
+
 namespace Svelto.ECS.Schema
 {
     // common parent of all rows

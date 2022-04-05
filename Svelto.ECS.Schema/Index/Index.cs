@@ -29,7 +29,7 @@ namespace Svelto.ECS.Schema.Internal
 
         void IEntityIndex.AddEngines(EnginesRoot enginesRoot, IndexedDB indexedDB)
         {
-            IndexableComponentHelper<TComponent>.EngineHandler.AddEngines<TRow>(enginesRoot, indexedDB);
+            KeyComponentHelper<TComponent>.Handler.AddEngines<TRow>(enginesRoot, indexedDB);
         }
     }
 }

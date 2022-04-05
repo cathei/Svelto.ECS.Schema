@@ -22,6 +22,6 @@ namespace Svelto.ECS.Schema.Internal
 namespace Svelto.ECS.Schema
 {
     public interface IIndexableRow<TComponent> : IQueryableRow<ResultSet<TComponent>>
-        where TComponent : unmanaged, IEntityComponent
+        where TComponent : unmanaged, IKeyComponent
     { }
 }

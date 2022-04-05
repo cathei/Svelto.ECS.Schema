@@ -7,13 +7,12 @@ namespace Svelto.ECS.Schema
 {
     public static class IndexExtensions
     {
-        // public static void Update<TComponent>(
-        //         this IndexedDB indexedDB, ref TComponent component)
-        //     where TComponent : unmanaged, IIndexableComponent
-        // {
-        //     indexedDB.UpdateIndexableComponent(, component.ID,
-        //         IndexComponentReflection<TComponent>.KeyGetter<TK>.Getter(ref component));
-        // }
+        public static void Update<TComponent>(
+                this IndexedDB indexedDB, ref TComponent component, in EGID egid)
+            where TComponent : unmanaged, IKeyComponent
+        {
+            KeyComponentHelper<TComponent>.Handler.Update(indexedDB, ref component, egid);
+        }
 
         public static void Update<TComponent, TKey>(
                 this IndexedDB indexedDB, ref TComponent component, in EGID egid, in TKey key)
@@ -21,8 +20,7 @@ namespace Svelto.ECS.Schema
             where TKey : unmanaged, IEquatable<TKey>
         {
             component.key = key;
-            indexedDB.UpdateIndexableComponent(
-                TypeRefWrapper<TComponent>.wrapper, egid, component.key);
+            KeyComponentHelper<TComponent>.Handler.Update(indexedDB, ref component, egid);
         }
 
         public static void Update<TComponent, TKey>(
@@ -31,8 +29,7 @@ namespace Svelto.ECS.Schema
             where TKey : unmanaged, Enum
         {
             component.key = key;
-            indexedDB.UpdateIndexableComponent(
-                TypeRefWrapper<TComponent>.wrapper, egid, component.key);
+            KeyComponentHelper<TComponent>.Handler.Update(indexedDB, ref component, egid);
         }
     }
 }

@@ -56,38 +56,38 @@ namespace Svelto.ECS.Schema.Internal
         }
     }
 
-    public readonly ref struct SelectQuery<TResult1, TResult2>
-        where TResult1 : struct, IResultSet
-        where TResult2 : struct, IResultSet
-    {
-        internal readonly IndexedDB _indexedDB;
+    // public readonly ref struct SelectQuery<TResult1, TResult2>
+    //     where TResult1 : struct, IResultSet
+    //     where TResult2 : struct, IResultSet
+    // {
+    //     internal readonly IndexedDB _indexedDB;
 
-        public SelectQuery(IndexedDB indexedDB)
-        {
-            _indexedDB = indexedDB;
-        }
+    //     public SelectQuery(IndexedDB indexedDB)
+    //     {
+    //         _indexedDB = indexedDB;
+    //     }
 
-        private static (TResult1, TResult2) QueryEntities(EntitiesDB entitiesDB, in ExclusiveGroupStruct group)
-        {
-            ResultSetHelper<TResult1>.Assign(out var result1, entitiesDB, group);
-            ResultSetHelper<TResult2>.Assign(out var result2, entitiesDB, group);
-            return (result1, result2);
-        }
+    //     private static (TResult1, TResult2) QueryEntities(EntitiesDB entitiesDB, in ExclusiveGroupStruct group)
+    //     {
+    //         ResultSetHelper<TResult1>.Assign(out var result1, entitiesDB, group);
+    //         ResultSetHelper<TResult2>.Assign(out var result2, entitiesDB, group);
+    //         return (result1, result2);
+    //     }
 
-        private static readonly SelectFromQueryDelegate<(TResult1, TResult2)> Selector = QueryEntities;
+    //     private static readonly SelectFromQueryDelegate<(TResult1, TResult2)> Selector = QueryEntities;
 
-        public SelectFromQuery<TRow, (TResult1, TResult2)> From<TRow>()
-            where TRow : class, IQueryableRow<TResult1>, IQueryableRow<TResult2>
-        {
-            return new(_indexedDB, Selector);
-        }
+    //     public SelectFromQuery<TRow, (TResult1, TResult2)> From<TRow>()
+    //         where TRow : class, IQueryableRow<TResult1>, IQueryableRow<TResult2>
+    //     {
+    //         return new(_indexedDB, Selector);
+    //     }
 
-        public SelectFromQuery<TRow, (TResult1, TResult2)> From<TRow>(IEntityTables<TRow> tables)
-            where TRow : class, IQueryableRow<TResult1>, IQueryableRow<TResult2>
-        {
-            return new(_indexedDB, tables, Selector);
-        }
-    }
+    //     public SelectFromQuery<TRow, (TResult1, TResult2)> From<TRow>(IEntityTables<TRow> tables)
+    //         where TRow : class, IQueryableRow<TResult1>, IQueryableRow<TResult2>
+    //     {
+    //         return new(_indexedDB, tables, Selector);
+    //     }
+    // }
 }
 
 namespace Svelto.ECS.Schema
@@ -100,12 +100,12 @@ namespace Svelto.ECS.Schema
             return new(indexedDB);
         }
 
-        public static SelectQuery<TResult1, TResult2> Select<TResult1, TResult2>(this IndexedDB indexedDB)
-            where TResult1 : struct, IResultSet
-            where TResult2 : struct, IResultSet
-        {
-            return new(indexedDB);
-        }
+        // public static SelectQuery<TResult1, TResult2> Select<TResult1, TResult2>(this IndexedDB indexedDB)
+        //     where TResult1 : struct, IResultSet
+        //     where TResult2 : struct, IResultSet
+        // {
+        //     return new(indexedDB);
+        // }
 
         public static SelectFromQuery<TRow, Empty> From<TRow>(this IndexedDB indexedDB)
             where TRow : class, IEntityRow

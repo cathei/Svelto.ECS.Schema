@@ -5,45 +5,6 @@ using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema.Internal
 {
-    internal static class IndexableComponentHelper<TComponent>
-        where TComponent : unmanaged, IKeyComponent
-    {
-        internal abstract class EngineHandlerBase
-        {
-            public abstract void AddEngines<TRow>(EnginesRoot enginesRoot, IndexedDB indexedDB)
-                where TRow : class, IQueryableRow<ResultSet<TComponent>>;
-        }
-
-        internal static EngineHandlerBase EngineHandler;
-
-        public static class KeyGetter<TKey>
-            where TKey : unmanaged, IEquatable<TKey>
-        {
-            internal delegate TKey GetterDelegate(ref TComponent component);
-
-            internal static readonly GetterDelegate Getter;
-
-            static KeyGetter()
-            {
-                EngineHandler = new EngineHandlerImpl();
-
-                var getMethod = typeof(TComponent).GetProperty(nameof(IKeyComponent<TKey>.key)).GetMethod;
-                Getter = (GetterDelegate)Delegate.CreateDelegate(typeof(GetterDelegate), getMethod);
-            }
-
-            // just trigger for static constructor
-            public static void Warmup() { }
-
-            public class EngineHandlerImpl : EngineHandlerBase
-            {
-                public override void AddEngines<TRow>(EnginesRoot enginesRoot, IndexedDB indexedDB)
-                {
-                    enginesRoot.AddEngine(new TableIndexingEngine<TRow, TComponent, TKey>(indexedDB));
-                }
-            }
-        }
-    }
-
     public interface IKeyComponent : IEntityComponent
     {
         internal void Warmup<TComponent>() where TComponent : unmanaged, IKeyComponent;
@@ -63,7 +24,7 @@ namespace Svelto.ECS.Schema
 
         void IKeyComponent.Warmup<TComponent>()
         {
-            IndexableComponentHelper<TComponent>.KeyGetter<TKey>.Warmup();
+            KeyComponentHelperIndex<TComponent, TKey>.Warmup();
         }
     }
 }
