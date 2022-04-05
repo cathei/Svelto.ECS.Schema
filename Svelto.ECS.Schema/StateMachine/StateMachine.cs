@@ -15,7 +15,7 @@ namespace Svelto.ECS.Schema.Definition
 
         public interface IIndexableRow : IIndexableRow<TComponent>, IEntityRow<TComponent> { }
 
-        int IIndexQueryable<IIndexableRow, TComponent>.IndexerID => config._index._indexerID;
+        FilterContextID IIndexQueryable<IIndexableRow, TComponent>.IndexerID => config._index._indexerID;
 
         IEntityIndex IEntityStateMachine.Index => config._index;
 

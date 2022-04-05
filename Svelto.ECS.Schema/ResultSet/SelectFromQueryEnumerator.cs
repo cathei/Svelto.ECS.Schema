@@ -4,21 +4,25 @@ using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema
 {
-    public ref struct FromRowQueryEnumerator<TRow>
+    public ref struct SelectFromQueryEnumerator<TRow, TResult>
         where TRow : class, IEntityRow
+        where TResult : struct
     {
         private readonly ResultSetQueryConfig _config;
+        private readonly SelectFromQueryDelegate<TResult> _selector;
 
         private readonly NB<ExclusiveGroupStruct> _groups;
         private readonly uint _groupCount;
 
         private int _groupIndex;
+        private TResult _result;
         private NativeEntityIDs _entityIDs;
         private int _count;
 
-        internal FromRowQueryEnumerator(ResultSetQueryConfig config) : this()
+        internal SelectFromQueryEnumerator(ResultSetQueryConfig config, SelectFromQueryDelegate<TResult> selector) : this()
         {
             _config = config;
+            _selector = selector;
             _groupIndex = -1;
 
             _groups = _config.temporaryGroups.GetValues(out _groupCount);
@@ -26,8 +30,6 @@ namespace Svelto.ECS.Schema
 
         public bool MoveNext()
         {
-            bool moveNext = false;
-
             while (++_groupIndex < _groupCount)
             {
                 var currentGroup = _groups[_groupIndex];
@@ -50,13 +52,17 @@ namespace Svelto.ECS.Schema
 
                 if (haveAllFilters)
                 {
-                    (_, _entityIDs, _count) = _config.indexedDB.entitiesDB.QueryEntities<RowIdentityComponent>(currentGroup);
-                    moveNext = true;
-                    break;
+                    (_entityIDs, _count) = _config.indexedDB.QueryEntityIDs(currentGroup);
+
+                    if (_count == 0)
+                        continue;
+
+                    _result = _selector(_config.indexedDB.entitiesDB, currentGroup);
+                    return true;
                 }
             }
 
-            return moveNext;
+            return false;
         }
 
         public void Reset() { _groupIndex = -1; }
@@ -67,7 +73,7 @@ namespace Svelto.ECS.Schema
             ResultSetQueryConfig.Return(_config);
         }
 
-        public FromGroupQuery<TRow> Current =>
-            new(_config, _groups[_groupIndex], new(_config.temporaryFilters, _entityIDs, _count));
+        public SelectFromQueryResult<TResult> Current =>
+            new(_result, _groups[_groupIndex], new(_config.temporaryFilters, _entityIDs, _count));
     }
 }

@@ -74,28 +74,26 @@ namespace Svelto.ECS.Schema.Definition
                 indexedDB.Memo(states[i]._enterCandidates).Clear();
             }
 
-            foreach (var query in indexedDB.From<TRow>())
+            foreach (var result in indexedDB.Select<ResultSet<TComponent>>().From<TRow>())
             {
-                query.Select(out ResultSet<TComponent> result);
-
                 for (int i = 0; i < stateCount; ++i)
                 {
-                    states[i].Evaluate(indexedDB, query, result);
+                    states[i].Evaluate(indexedDB, result);
                 }
 
                 // any state transition has lower priority
-                _anyState.Evaluate(indexedDB, query, result);
+                _anyState.Evaluate(indexedDB, result);
 
                 // check for exit candidates
                 for (int i = 0; i < stateCount; ++i)
                 {
-                    states[i].ProcessExit(indexedDB, query, result);
+                    states[i].ProcessExit(indexedDB, result);
                 }
 
                 // check for enter candidates
                 for (int i = 0; i < stateCount; ++i)
                 {
-                    states[i].ProcessEnter(indexedDB, query, result);
+                    states[i].ProcessEnter(indexedDB, result);
                 }
             }
         }

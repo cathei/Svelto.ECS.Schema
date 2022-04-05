@@ -44,8 +44,7 @@ namespace Svelto.ECS.Schema.Tests
             IPrimaryKeyRow<CharacterGroupComponent>,
             IIndexableRow<CharacterControllerComponent>,
             IIndexableRow<CharacterStateComponent>,
-            IQueryableRow<ControllerAndStateSet>,
-            IMemorableRow
+            IQueryableRow<ControllerAndStateSet>
         { }
 
         public class TestSchema : EntitySchema
@@ -94,18 +93,17 @@ namespace Svelto.ECS.Schema.Tests
 
             int entityCount = 0;
 
-            foreach (var query in _indexedDB.From(_schema.Character).Where(_schema.Memo))
+            foreach (var result in _indexedDB.Select<ControllerAndStateSet>()
+                .From(_schema.Character).Where(_schema.Memo))
             {
-                query.Select(out ControllerAndStateSet result);
-                
-                foreach (int i in query.indices)
+                foreach (int i in result.indices)
                 {
                     bool controllerMatch =
-                        result.controller[i].key == 0 ||
-                        result.controller[i].key == 3 ||
-                        result.controller[i].key == 6;
+                        result.set.controller[i].key == 0 ||
+                        result.set.controller[i].key == 3 ||
+                        result.set.controller[i].key == 6;
 
-                    bool stateMatch = result.state[i].key == CharacterState.Happy;
+                    bool stateMatch = result.set.state[i].key == CharacterState.Happy;
 
                     Assert.True(controllerMatch || stateMatch);
 
@@ -145,18 +143,17 @@ namespace Svelto.ECS.Schema.Tests
 
             int entityCount = 0;
 
-            foreach (var query in _indexedDB.From(_schema.Character).Where(_schema.Memo))
+            foreach (var result in _indexedDB.Select<ControllerAndStateSet>()
+                .From(_schema.Character).Where(_schema.Memo))
             {
-                query.Select(out ControllerAndStateSet result);
-
-                foreach (int i in query.indices)
+                foreach (int i in result.indices)
                 {
                     bool controllerMatch =
-                        result.controller[i].key == 0 ||
-                        result.controller[i].key == 3 ||
-                        result.controller[i].key == 6;
+                        result.set.controller[i].key == 0 ||
+                        result.set.controller[i].key == 3 ||
+                        result.set.controller[i].key == 6;
 
-                    bool stateMatch = result.state[i].key == CharacterState.Happy;
+                    bool stateMatch = result.set.state[i].key == CharacterState.Happy;
 
                     Assert.True(controllerMatch && stateMatch);
 

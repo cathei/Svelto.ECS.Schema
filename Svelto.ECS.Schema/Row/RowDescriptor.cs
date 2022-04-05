@@ -61,8 +61,7 @@ namespace Svelto.ECS.Schema
 
                     var genericDefinition = interfaceType.GetGenericTypeDefinition();
 
-                    if (genericDefinition == typeof(IEntityRow<>) ||
-                        genericDefinition == typeof(IReactiveRow<>))
+                    if (genericDefinition == typeof(IEntityRow<>))
                     {
                         addComponentBuilders(interfaceType);
                     }

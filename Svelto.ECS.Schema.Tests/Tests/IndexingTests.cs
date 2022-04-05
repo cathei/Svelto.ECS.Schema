@@ -9,14 +9,15 @@ namespace Svelto.ECS.Schema.Tests
     public class IndexingTests : SchemaTestsBase<IndexingTests.TestSchema>
     {
         // components
-        public struct ItemOwnerComponent : IKeyComponent<int>, INeedEGID
+        public struct ItemOwnerComponent : IKeyComponent<int>
         {
-            public EGID ID { get; set; }
             public int key { get; set; }
+            public uint entityID;
 
-            public ItemOwnerComponent(int itemOwner) : this()
+            public ItemOwnerComponent(int itemOwner, uint entityID) : this()
             {
                 key = itemOwner;
+                this.entityID = entityID;
             }
         }
 
@@ -31,35 +32,22 @@ namespace Svelto.ECS.Schema.Tests
         }
 
         // result sets
-        public struct EGIDSet : IResultSet<EGIDComponent>
-        {
-            public NB<EGIDComponent> egid;
-
-            public int count { get; set; }
-
-            public void Init(in EntityCollection<EGIDComponent> buffers)
-            {
-                (egid, count) = buffers;
-            }
-        }
-
-        public struct ItemWithOwnerSet : IResultSet<ItemOwnerComponent, EGIDComponent, PlayerComponent>
+        public struct ItemWithOwnerSet : IResultSet<ItemOwnerComponent, PlayerComponent>
         {
             public NB<ItemOwnerComponent> itemOwner;
-            public NB<EGIDComponent> egid;
             public NB<PlayerComponent> player;
 
             public int count { get; set; }
 
-            public void Init(in EntityCollection<ItemOwnerComponent, EGIDComponent, PlayerComponent> buffers)
+            public void Init(in EntityCollection<ItemOwnerComponent, PlayerComponent> buffers)
             {
-                (itemOwner, egid, player, count) = buffers;
+                (itemOwner, player, count) = buffers;
             }
         }
 
         // rows
         public class CharacterRow : DescriptorRow<CharacterRow>,
-            IQueryableRow<EGIDSet>, IPrimaryKeyRow<PlayerComponent>
+            IPrimaryKeyRow<PlayerComponent>
         {}
 
         public class ItemRow : DescriptorRow<ItemRow>,
@@ -87,25 +75,24 @@ namespace Svelto.ECS.Schema.Tests
         }
 
         private void AssertIndexer(int itemOwnerKey, int? playerId, int expectedGroupCount,
-            out List<ItemOwnerComponent> components)
+            out List<ItemOwnerComponent> entityIDs)
         {
-            components = new List<ItemOwnerComponent>();
+            entityIDs = new List<ItemOwnerComponent>();
 
             int groupCount = 0;
 
-            var queries = _indexedDB.From<ItemRow>().Where(_schema.ItemOwner.Is(itemOwnerKey));
+            var query = _indexedDB.Select<ItemWithOwnerSet>()
+                .From<ItemRow>().Where(_schema.ItemOwner.Is(itemOwnerKey));
 
             if (playerId != null)
-                queries.Where(_schema.Player.Is(playerId.Value));
+                query.Where(_schema.Player.Is(playerId.Value));
 
-            foreach (var query in queries)
+            foreach (var result in query)
             {
                 groupCount++;
 
-                query.Select(out ItemWithOwnerSet result);
-
-                foreach (var i in query.indices)
-                    components.Add(result.itemOwner[i]);
+                foreach (var i in result.indices)
+                    entityIDs.Add(result.set.itemOwner[i]);
             }
 
             Assert.Equal(expectedGroupCount, groupCount);
@@ -118,22 +105,22 @@ namespace Svelto.ECS.Schema.Tests
 
             for (int i = 0; i < 10; ++i)
             {
-                var itemBuilder = _factory.Build(_schema.Item, itemIdCounter++);
-                itemBuilder.Init(new ItemOwnerComponent(0));
+                var itemBuilder = _factory.Build(_schema.Item, itemIdCounter);
+                itemBuilder.Init(new ItemOwnerComponent(0, itemIdCounter++));
                 itemBuilder.Init(new PlayerComponent(-1));
             }
 
             for (int i = 0; i < 10; ++i)
             {
-                var itemBuilder = _factory.Build(_schema.Item, itemIdCounter++);
-                itemBuilder.Init(new ItemOwnerComponent(0));
+                var itemBuilder = _factory.Build(_schema.Item, itemIdCounter);
+                itemBuilder.Init(new ItemOwnerComponent(0, itemIdCounter++));
                 itemBuilder.Init(new PlayerComponent(0));
             }
 
             for (int i = 0; i < 10; ++i)
             {
-                var itemBuilder = _factory.Build(_schema.Item, itemIdCounter++);
-                itemBuilder.Init(new ItemOwnerComponent(0));
+                var itemBuilder = _factory.Build(_schema.Item, itemIdCounter);
+                itemBuilder.Init(new ItemOwnerComponent(0, itemIdCounter++));
                 itemBuilder.Init(new PlayerComponent(1));
             }
 
@@ -143,35 +130,34 @@ namespace Svelto.ECS.Schema.Tests
 
             Assert.Equal(30, queriedComponents.Count);
 
-            Assert.Contains(0u, queriedComponents.Select(x => x.ID.entityID));
-            Assert.Contains(10u, queriedComponents.Select(x => x.ID.entityID));
-            Assert.Contains(20u, queriedComponents.Select(x => x.ID.entityID));
+            Assert.Contains(0u, queriedComponents.Select(x => x.entityID));
+            Assert.Contains(10u, queriedComponents.Select(x => x.entityID));
+            Assert.Contains(20u, queriedComponents.Select(x => x.entityID));
 
             Assert.All(queriedComponents.Select(x => x.key), x => Assert.Equal(0, x));
 
-            foreach (var query in _indexedDB.From(_schema.Item).Where(_schema.Player.Is(0)))
+            foreach (var result in _indexedDB.Select<ItemWithOwnerSet>()
+                .From(_schema.Item).Where(_schema.Player.Is(0)))
             {
-                query.Select(out ItemWithOwnerSet result);
-
-                foreach (var i in query.indices)
-                    _indexedDB.Update(ref result.itemOwner[i], result.egid[i].ID, 1);
+                foreach (var i in result.indices)
+                    _indexedDB.Update(ref result.set.itemOwner[i], new EGID(result.entityIDs[i], result.group), 1);
             }
 
             AssertIndexer(0, null, 2, out queriedComponents);
 
             Assert.Equal(20, queriedComponents.Count);
 
-            Assert.Contains(0u, queriedComponents.Select(x => x.ID.entityID));
-            Assert.DoesNotContain(10u, queriedComponents.Select(x => x.ID.entityID));
-            Assert.Contains(20u, queriedComponents.Select(x => x.ID.entityID));
+            Assert.Contains(0u, queriedComponents.Select(x => x.entityID));
+            Assert.DoesNotContain(10u, queriedComponents.Select(x => x.entityID));
+            Assert.Contains(20u, queriedComponents.Select(x => x.entityID));
 
             AssertIndexer(1, null, 1, out queriedComponents);
 
             Assert.Equal(10, queriedComponents.Count);
 
-            Assert.DoesNotContain(0u, queriedComponents.Select(x => x.ID.entityID));
-            Assert.Contains(10u, queriedComponents.Select(x => x.ID.entityID));
-            Assert.DoesNotContain(20u, queriedComponents.Select(x => x.ID.entityID));
+            Assert.DoesNotContain(0u, queriedComponents.Select(x => x.entityID));
+            Assert.Contains(10u, queriedComponents.Select(x => x.entityID));
+            Assert.DoesNotContain(20u, queriedComponents.Select(x => x.entityID));
         }
 
         [Fact]
@@ -181,22 +167,22 @@ namespace Svelto.ECS.Schema.Tests
 
             for (int i = 0; i < 10; ++i)
             {
-                var itemBuilder = _factory.Build(_schema.Item, itemIdCounter++);
-                itemBuilder.Init(new ItemOwnerComponent(0));
+                var itemBuilder = _factory.Build(_schema.Item, itemIdCounter);
+                itemBuilder.Init(new ItemOwnerComponent(0, itemIdCounter++));
                 itemBuilder.Init(new PlayerComponent(-1));
             }
 
             for (int i = 0; i < 10; ++i)
             {
-                var itemBuilder = _factory.Build(_schema.Item, itemIdCounter++);
-                itemBuilder.Init(new ItemOwnerComponent(0));
+                var itemBuilder = _factory.Build(_schema.Item, itemIdCounter);
+                itemBuilder.Init(new ItemOwnerComponent(0, itemIdCounter++));
                 itemBuilder.Init(new PlayerComponent(0));
             }
 
             for (int i = 0; i < 10; ++i)
             {
-                var itemBuilder = _factory.Build(_schema.Item, itemIdCounter++);
-                itemBuilder.Init(new ItemOwnerComponent(0));
+                var itemBuilder = _factory.Build(_schema.Item, itemIdCounter);
+                itemBuilder.Init(new ItemOwnerComponent(0, itemIdCounter++));
                 itemBuilder.Init(new PlayerComponent(1));
             }
 
@@ -206,17 +192,15 @@ namespace Svelto.ECS.Schema.Tests
 
             Assert.Equal(10, queriedComponents.Count);
 
-            Assert.Contains(0u, queriedComponents.Select(x => x.ID.entityID));
-            Assert.Contains(5u, queriedComponents.Select(x => x.ID.entityID));
-            Assert.DoesNotContain(10u, queriedComponents.Select(x => x.ID.entityID));
-            Assert.DoesNotContain(20u, queriedComponents.Select(x => x.ID.entityID));
+            Assert.Contains(0u, queriedComponents.Select(x => x.entityID));
+            Assert.Contains(5u, queriedComponents.Select(x => x.entityID));
+            Assert.DoesNotContain(10u, queriedComponents.Select(x => x.entityID));
+            Assert.DoesNotContain(20u, queriedComponents.Select(x => x.entityID));
 
-            foreach (var query in _indexedDB.From(_schema.Item).Where(_schema.Player.Is(-1)))
+            foreach (var result in _indexedDB.Select<ItemWithOwnerSet>().From(_schema.Item).Where(_schema.Player.Is(-1)))
             {
-                query.Select(out ItemWithOwnerSet result);
-
-                for (int i = 0; i < result.count / 2; ++i)
-                    _indexedDB.Update(ref result.player[i], result.egid[i].ID, 1);
+                for (int i = 0; i < result.set.count / 2; ++i)
+                    _indexedDB.Update(ref result.set.player[i], new EGID(result.entityIDs[i], result.group), 1);
             }
 
             _indexedDB.Engine.Step();
@@ -226,17 +210,17 @@ namespace Svelto.ECS.Schema.Tests
 
             Assert.Equal(5, queriedComponents.Count);
 
-            Assert.DoesNotContain(0u, queriedComponents.Select(x => x.ID.entityID));
-            Assert.Contains(5u, queriedComponents.Select(x => x.ID.entityID));
+            Assert.DoesNotContain(0u, queriedComponents.Select(x => x.entityID));
+            Assert.Contains(5u, queriedComponents.Select(x => x.entityID));
 
             AssertIndexer(0, 1, 1, out queriedComponents);
 
             Assert.Equal(15, queriedComponents.Count);
 
-            Assert.Contains(0u, queriedComponents.Select(x => x.ID.entityID));
-            Assert.DoesNotContain(5u, queriedComponents.Select(x => x.ID.entityID));
-            Assert.DoesNotContain(10u, queriedComponents.Select(x => x.ID.entityID));
-            Assert.Contains(20u, queriedComponents.Select(x => x.ID.entityID));
+            Assert.Contains(0u, queriedComponents.Select(x => x.entityID));
+            Assert.DoesNotContain(5u, queriedComponents.Select(x => x.entityID));
+            Assert.DoesNotContain(10u, queriedComponents.Select(x => x.entityID));
+            Assert.Contains(20u, queriedComponents.Select(x => x.entityID));
         }
 
         [Fact]
@@ -246,38 +230,36 @@ namespace Svelto.ECS.Schema.Tests
 
             for (int i = 0; i < 10; ++i)
             {
-                var itemBuilder = _factory.Build(_schema.Item, itemIdCounter++);
-                itemBuilder.Init(new ItemOwnerComponent(i));
+                var itemBuilder = _factory.Build(_schema.Item, itemIdCounter);
+                itemBuilder.Init(new ItemOwnerComponent(i, itemIdCounter++));
                 itemBuilder.Init(new PlayerComponent(-1));
             }
 
             for (int i = 0; i < 10; ++i)
             {
-                var itemBuilder = _factory.Build(_schema.Item, itemIdCounter++);
-                itemBuilder.Init(new ItemOwnerComponent(i));
+                var itemBuilder = _factory.Build(_schema.Item, itemIdCounter);
+                itemBuilder.Init(new ItemOwnerComponent(i, itemIdCounter++));
                 itemBuilder.Init(new PlayerComponent(3));
             }
 
             for (int i = 0; i < 10; ++i)
             {
-                var itemBuilder = _factory.Build(_schema.Item, itemIdCounter++);
-                itemBuilder.Init(new ItemOwnerComponent(i));
+                var itemBuilder = _factory.Build(_schema.Item, itemIdCounter);
+                itemBuilder.Init(new ItemOwnerComponent(i, itemIdCounter++));
                 itemBuilder.Init(new PlayerComponent(5));
             }
 
             _submissionScheduler.SubmitEntities();
 
-            foreach (var query in _indexedDB.From(_schema.Item)
+            foreach (var result in _indexedDB.Select<ItemWithOwnerSet>().From(_schema.Item)
                 .Where(_schema.ItemOwner.Is(0)).Where(_schema.Player.Is(-1)))
             {
-                query.Select(out ItemWithOwnerSet result);
-
                 int count = 0;
 
-                foreach (var i in query.indices)
+                foreach (var i in result.indices)
                 {
                     count++;
-                    Assert.Equal(0u, result.egid[i].ID.entityID);
+                    Assert.Equal(0u, result.set.itemOwner[i].entityID);
                 }
 
                 Assert.Equal(1, count);
@@ -287,12 +269,12 @@ namespace Svelto.ECS.Schema.Tests
 
             Assert.Equal(3, queriedComponents.Count);
 
-            Assert.Contains(7u, queriedComponents.Select(x => x.ID.entityID));
-            Assert.Contains(17u, queriedComponents.Select(x => x.ID.entityID));
-            Assert.Contains(27u, queriedComponents.Select(x => x.ID.entityID));
+            Assert.Contains(7u, queriedComponents.Select(x => x.entityID));
+            Assert.Contains(17u, queriedComponents.Select(x => x.entityID));
+            Assert.Contains(27u, queriedComponents.Select(x => x.entityID));
 
-            Assert.DoesNotContain(10u, queriedComponents.Select(x => x.ID.entityID));
-            Assert.DoesNotContain(20u, queriedComponents.Select(x => x.ID.entityID));
+            Assert.DoesNotContain(10u, queriedComponents.Select(x => x.entityID));
+            Assert.DoesNotContain(20u, queriedComponents.Select(x => x.entityID));
         }
     }
 }

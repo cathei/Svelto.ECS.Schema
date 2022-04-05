@@ -8,8 +8,7 @@ namespace Svelto.ECS.Schema.Internal
     internal static class ResultSetHelper<T> where T : struct, IResultSet
     {
         // boxed as template
-        private readonly static ThreadLocal<IResultSet> defaultBoxed
-            = new ThreadLocal<IResultSet>(() => default(T));
+        private readonly static ThreadLocal<IResultSet> defaultBoxed = new(() => default(T));
 
         // some tricky thing is happening here but this should be threadsafe
         public static void Assign(out T resultSet, EntitiesDB entitiesDB, in ExclusiveGroupStruct groupID)

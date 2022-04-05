@@ -23,16 +23,15 @@ namespace Svelto.ECS.Schema.Tests
             public uint proof;
         }
 
-        public struct ThiefSet : IResultSet<EGIDComponent, ThiefCopmonent>
+        public struct ThiefSet : IResultSet<ThiefCopmonent>
         {
-            public NB<EGIDComponent> egid;
             public NB<ThiefCopmonent> thief;
 
             public int count { get; set; }
 
-            public void Init(in EntityCollection<EGIDComponent, ThiefCopmonent> buffers)
+            public void Init(in EntityCollection<ThiefCopmonent> buffers)
             {
-                (egid, thief, count) = buffers;
+                (thief, count) = buffers;
             }
         }
 
@@ -84,18 +83,16 @@ namespace Svelto.ECS.Schema.Tests
 
             uint policeCount = 0;
 
-            foreach (var query in _indexedDB.From<ThiefSet>())
+            foreach (var result in _indexedDB.Select<ThiefSet>().FromAll())
             {
-                query.Select(out var result);
-
-                foreach (var i in query.indices)
+                foreach (var i in result.indices)
                 {
                     var builder = _factory.Build(_schema.Police, policeCount++);
 
                     builder.Init(new PoliceComponent
                     {
-                        target = _indexedDB.GetEntityReference(result.egid[i].ID.entityID, query.group),
-                        proof = result.thief[i].proof
+                        target = _indexedDB.GetEntityReference(result.entityIDs[i], result.group),
+                        proof = result.set.thief[i].proof
                     });
                 }
             }
@@ -105,16 +102,12 @@ namespace Svelto.ECS.Schema.Tests
             _submissionScheduler.SubmitEntities();
             _indexedDB.Engine.Step();
 
-            foreach (var query in _indexedDB.From(_schema.Police))
+            foreach (var result in _indexedDB.Select<PoliceSet>().From(_schema.Police))
             {
-                query.Select(out PoliceSet result);
-
-                Assert.Equal(1000, result.count);
-
                 for (int i = 0; i < 1000; ++i)
                 {
                     Assert.True(_indexedDB.TryGetEntityIndex<ThiefRow>(
-                        result.police[i].target, out var index));
+                        result.set.police[i].target, out var index));
 
                     // TODO Foriegn Key
 

@@ -1,39 +1,54 @@
 using System;
 using System.Collections.Generic;
 using Svelto.DataStructures;
+using Svelto.ECS.Internal;
 using Svelto.ECS.Schema.Definition;
 using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema.Internal
 {
     internal class PrimaryKeyEngine :
-        ReactToRowEngine<IPrimaryKeyRow, RowIdentityComponent>, IStepEngine, IReactOnSubmission
+        IReactRowAdd<IPrimaryKeyRow, ResultSet<RowIdentityComponent>>,
+        IReactRowSwap<IPrimaryKeyRow, ResultSet<RowIdentityComponent>>,
+        IStepEngine
     {
-        public PrimaryKeyEngine(IndexedDB indexedDB) : base(indexedDB) { }
+        public PrimaryKeyEngine(IndexedDB indexedDB)
+        {
+            this.indexedDB = indexedDB;
+        }
+
+        public IndexedDB indexedDB { get; }
 
         public string name { get; } = nameof(PrimaryKeyEngine);
 
-        protected override void Add(ref RowIdentityComponent entityComponent, IEntityTable<IPrimaryKeyRow> table, EGID egid)
+        public void Add(in ResultSet<RowIdentityComponent> resultSet,
+            RangedIndices indices, ExclusiveGroupStruct group)
         {
             // process only build group (no. 0)
-            if (egid.groupID != table.Group)
+            var table = indexedDB.FindTable(group);
+
+            if (group != table.Group)
                 return;
 
-            ProcessSingle(table, egid);
+            Process(resultSet.entityIDs, indices, group);
         }
 
-        protected override void MovedTo(ref RowIdentityComponent entityComponent, IEntityTable<IPrimaryKeyRow> previousTable, IEntityTable<IPrimaryKeyRow> table, EGID egid)
+        public void MovedTo(in ResultSet<RowIdentityComponent> resultSet,
+            RangedIndices indices, ExclusiveGroupStruct fromGroup, ExclusiveGroupStruct toGroup)
         {
             // process only build group (no. 0)
-            if (egid.groupID != table.Group)
+            var table = indexedDB.FindTable(toGroup);
+
+            if (toGroup != table.Group)
                 return;
 
-            ProcessSingle(table, egid);
+            Process(resultSet.entityIDs, indices, toGroup);
         }
 
-        // TODO AddEx will improve performance
-        public void ProcessSingle(IEntityTable<IPrimaryKeyRow> table, EGID egid)
+        public void Process(NativeEntityIDs entityIDs, in RangedIndices indices, ExclusiveGroupStruct group)
         {
+            var table = indexedDB.FindTable(group);
+
             if (table.PrimaryKeys.count == 0)
                 return;
 
@@ -41,41 +56,35 @@ namespace Svelto.ECS.Schema.Internal
 
             for (int p = 0; p < pkCount; ++p)
             {
-                pks[p].Ready(indexedDB.entitiesDB, egid.groupID);
+                pks[p].Ready(indexedDB.entitiesDB, group);
             }
 
-            indexedDB.TryGetEntityIndex(egid.entityID, egid.groupID, out var entityIndex);
-
-            int groupIndex = 0;
-
-            for (int p = 0; p < pkCount; ++p)
+            foreach (var i in indices)
             {
-                groupIndex *= pks[p].PossibleKeyCount;
-                groupIndex += pks[p].QueryGroupIndex(entityIndex);
+                int groupIndex = 0;
+
+                for (int p = 0; p < pkCount; ++p)
+                {
+                    groupIndex *= pks[p].PossibleKeyCount;
+                    groupIndex += pks[p].QueryGroupIndex(i);
+                }
+
+                ExclusiveGroupStruct targetGroup = table.Group + (uint)(groupIndex + 1);
+
+                if (group.id != targetGroup.id)
+                    table.Swap(indexedDB.entityFunctions, new EGID(entityIDs[i], group), targetGroup);
             }
-
-            ExclusiveGroupStruct targetGroup = table.Group + (uint)(groupIndex + 1);
-
-            if (egid.groupID.id != targetGroup.id)
-                table.Swap(indexedDB.entityFunctions, egid, targetGroup);
         }
 
         public void Step()
         {
-            var keyData = indexedDB.entitiesToUpdateGroup.GetIndexerKeyData(indexedDB);
-
-            if (keyData.groups == null || keyData.groups.count == 0)
-                return;
-
-            for (int filterIndex = 0; filterIndex < keyData.groups.count; ++filterIndex)
+            foreach (var query in indexedDB.From<IPrimaryKeyRow>().Where(indexedDB.entitiesToUpdateGroup))
             {
-                var group = keyData.groups.unsafeKeys[filterIndex].key;
-                var groupData = keyData.groups.unsafeValues[filterIndex];
-
+                var group = query.group;
                 var table = indexedDB.FindTable(group);
 
                 if (table.PrimaryKeys.count == 0)
-                    continue;
+                    return;
 
                 var pks = table.PrimaryKeys.GetValues(out var pkCount);
 
@@ -84,11 +93,7 @@ namespace Svelto.ECS.Schema.Internal
                     pks[p].Ready(indexedDB.entitiesDB, group);
                 }
 
-                var indices = new IndexedIndices(groupData.filter.filteredIndices);
-
-                var (egid, _) = indexedDB.entitiesDB.QueryEntities<EGIDComponent>(group);
-
-                foreach (var i in indices)
+                foreach (var i in query.indices)
                 {
                     int groupIndex = 0;
 
@@ -100,19 +105,11 @@ namespace Svelto.ECS.Schema.Internal
 
                     ExclusiveGroupStruct targetGroup = table.Group + (uint)(groupIndex + 1);
 
-                    if (egid[i].ID.groupID.id != targetGroup.id)
-                        table.Swap(indexedDB.entityFunctions, egid[i].ID, targetGroup);
+                    if (group.id != targetGroup.id)
+                        table.Swap(indexedDB.entityFunctions, new EGID(query.entityIDs[i], group), targetGroup);
                 }
             }
 
-            indexedDB.Memo(indexedDB.entitiesToUpdateGroup).Clear();
-        }
-
-        public void EntitiesSubmitted()
-        {
-            // this needs to be cleared otherwise it will be invalidated
-            // that means if user has any Update on it's iteration,
-            // they need to call Step() before entity submission
             indexedDB.Memo(indexedDB.entitiesToUpdateGroup).Clear();
         }
     }

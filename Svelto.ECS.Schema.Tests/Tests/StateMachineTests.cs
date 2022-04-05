@@ -124,16 +124,15 @@ namespace Svelto.ECS.Schema.Tests
 
             for (CharacterState state = 0; state < CharacterState.MAX; ++state)
             {
-                foreach (var query in _indexedDB.From(_schema.Character).Where(_schema.CharacterFSM.Is(state)))
+                foreach (var result in _indexedDB.Select<RageResultSet>()
+                    .From(_schema.Character).Where(_schema.CharacterFSM.Is(state)))
                 {
-                    query.Select(out RageResultSet result);
+                    count = result.set.count;
 
-                    count = result.count;
-
-                    foreach (var i in query.indices)
+                    foreach (var i in result.indices)
                     {
                         // component state must match
-                        Assert.Equal(state, (CharacterState)result.state[i].key);
+                        Assert.Equal(state, (CharacterState)result.set.state[i].key);
 
                         ++totalCheckedCount;
                     }
@@ -159,14 +158,12 @@ namespace Svelto.ECS.Schema.Tests
 
             AssertIndexer();
 
-            foreach (var query in _indexedDB.From(_schema.Character))
+            foreach (var result in _indexedDB.Select<RageResultSet>().From(_schema.Character))
             {
-                query.Select(out RageResultSet result);
-
-                foreach (var i in query.indices)
+                foreach (var i in result.indices)
                 {
-                    Assert.Equal(CharacterState.Normal, (CharacterState)result.state[i].key);
-                    result.rage[i].value = (int)(i * 2);
+                    Assert.Equal(CharacterState.Normal, (CharacterState)result.set.state[i].key);
+                    result.set.rage[i].value = (int)(i * 2);
                 }
             }
 
@@ -174,14 +171,12 @@ namespace Svelto.ECS.Schema.Tests
 
             AssertIndexer();
 
-            foreach (var query in _indexedDB.From(_schema.Character))
+            foreach (var result in _indexedDB.Select<RageResultSet>().From(_schema.Character))
             {
-                query.Select(out RageResultSet result);
-
-                foreach (var i in query.indices)
+                foreach (var i in result.indices)
                 {
                     Assert.Equal(i < 5 ? CharacterState.Normal : CharacterState.Upset,
-                        (CharacterState)result.state[i].key);
+                        (CharacterState)result.set.state[i].key);
                 }
             }
         }
@@ -200,13 +195,11 @@ namespace Svelto.ECS.Schema.Tests
 
             AssertIndexer();
 
-            foreach (var query in _indexedDB.From(_schema.Character))
+            foreach (var result in _indexedDB.Select<RageResultSet>().From(_schema.Character))
             {
-                query.Select(out RageResultSet result);
-
-                foreach (var i in query.indices)
+                foreach (var i in result.indices)
                 {
-                    Assert.Equal(CharacterState.Normal, (CharacterState)result.state[i].key);
+                    Assert.Equal(CharacterState.Normal, (CharacterState)result.set.state[i].key);
                 }
             }
 
@@ -214,13 +207,11 @@ namespace Svelto.ECS.Schema.Tests
 
             AssertIndexer();
 
-            foreach (var query in _indexedDB.From(_schema.Character))
+            foreach (var result in _indexedDB.Select<RageResultSet>().From(_schema.Character))
             {
-                query.Select(out RageResultSet result);
-
-                foreach (var i in query.indices)
+                foreach (var i in result.indices)
                 {
-                    Assert.Equal(CharacterState.Upset, (CharacterState)result.state[i].key);
+                    Assert.Equal(CharacterState.Upset, (CharacterState)result.set.state[i].key);
                 }
             }
 
@@ -228,13 +219,11 @@ namespace Svelto.ECS.Schema.Tests
 
             AssertIndexer();
 
-            foreach (var query in _indexedDB.From(_schema.Character))
+            foreach (var result in _indexedDB.Select<RageResultSet>().From(_schema.Character))
             {
-                query.Select(out RageResultSet result);
-
-                foreach (var i in query.indices)
+                foreach (var i in result.indices)
                 {
-                    Assert.Equal(CharacterState.Angry, (CharacterState)result.state[i].key);
+                    Assert.Equal(CharacterState.Angry, (CharacterState)result.set.state[i].key);
                 }
             }
         }
@@ -256,20 +245,19 @@ namespace Svelto.ECS.Schema.Tests
 
             AssertIndexer();
 
-            foreach (var query in _indexedDB.From(_schema.Character))
+            foreach (var result in _indexedDB.Select<AllFourSet>().From(_schema.Character))
             {
-                query.Select(out AllFourSet result);
-
-                foreach (var i in query.indices)
+                foreach (var i in result.indices)
                 {
-                    Assert.Equal(i % 2 == 0 ? CharacterState.Special : CharacterState.Normal, (CharacterState)result.state[i].key);
+                    Assert.Equal(i % 2 == 0 ? CharacterState.Special : CharacterState.Normal,
+                        (CharacterState)result.set.state[i].key);
 
                     // must assigned when ExecuteOnEnter
-                    Assert.False(result.trigger[i].value);
-                    Assert.Equal(i % 2 == 0 ? 1 : 0, result.timer[i].value);
+                    Assert.False(result.set.trigger[i].value);
+                    Assert.Equal(i % 2 == 0 ? 1 : 0, result.set.timer[i].value);
 
                     if (i % 3 == 0)
-                        result.timer[i].value = 0;
+                        result.set.timer[i].value = 0;
                 }
             }
 
@@ -277,16 +265,15 @@ namespace Svelto.ECS.Schema.Tests
 
             AssertIndexer();
 
-            foreach (var query in _indexedDB.From(_schema.Character))
+            foreach (var result in _indexedDB.Select<AllFourSet>().From(_schema.Character))
             {
-                query.Select(out AllFourSet result);
-
-                foreach (var i in query.indices)
+                foreach (var i in result.indices)
                 {
-                    Assert.Equal(i % 3 != 0 && i % 2 == 0 ? CharacterState.Special : CharacterState.Normal, (CharacterState)result.state[i].key);
+                    Assert.Equal(i % 3 != 0 && i % 2 == 0 ? CharacterState.Special : CharacterState.Normal,
+                        (CharacterState)result.set.state[i].key);
 
                     // must assigned when ExecuteOnExit
-                    Assert.Equal(i % 3 == 0 && i % 2 == 0 ? 5 : -1, result.rage[i].value);
+                    Assert.Equal(i % 3 == 0 && i % 2 == 0 ? 5 : -1, result.set.rage[i].value);
                 }
             }
         }
@@ -305,26 +292,22 @@ namespace Svelto.ECS.Schema.Tests
             // warming up
             _indexedDB.Engine.Step();
 
-            foreach (var query in _indexedDB.From(_schema.Character))
+            foreach (var result in _indexedDB.Select<RageResultSet>().From(_schema.Character))
             {
-                query.Select(out RageResultSet result);
-
-                foreach (var i in query.indices)
+                foreach (var i in result.indices)
                 {
-                    Assert.Equal(CharacterState.Normal, (CharacterState)result.state[i].key);
-                    result.rage[i].value = (int)i * 2;
+                    Assert.Equal(CharacterState.Normal, (CharacterState)result.set.state[i].key);
+                    result.set.rage[i].value = (int)i * 2;
                 }
             }
 
             _indexedDB.Engine.Step();
 
-            foreach (var query in _indexedDB.From(_schema.Character))
+            foreach (var result in _indexedDB.Select<RageResultSet>().From(_schema.Character))
             {
-                query.Select(out RageResultSet result);
-
-                foreach (var i in query.indices)
+                foreach (var i in result.indices)
                 {
-                    result.rage[i].value = 0;
+                    result.set.rage[i].value = 0;
                 }
             }
 

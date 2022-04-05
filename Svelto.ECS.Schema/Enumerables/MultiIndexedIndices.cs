@@ -1,8 +1,5 @@
-using System;
-using Svelto.DataStructures;
 using Svelto.ECS.DataStructures;
 using Svelto.ECS.Internal;
-using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema
 {
@@ -45,18 +42,18 @@ namespace Svelto.ECS.Schema
                 {
                     _current = _indices[_index];
 
-                    bool haveAllFilters = true;
+                    bool entityIsInAllFilters = true;
 
                     for (int i = 1; i < _filters.count; ++i)
                     {
                         if (_filters[i].Exists(_entityIDs[_current]))
                         {
-                            haveAllFilters = false;
+                            entityIsInAllFilters = false;
                             break;
                         }
                     }
 
-                    if (!haveAllFilters)
+                    if (!entityIsInAllFilters)
                         continue;
 
                     return true;

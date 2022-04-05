@@ -9,7 +9,6 @@
         <IsPackable>false</IsPackable>
         <Configurations>Debug;Release;SlowSubmissionRelease;SlowSubmissionDebug</Configurations>
         <Platforms>AnyCPU</Platforms>
-        <DefineConstants>TRACE;SLOW_SVELTO_SUBMISSION;DEBUG</DefineConstants>
     </PropertyGroup>
     <PropertyGroup>
         <PackageId>Svelto.ECS</PackageId>

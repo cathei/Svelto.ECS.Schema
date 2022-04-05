@@ -27,6 +27,9 @@ namespace Svelto.ECS.Schema
             public SharedSveltoDictionaryNative<EntityReference, TKey> previousKeys = new(0);
         }
 
+        // this will be cleared every time entity submission happens
+        // that means if user has any Update on it's iteration,
+        // they need to call IndexedDB.Engine.Step() before entity submission
         internal Memo<IPrimaryKeyRow> entitiesToUpdateGroup = new();
 
         internal IndexableComponentCache<TK> CreateOrGetComponentCache<TK>(in RefWrapperType componentType)

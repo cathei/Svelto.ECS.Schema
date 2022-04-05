@@ -2,16 +2,14 @@ using System.Collections.Generic;
 using System.Linq;
 using Svelto.DataStructures;
 using Svelto.ECS.Schema.Definition;
+using Svelto.ECS.Schema.Internal;
 using Xunit;
 
 namespace Svelto.ECS.Schema.Tests
 {
     public class ReactiveEngineTests : SchemaTestsBase<ReactiveEngineTests.TestSchema>
     {
-        public struct HealthComponent : IEntityComponent, INeedEGID
-        {
-            public EGID ID { get; set; }
-        }
+        public struct HealthComponent : IEntityComponent { }
 
         public struct DamageComponent : IEntityComponent { }
 
@@ -32,43 +30,52 @@ namespace Svelto.ECS.Schema.Tests
             public int key { get; set; }
         }
 
-        public struct GroupSet : IResultSet<GroupComponent, EGIDComponent>
+        public struct GroupSet : IResultSet<GroupComponent>
         {
             public NB<GroupComponent> group;
-            public NB<EGIDComponent> egid;
             public int count;
 
-            public void Init(in EntityCollection<GroupComponent, EGIDComponent> buffers)
+            public void Init(in EntityCollection<GroupComponent> buffers)
             {
-                (group, egid, count) = buffers;
+                (group, count) = buffers;
             }
         }
 
-        public interface IHealthRow : IReactiveRow<HealthComponent>, IQueryableRow<HealthSet> { }
-        public interface IDamageRow : IReactiveRow<DamageComponent> { }
+        public interface IHealthRow : IQueryableRow<HealthSet> { }
+        public interface IDamageRow : IEntityRow<DamageComponent> { }
 
-        public class HealthReactiveEngine : ReactToRowEngine<IHealthRow, HealthComponent>
+        public class HealthReactiveEngine :
+            IReactRowAdd<IHealthRow, HealthSet>,
+            IReactRowRemove<IHealthRow, HealthSet>,
+            IReactRowSwap<IHealthRow, HealthSet>
         {
             internal int added;
             internal int moved;
             internal int removed;
 
-            public HealthReactiveEngine(IndexedDB indexedDB) : base(indexedDB)
-            { }
+            public IndexedDB indexedDB { get; }
 
-            protected override void Add(ref HealthComponent component, IEntityTable<IHealthRow> table, EGID egid)
+            public HealthReactiveEngine(IndexedDB indexedDB)
             {
-                added++;
+                this.indexedDB = indexedDB;
             }
 
-            protected override void MovedTo(ref HealthComponent component, IEntityTable<IHealthRow> previousTable, IEntityTable<IHealthRow> table, EGID egid)
+            public void Add(in HealthSet resultSet, RangedIndices indices, ExclusiveGroupStruct group)
             {
-                moved++;
+                foreach (int i in indices)
+                    added++;
             }
 
-            protected override void Remove(ref HealthComponent component, IEntityTable<IHealthRow> table, EGID egid)
+            public void MovedTo(in HealthSet resultSet, RangedIndices indices, ExclusiveGroupStruct fromGroup, ExclusiveGroupStruct toGroup)
             {
-                removed++;
+                foreach (int i in indices)
+                    moved++;
+            }
+
+            public void Remove(in HealthSet resultSet, RangedIndices indices, ExclusiveGroupStruct group)
+            {
+                foreach (int i in indices)
+                    removed++;
             }
         }
 
@@ -129,20 +136,16 @@ namespace Svelto.ECS.Schema.Tests
 
             engine.added = engine.moved = engine.removed = 0;
 
-            foreach (var query in _indexedDB.From(_schema.Table2).Where(_schema.Group.Is(0)))
+            foreach (var result in _indexedDB.Select<GroupSet>().From(_schema.Table2).Where(_schema.Group.Is(0)))
             {
-                query.Select(out GroupSet result);
-
-                for (int i = 0; i < result.count / 2; ++i)
-                    _indexedDB.Update(ref result.group[i], result.egid[i].ID, 1);
+                for (int i = 0; i < result.set.count / 2; ++i)
+                    _indexedDB.Update(ref result.set.group[i], new EGID(result.entityIDs[i], result.group), 1);
             }
 
-            foreach (var query in _indexedDB.From(_schema.Table2).Where(_schema.Group.Is(3)))
+            foreach (var result in _indexedDB.Select<GroupSet>().From(_schema.Table2).Where(_schema.Group.Is(3)))
             {
-                query.Select(out GroupSet result);
-
-                foreach (var i in query.indices)
-                    _indexedDB.Update(ref result.group[i], result.egid[i].ID, 4);
+                foreach (var i in result.indices)
+                    _indexedDB.Update(ref result.set.group[i], new EGID(result.entityIDs[i], result.group), 4);
             }
 
             _indexedDB.RemoveAll(_schema.Table1);

@@ -20,11 +20,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Svelto.ECS" Version="3.2.5" />
-    <PackageReference Include="Svelto.Common" Version="3.2.3" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\Svelto.ECS.Schema\Svelto.ECS.Schema.csproj" />
   </ItemGroup>
 

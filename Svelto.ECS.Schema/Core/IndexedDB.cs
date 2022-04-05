@@ -20,9 +20,6 @@ namespace Svelto.ECS.Schema
 
         internal readonly FasterDictionary<uint, IndexerData> indexers = new();
 
-        // well... let's have some space for user defined filter
-        private int filterIdCounter = 10000;
-
         internal IEntityFunctions entityFunctions;
         internal EntitiesDB entitiesDB;
 

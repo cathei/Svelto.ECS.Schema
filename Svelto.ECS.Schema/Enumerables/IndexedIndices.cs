@@ -1,6 +1,3 @@
-using System;
-using Svelto.ECS.Schema.Internal;
-
 namespace Svelto.ECS.Schema
 {
     public ref struct IndexedIndicesEnumerator
