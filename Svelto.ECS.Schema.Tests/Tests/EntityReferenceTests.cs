@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using Svelto.DataStructures;
 using Svelto.ECS.Schema.Definition;
@@ -179,6 +180,61 @@ namespace Svelto.ECS.Schema.Tests
 
             Assert.Equal(2, group);
             Assert.Equal(entityIDs.Length, loop);
+        }
+
+        [Fact]
+        public void MemoryTest()
+        {
+            for (uint i = 0; i < 100; ++i)
+            {
+                var theifBuilder = _factory.Build(_schema.Thief, i);
+                theifBuilder.Init(new ThiefCopmonent { proof = i * 5 });
+                theifBuilder.Init(new PartitionComponent { key = (int)(i / 10) });
+
+                var policeBuilder = _factory.Build(_schema.Police, i);
+                policeBuilder.Init(new PoliceComponent
+                {
+                    reference = theifBuilder.reference,
+                    proof = i * 5
+                });
+            }
+
+            _submissionScheduler.SubmitEntities();
+
+            int loop = 0;
+
+            // warmup
+            for (int count = 0; count < 2; ++count)
+            {
+                foreach (var result in _indexedDB.Select<PoliceSet>()
+                                            .From(_schema.Police)
+                                            .Join<ThiefSet>().On(_schema.ThiefFK))
+                {
+                    foreach (var (i, j) in result.indices)
+                        loop++;
+                }
+            }
+
+            Assert.True(loop > 0);
+
+            long before = GC.GetAllocatedBytesForCurrentThread();
+
+            loop = 0;
+
+            for (int count = 0; count < 100; ++count)
+            {
+                foreach (var result in _indexedDB.Select<PoliceSet>()
+                                            .From(_schema.Police)
+                                            .Join<ThiefSet>().On(_schema.ThiefFK))
+                {
+                    foreach (var (i, j) in result.indices)
+                        loop++;
+                }
+            }
+
+            Assert.True(before + 50 > GC.GetAllocatedBytesForCurrentThread());
+
+            Assert.True(loop > 0);
         }
     }
 }
