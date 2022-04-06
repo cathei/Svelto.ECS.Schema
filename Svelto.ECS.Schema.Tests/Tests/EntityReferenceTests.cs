@@ -126,5 +126,59 @@ namespace Svelto.ECS.Schema.Tests
             Assert.Equal(10, group);
             Assert.Equal(1000, loop);
         }
+
+        [Fact]
+        public void JoinWithEntityIDsTest()
+        {
+            var theif1Builder = _factory.Build(_schema.Thief, 0);
+            theif1Builder.Init(new ThiefCopmonent { proof = 0 });
+            theif1Builder.Init(new PartitionComponent { key = 0 });
+
+            var theif2Builder = _factory.Build(_schema.Thief, 1);
+            theif2Builder.Init(new ThiefCopmonent { proof = 1 });
+            theif2Builder.Init(new PartitionComponent { key = 1 });
+
+            for (uint i = 0; i < 100; ++i)
+            {
+                var policeBuilder = _factory.Build(_schema.Police, i);
+                policeBuilder.Init(new PoliceComponent
+                {
+                    reference = i % 2 == 0 ?
+                        theif1Builder.reference :
+                        theif2Builder.reference,
+                    proof = i % 2
+                });
+            }
+
+            _submissionScheduler.SubmitEntities();
+
+            _indexedDB.Engine.Step();
+
+            var entityIDs = new uint[]
+            {
+                1, 2, 3, 5
+            };
+
+            int group = 0, loop = 0;
+
+            foreach (var result in _indexedDB.Select<PoliceSet>()
+                                        .From<PoliceRow>()
+                                        .Where(_schema.EntityID.Is(new FasterList<uint>(entityIDs)))
+                                        .Join<ThiefSet>().On(_schema.ThiefFK))
+            {
+                group++;
+
+                foreach (var (i, j) in result.indices)
+                {
+                    Assert.Contains(result.egid[i].entityID, entityIDs);
+                    Assert.Equal(result.set.police[i].proof, result.joined.thief[j].proof);
+
+                    loop++;
+                }
+            }
+
+            Assert.Equal(2, group);
+            Assert.Equal(entityIDs.Length, loop);
+        }
     }
 }
