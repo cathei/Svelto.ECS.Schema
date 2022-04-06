@@ -58,14 +58,16 @@ namespace Svelto.ECS.Schema
 
         private void FindNextGroup()
         {
-            while (_joinedGroupIndex++ < _joinedGroups.count)
+            while (++_joinedGroupIndex < _joinedGroups.count)
             {
                 _joinedGroup = _joinedGroups.unsafeKeys[_joinedGroupIndex].key;
 
                 if (_joiner.IsValidGroup(_inner._config.indexedDB, _joinedGroup))
                 {
-                    ref var filter = ref _inner._config.indexedDB.GetFilter(
-                        _joiner.IndexerID, _joinedGroups.unsafeValues[_joinedGroupIndex]);
+                    var filterID = new CombinedFilterID(
+                        _joinedGroups.unsafeValues[_joinedGroupIndex], _joiner.IndexerID);
+
+                    ref var filter = ref _inner._config.indexedDB.GetOrAddPersistentFilter(filterID);
 
                     if (filter.groupCount == 0)
                         continue;
@@ -78,7 +80,6 @@ namespace Svelto.ECS.Schema
                     break;
                 }
             }
-
         }
 
         public void Reset()

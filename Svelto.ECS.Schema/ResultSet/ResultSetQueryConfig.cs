@@ -22,7 +22,7 @@ namespace Svelto.ECS.Schema.Internal
 
         internal SharedSveltoDictionaryNative<ExclusiveGroupStruct, ExclusiveGroupStruct> temporaryGroups = new(0);
         internal NativeDynamicArrayCast<EntityFilterCollection.GroupFilters> temporaryFilters = new(NativeDynamicArray.Alloc<EntityFilterCollection.GroupFilters>());
-        internal NativeDynamicArrayCast<uint> temporaryEntityIndices = new(NativeDynamicArray.Alloc<EntityFilterCollection.GroupFilters>());
+        internal NativeDynamicArrayCast<uint> temporaryEntityIndices = new(NativeDynamicArray.Alloc<uint>());
 
         internal static ThreadLocal<Stack<ResultSetQueryConfig>> Pool = new(() => new());
 
