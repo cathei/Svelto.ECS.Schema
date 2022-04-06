@@ -14,31 +14,25 @@ using Svelto.ObjectPool;
 
 namespace Svelto.ECS.Schema.Internal
 {
-    public delegate TResult SelectFromQueryDelegate<TResult>(EntitiesDB entitiesDB, in ExclusiveGroupStruct group)
-        where TResult : struct;
-
     public readonly ref struct SelectFromQuery<TRow, TResult>
         where TRow : class, IEntityRow
-        where TResult : struct
+        where TResult : struct, IResultSet
     {
         internal readonly ResultSetQueryConfig config;
-        internal readonly SelectFromQueryDelegate<TResult> selector;
         internal readonly IEntityTables<TRow> tables;
 
-        internal SelectFromQuery(IndexedDB indexedDB, SelectFromQueryDelegate<TResult> selector)
+        internal SelectFromQuery(IndexedDB indexedDB)
         {
             config = ResultSetQueryConfig.Use();
             config.indexedDB = indexedDB;
             this.tables = indexedDB.FindTables<TRow>();
-            this.selector = selector;
         }
 
-        internal SelectFromQuery(IndexedDB indexedDB, IEntityTables<TRow> tables, SelectFromQueryDelegate<TResult> selector)
+        internal SelectFromQuery(IndexedDB indexedDB, IEntityTables<TRow> tables)
         {
             config = ResultSetQueryConfig.Use();
             config.indexedDB = indexedDB;
             this.tables = tables;
-            this.selector = selector;
         }
 
         public SelectFromQuery<TRow, TResult> Where<T>(T query)
@@ -51,10 +45,20 @@ namespace Svelto.ECS.Schema.Internal
             return this;
         }
 
-        public SelectFromQueryEnumerator<TRow, TResult> GetEnumerator()
+        public SelectFromJoinQuery<TRow, TResult, TJoined> Join<TJoined>()
+            where TJoined : struct, IResultSet 
+        {
+            if (config.temporaryGroups.count != 0)
+                throw new ECSException("Query is already in use, cannot perform Join");
+
+            Build();
+            return new(config);
+        }
+
+        public SelectFromQueryEnumerator<TResult, RowIdentityComponent> GetEnumerator()
         {
             Build();
-            return new(config, selector);
+            return new(config);
         }
 
         internal void Build()
@@ -119,5 +123,4 @@ namespace Svelto.ECS.Schema.Internal
             }
         }
     }
-
 }

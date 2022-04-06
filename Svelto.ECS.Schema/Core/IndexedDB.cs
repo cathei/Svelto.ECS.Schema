@@ -16,7 +16,6 @@ namespace Svelto.ECS.Schema
 
         // engines will be created per TComponent
         internal readonly HashSet<RefWrapperType> createdIndexerEngines = new();
-        internal readonly HashSet<RefWrapperType> createdForeignKeyEngines = new();
         internal readonly HashSet<RefWrapperType> createdStateMachineEngines = new();
 
         internal readonly FasterDictionary<uint, IndexerData> indexers = new();
@@ -50,18 +49,6 @@ namespace Svelto.ECS.Schema
                 createdIndexerEngines.Add(componentType);
 
                 indexer.AddEngines(enginesRoot, this);
-            }
-
-            foreach (var fk in metadata.foreignKeys)
-            {
-                var componentType = fk.ComponentType;
-
-                if (createdForeignKeyEngines.Contains(componentType))
-                    continue;
-
-                createdForeignKeyEngines.Add(componentType);
-
-                fk.AddEngines(enginesRoot, this);
             }
 
             foreach (var stateMachine in metadata.stateMachines)

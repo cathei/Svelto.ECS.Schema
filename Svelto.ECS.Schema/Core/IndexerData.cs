@@ -13,7 +13,7 @@ namespace Svelto.ECS.Schema
     internal sealed class IndexerData<TKey> : IndexerData
         where TKey : unmanaged, IEquatable<TKey>
     {
-        private readonly FasterDictionary<TKey, int> keyToFilterID = new();
+        internal readonly FasterDictionary<TKey, int> keyToFilterID = new();
 
         public int Get(in TKey key)
         {
@@ -25,5 +25,7 @@ namespace Svelto.ECS.Schema
 
             return filterID;
         }
+
+        public bool Contains(in TKey key) => keyToFilterID.ContainsKey(key);
     }
 }

@@ -12,7 +12,6 @@ namespace Svelto.ECS.Schema
     {
         internal readonly FasterList<IEntityTable> tables = new();
         internal readonly FasterList<IEntityIndex> indexers = new();
-        internal readonly FasterList<IEntityForeignKey> foreignKeys = new();
         internal readonly FasterList<IEntityStateMachine> stateMachines = new();
 
         internal readonly FasterDictionary<ExclusiveGroupStruct, IEntityTable> groupToTable = new();
@@ -113,7 +112,6 @@ namespace Svelto.ECS.Schema
         private void RegisterForeignKey(IEntityForeignKey fk)
         {
             indexers.Add(fk.Index);
-            foreignKeys.Add(fk);
         }
 
         private void RegisterStateMachine(IEntityStateMachine stateMachine)

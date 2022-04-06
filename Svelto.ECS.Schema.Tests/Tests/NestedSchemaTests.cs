@@ -87,7 +87,6 @@ namespace Svelto.ECS.Schema.Tests
                 metadata.groupToTable[_schema.Food.Group]);
 
             Assert.Equal(0, metadata.indexers.count);
-            Assert.Equal(0, metadata.indexersToGenerateEngine.count);
         }
 
         [Fact]

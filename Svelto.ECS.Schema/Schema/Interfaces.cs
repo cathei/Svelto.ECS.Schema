@@ -47,8 +47,6 @@ namespace Svelto.ECS.Schema
 
         public interface IEntityForeignKey : ISchemaDefinition
         {
-            RefWrapperType ComponentType { get; }
-            void AddEngines(EnginesRoot enginesRoot, IndexedDB indexedDB);
             IEntityIndex Index { get; }
         }
 

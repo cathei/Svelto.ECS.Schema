@@ -14,7 +14,7 @@ Any Index Component or State Machine Component can be used as Primary Key Compon
 
 Since the groups must stay statically - primary key component have to give you the possible range.
 
-Primary key also have to support partial Query.
+Primary key also supports partial query
 
     ***/
 
@@ -58,6 +58,12 @@ namespace Svelto.ECS.Schema
         Delegate IPrimaryKeyQueryable<IPrimaryKeyRow<TComponent>, TComponent>.KeyToIndex => _keyToIndex;
 
         private readonly ThreadLocal<NB<TComponent>> threadStorage = new();
+
+        static PrimaryKey()
+        {
+            // must register and trigger reflection
+            default(TComponent).Warmup<TComponent>();
+        }
 
         void IEntityPrimaryKey.Ready(EntitiesDB entitiesDB, in ExclusiveGroupStruct groupID)
         {

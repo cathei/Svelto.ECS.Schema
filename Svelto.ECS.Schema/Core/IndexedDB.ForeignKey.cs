@@ -60,7 +60,7 @@ namespace Svelto.ECS.Schema
         internal void UpdateForeignKeyComponent<TComponent>(in EGID egid, in EntityReference other)
             where TComponent : unmanaged, IForeignKeyComponent
         {
-            var fkType = TypeRefWrapper<ForeignKey<TComponent>>.wrapper;
+            var fkType = ForeignKeyTag<TComponent>.wrapper;
 
             // we need to compare with previous key with reference because it's only reliable value
             var entityReference = entitiesDB.GetEntityReference(egid);
@@ -93,7 +93,7 @@ namespace Svelto.ECS.Schema
         internal void RemoveForeignKeyComponent<TComponent>(in EGID egid)
             where TComponent : unmanaged, IForeignKeyComponent
         {
-            var fkType = TypeRefWrapper<ForeignKey<TComponent>>.wrapper;
+            var fkType = ForeignKeyTag<TComponent>.wrapper;
 
             // we need to compare with previous key with reference because it's only reliable value
             var entityReference = entitiesDB.GetEntityReference(egid);
@@ -107,7 +107,7 @@ namespace Svelto.ECS.Schema
         internal void UpdateReferencedComponent<TComponent>(in EntityReference other)
             where TComponent : unmanaged, IForeignKeyComponent
         {
-            var fkType = TypeRefWrapper<ForeignKey<TComponent>>.wrapper;
+            var fkType = ForeignKeyTag<TComponent>.wrapper;
 
             var fkCache = GetOrAddForeignKeyCache(fkType);
             var componentCache = GetOrAddComponentCache<ExclusiveGroupStruct>(fkType);
@@ -137,7 +137,7 @@ namespace Svelto.ECS.Schema
         internal void RemoveReferencedComponent<TComponent>(in EntityReference other)
             where TComponent : unmanaged, IForeignKeyComponent
         {
-            var fkType = TypeRefWrapper<ForeignKey<TComponent>>.wrapper;
+            var fkType = ForeignKeyTag<TComponent>.wrapper;
 
             var fkCache = GetOrAddForeignKeyCache(fkType);
             var componentCache = GetOrAddComponentCache<ExclusiveGroupStruct>(fkType);

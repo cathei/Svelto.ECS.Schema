@@ -41,13 +41,13 @@ namespace Svelto.ECS.Schema.Tests
             }
         }
 
-        public interface IHealthRow : IQueryableRow<HealthSet> { }
+        public interface IHealthRow : IQueryableRow<HealthSet>, IReactiveRow<HealthComponent> { }
         public interface IDamageRow : IEntityRow<DamageComponent> { }
 
         public class HealthReactiveEngine :
-            IReactRowAdd<IHealthRow, HealthSet>,
-            IReactRowRemove<IHealthRow, HealthSet>,
-            IReactRowSwap<IHealthRow, HealthSet>
+            IReactRowAdd<IHealthRow, HealthComponent>,
+            IReactRowRemove<IHealthRow, HealthComponent>,
+            IReactRowSwap<IHealthRow, HealthComponent>
         {
             internal int added;
             internal int moved;
@@ -60,19 +60,19 @@ namespace Svelto.ECS.Schema.Tests
                 this.indexedDB = indexedDB;
             }
 
-            public void Add(in HealthSet resultSet, RangedIndices indices, ExclusiveGroupStruct group)
+            public void Add(in EntityCollection<HealthComponent> collection, RangedIndices indices, ExclusiveGroupStruct group)
             {
                 foreach (int i in indices)
                     added++;
             }
 
-            public void MovedTo(in HealthSet resultSet, RangedIndices indices, ExclusiveGroupStruct fromGroup, ExclusiveGroupStruct toGroup)
+            public void MovedTo(in EntityCollection<HealthComponent> collection, RangedIndices indices, ExclusiveGroupStruct fromGroup, ExclusiveGroupStruct toGroup)
             {
                 foreach (int i in indices)
                     moved++;
             }
 
-            public void Remove(in HealthSet resultSet, RangedIndices indices, ExclusiveGroupStruct group)
+            public void Remove(in EntityCollection<HealthComponent> collection, RangedIndices indices, ExclusiveGroupStruct group)
             {
                 foreach (int i in indices)
                     removed++;

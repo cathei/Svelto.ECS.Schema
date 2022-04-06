@@ -18,9 +18,11 @@ namespace Svelto.ECS.Schema.Internal
 
         internal FasterDictionary<int, int> pkToValue = new();
         internal FasterList<EntityFilterCollection> filters = new();
+        internal HashSet<uint> selectedEntityIDs = new();
 
         internal SharedSveltoDictionaryNative<ExclusiveGroupStruct, ExclusiveGroupStruct> temporaryGroups = new(0);
         internal NativeDynamicArrayCast<EntityFilterCollection.GroupFilters> temporaryFilters = new(NativeDynamicArray.Alloc<EntityFilterCollection.GroupFilters>());
+        internal NativeDynamicArrayCast<uint> temporaryEntityIndices = new(NativeDynamicArray.Alloc<EntityFilterCollection.GroupFilters>());
 
         internal static ThreadLocal<Stack<ResultSetQueryConfig>> Pool = new(() => new());
 
@@ -44,9 +46,11 @@ namespace Svelto.ECS.Schema.Internal
             config.indexedDB = null;
             config.pkToValue.FastClear();
             config.filters.FastClear();
+            config.selectedEntityIDs.Clear();
 
             config.temporaryGroups.FastClear();
             config.temporaryFilters.Clear();
+            config.temporaryEntityIndices.Clear();
 
             Pool.Value.Push(config);
         }

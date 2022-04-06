@@ -1,3 +1,4 @@
+using Svelto.DataStructures.Native;
 using Svelto.ECS.DataStructures;
 using Svelto.ECS.Internal;
 
@@ -5,27 +6,35 @@ namespace Svelto.ECS.Schema
 {
     public ref struct MultiIndexedIndicesEnumerator
     {
+        private readonly NativeDynamicArrayCast<uint> _selectedIndices;
         private readonly NativeDynamicArrayCast<EntityFilterCollection.GroupFilters> _filters;
         private readonly NativeEntityIDs _entityIDs;
 
         private int _index;
-        private uint _current;
+        internal uint _current;
 
         private readonly int _maxCount;
         private EntityFilterIndices _indices;
 
         internal MultiIndexedIndicesEnumerator(
-            NativeDynamicArrayCast<EntityFilterCollection.GroupFilters> filters, NativeEntityIDs entityIDs, int count) : this()
+            NativeDynamicArrayCast<uint> selectedIndices,
+            NativeDynamicArrayCast<EntityFilterCollection.GroupFilters> filters,
+            NativeEntityIDs entityIDs, int count) : this()
         {
+            _selectedIndices = selectedIndices;
             _filters = filters;
             _entityIDs = entityIDs;
 
             _index = -1;
             _current = 0;
 
-            if (filters.count > 0)
+            if (_selectedIndices.count > 0)
             {
-                _indices = filters[0].indices;
+                _maxCount = _selectedIndices.count;
+            }
+            else if (_filters.count > 0)
+            {
+                _indices = _filters[0].indices;
                 _maxCount = (int)_indices.count;
             }
             else
@@ -38,22 +47,21 @@ namespace Svelto.ECS.Schema
         {
             while (++_index < _maxCount)
             {
-                if (_filters.count > 0)
+                if (_selectedIndices.count > 0)
+                {
+                    _current = _selectedIndices[_index];
+
+                    if (!ExistInAllFilters(_entityIDs[_current], 0))
+                        continue;
+
+                    return true;
+
+                }
+                else if (_filters.count > 0)
                 {
                     _current = _indices[_index];
 
-                    bool entityIsInAllFilters = true;
-
-                    for (int i = 1; i < _filters.count; ++i)
-                    {
-                        if (_filters[i].Exists(_entityIDs[_current]))
-                        {
-                            entityIsInAllFilters = false;
-                            break;
-                        }
-                    }
-
-                    if (!entityIsInAllFilters)
+                    if (!ExistInAllFilters(_entityIDs[_current], 1))
                         continue;
 
                     return true;
@@ -66,6 +74,17 @@ namespace Svelto.ECS.Schema
             }
 
             return false;
+        }
+
+        private bool ExistInAllFilters(uint entityID, int filterStart)
+        {
+            for (int i = filterStart; i < _filters.count; ++i)
+            {
+                if (!_filters[i].Exists(entityID))
+                    return false;
+            }
+
+            return true;
         }
 
         public void Reset()
@@ -81,23 +100,46 @@ namespace Svelto.ECS.Schema
     // To iterate over FilteredIndices with foreach
     public readonly ref struct MultiIndexedIndices
     {
+        private readonly NativeDynamicArrayCast<uint> _selectedIndices;
         private readonly NativeDynamicArrayCast<EntityFilterCollection.GroupFilters> _filters;
         internal readonly NativeEntityIDs _entityIDs;
         private readonly int _count;
 
         public MultiIndexedIndices(
-            NativeDynamicArrayCast<EntityFilterCollection.GroupFilters> filters, NativeEntityIDs entityIDs, int count)
+            NativeDynamicArrayCast<uint> selectedIndices,
+            NativeDynamicArrayCast<EntityFilterCollection.GroupFilters> filters,
+            NativeEntityIDs entityIDs, int count)
         {
+            _selectedIndices = selectedIndices;
             _filters = filters;
             _entityIDs = entityIDs;
             _count = count;
         }
 
-        /// <summary>
-        /// NOTE: If there is no filters it count as existing ID
-        /// </summary>
-        internal bool Exists(uint entityID)
+        internal bool IndexExists(uint index)
         {
+            if (index >= _count)
+                return false;
+
+            if (_selectedIndices.count > 0)
+            {
+                bool matchAny = false;
+
+                for (int i = 0; i < _selectedIndices.count; ++i)
+                {
+                    if (_selectedIndices[i] == index)
+                    {
+                        matchAny = true;
+                        break;
+                    }
+                }
+
+                if (!matchAny)
+                    return false;
+            }
+
+            uint entityID = _entityIDs[index];
+
             for (int i = 0; i < _filters.count; ++i)
             {
                 if (!_filters[i].Exists(entityID))
@@ -107,6 +149,7 @@ namespace Svelto.ECS.Schema
             return true;
         }
 
-        public MultiIndexedIndicesEnumerator GetEnumerator() => new(_filters, _entityIDs, _count);
+        public MultiIndexedIndicesEnumerator GetEnumerator()
+            => new(_selectedIndices, _filters, _entityIDs, _count);
     }
 }

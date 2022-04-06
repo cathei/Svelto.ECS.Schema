@@ -4,28 +4,27 @@ using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema
 {
-    public ref struct SelectFromQueryEnumerator<TRow, TResult>
-        where TRow : class, IEntityRow
-        where TResult : struct
+    public ref struct SelectFromQueryEnumerator<TResult, TComponent>
+        where TResult : struct, IResultSet
+        where TComponent : unmanaged, IEntityComponent
     {
-        private readonly ResultSetQueryConfig _config;
-        private readonly SelectFromQueryDelegate<TResult> _selector;
-
-        private readonly NB<ExclusiveGroupStruct> _groups;
+        internal readonly ResultSetQueryConfig _config;
+        internal readonly NB<ExclusiveGroupStruct> _groups;
         private readonly uint _groupCount;
 
-        private int _groupIndex;
-        private TResult _result;
-        private NativeEntityIDs _entityIDs;
-        private int _count;
+        internal int _groupIndex;
+        internal TResult _result;
 
-        internal SelectFromQueryEnumerator(ResultSetQueryConfig config, SelectFromQueryDelegate<TResult> selector) : this()
+        internal NB<TComponent> _components;
+        internal NativeEntityIDs _entityIDs;
+        internal int _count;
+
+        internal SelectFromQueryEnumerator(ResultSetQueryConfig config) : this()
         {
             _config = config;
-            _selector = selector;
-            _groupIndex = -1;
 
             _groups = _config.temporaryGroups.GetValues(out _groupCount);
+            _groupIndex = -1;
         }
 
         public bool MoveNext()
@@ -52,12 +51,29 @@ namespace Svelto.ECS.Schema
 
                 if (haveAllFilters)
                 {
-                    (_entityIDs, _count) = _config.indexedDB.QueryEntityIDs(currentGroup);
+                    (_components, _entityIDs, _count) =
+                        _config.indexedDB.entitiesDB.QueryEntities<TComponent>(currentGroup);
 
                     if (_count == 0)
                         continue;
 
-                    _result = _selector(_config.indexedDB.entitiesDB, currentGroup);
+                    if (_config.selectedEntityIDs.Count > 0)
+                    {
+                        var egidMapper = _config.indexedDB.GetEGIDMapper(currentGroup);
+
+                        _config.temporaryEntityIndices.Clear();
+
+                        foreach (uint entityID in _config.selectedEntityIDs)
+                        {
+                            if (egidMapper.FindIndex(entityID, out var index))
+                                _config.temporaryEntityIndices.Add(index);
+                        }
+
+                        if (_config.temporaryEntityIndices.count == 0)
+                            continue;
+                    }
+
+                    ResultSetHelper<TResult>.Assign(out _result, _config.indexedDB.entitiesDB, currentGroup);
                     return true;
                 }
             }
@@ -74,6 +90,7 @@ namespace Svelto.ECS.Schema
         }
 
         public SelectFromQueryResult<TResult> Current =>
-            new(_result, _groups[_groupIndex], new(_config.temporaryFilters, _entityIDs, _count));
+            new(_result, _groups[_groupIndex],
+                new(_config.temporaryEntityIndices, _config.temporaryFilters, _entityIDs, _count));
     }
 }

@@ -48,12 +48,10 @@ namespace Svelto.ECS.Schema.Internal
 
             foreach (var query in indexedDB.From<TRow>().Where(indexQuery))
             {
-                var (entityIDs, _) = indexedDB.QueryEntityIDs(query.group);
-
                 var groupFilter = originalFilter.GetGroupFilter(query.group);
 
                 foreach (var i in query.indices)
-                    groupFilter.Add(entityIDs[i], i);
+                    groupFilter.Add(query.egid[i].entityID, i);
             }
         }
 
@@ -87,16 +85,14 @@ namespace Svelto.ECS.Schema.Internal
                 if (groupFilter.count == 0)
                     continue;
 
-                var (entityIDs, _) = indexedDB.QueryEntityIDs(otherQuery.group);
-
                 var indices = groupFilter.indices;
 
                 // reverse iteration so we can remove safely
                 for (int i = (int)(indices.count - 1); i >= 0; --i)
                 {
-                    var entityID = entityIDs[indices[i]];
+                    var entityID = otherQuery.egid[indices[i]].entityID;
 
-                    if (!otherQuery.indices.Exists(entityID))
+                    if (!otherQuery.indices.IndexExists(indices[i]))
                         groupFilter.Remove(entityID);
                 }
             }
