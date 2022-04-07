@@ -4,7 +4,7 @@ using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema
 {
-    public ref struct SelectFromQueryEnumerator<TResult, TComponent>
+    public ref struct QueryEnumerator<TResult, TComponent>
         where TResult : struct, IResultSet
         where TComponent : unmanaged, IEntityComponent
     {
@@ -19,7 +19,7 @@ namespace Svelto.ECS.Schema
         internal NativeEntityIDs _entityIDs;
         internal int _count;
 
-        internal SelectFromQueryEnumerator(ResultSetQueryConfig config) : this()
+        internal QueryEnumerator(ResultSetQueryConfig config) : this()
         {
             _config = config;
 
@@ -89,8 +89,10 @@ namespace Svelto.ECS.Schema
             ResultSetQueryConfig.Return(_config);
         }
 
-        public SelectFromQueryResult<TResult> Current =>
-            new(_result, _groups[_groupIndex],
-                new(_config.temporaryEntityIndices, _config.temporaryFilters, _entityIDs, _count));
+        internal MultiIndexedIndices Indices
+            => new(_config.temporaryEntityIndices, _config.temporaryFilters, _entityIDs, _count);
+
+        public QueryResult<TResult> Current
+            => new(_result, _groups[_groupIndex], Indices);
     }
 }

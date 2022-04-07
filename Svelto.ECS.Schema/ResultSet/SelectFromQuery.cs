@@ -55,7 +55,7 @@ namespace Svelto.ECS.Schema.Internal
             return new(config);
         }
 
-        public SelectFromQueryEnumerator<TResult, RowIdentityComponent> GetEnumerator()
+        public QueryEnumerator<TResult, RowIdentityComponent> GetEnumerator()
         {
             Build();
             return new(config);

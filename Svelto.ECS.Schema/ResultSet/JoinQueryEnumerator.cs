@@ -5,23 +5,23 @@ using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema
 {
-    public ref struct SelectFromJoinQueryEnumerator<TResult, TJoined, TJoinComponent>
+    public ref struct JoinQueryEnumerator<TResult, TJoined, TJoinComponent>
         where TResult : struct, IResultSet
         where TJoined : struct, IResultSet
         where TJoinComponent : unmanaged, IForeignKeyComponent
     {
-        private SelectFromQueryEnumerator<TResult, TJoinComponent> _inner;
+        internal QueryEnumerator<TResult, TJoinComponent> _inner;
         private readonly IJoinProvider _joiner;
-        private readonly uint _joinedFilterIndex;
+        internal readonly uint _joinedFilterIndex;
 
         private readonly FasterDictionary<ExclusiveGroupStruct, int> _joinedGroups;
-        private ExclusiveGroupStruct _joinedGroup;
         private NativeEGIDMapper<RowIdentityComponent> _egidMapper;
         private int _joinedGroupIndex;
 
-        private TJoined _joinedResult;
+        internal TJoined _joinedResult;
+        internal ExclusiveGroupStruct _joinedGroup;
 
-        internal SelectFromJoinQueryEnumerator(ResultSetQueryConfig config, IJoinProvider joiner) : this()
+        internal JoinQueryEnumerator(ResultSetQueryConfig config, IJoinProvider joiner) : this()
         {
             _inner = new(config);
             _joiner = joiner;
@@ -92,10 +92,10 @@ namespace Svelto.ECS.Schema
             _inner.Dispose();
         }
 
-        public SelectFromJoinQueryResult<TResult, TJoined, TJoinComponent> Current =>
-            new(_inner._result, _inner._groups[_inner._groupIndex], _joinedResult, _joinedGroup,
-            new(_inner._config.temporaryEntityIndices, _inner._config.temporaryFilters,
-                _inner._config.indexedDB.entitiesDB.GetEntityLocator(), _egidMapper,
-                _inner._components, _inner._entityIDs, _inner._count));
+        internal JoinedIndexedIndices<TJoinComponent> Indices
+            => new(_inner.Indices, _inner._config.indexedDB.entitiesDB.GetEntityLocator(), _egidMapper, _inner._components);
+
+        public QueryResult<TResult, TJoined, TJoinComponent> Current =>
+            new(_inner._result, _inner._groups[_inner._groupIndex], _joinedResult, _joinedGroup, Indices);
     }
 }

@@ -49,10 +49,64 @@ namespace Svelto.ECS.Schema.Internal
             this.joiner = joiner;
         }
 
-        public SelectFromJoinQueryEnumerator<TResult, TJoined, TJoinComponent> GetEnumerator()
+        public JoinQueryEnumerator<TResult, TJoined, TJoinComponent> GetEnumerator()
         {
             return new(config, joiner);
         }
 
+        public SelectFromJoinQuery<TRow, TResult, TJoined, TJoined2, TJoinComponent> Join<TJoined2>()
+            where TJoined2 : struct, IResultSet
+        {
+            return new(config, joiner);
+        }
+    }
+
+    public class SelectFromJoinQuery<TRow, TResult, TJoined1, TJoined2, TJoinComponent1>
+        where TRow : class, IEntityRow
+        where TResult : struct, IResultSet
+        where TJoined1 : struct, IResultSet
+        where TJoined2 : struct, IResultSet
+        where TJoinComponent1 : unmanaged, IForeignKeyComponent
+    {
+        internal readonly ResultSetQueryConfig config;
+        internal readonly IJoinProvider joiner1;
+
+        internal SelectFromJoinQuery(ResultSetQueryConfig config, IJoinProvider joiner1)
+        {
+            this.config = config;
+            this.joiner1 = joiner1;
+        }
+
+        public SelectFromJoinOnQuery<TRow, TResult, TJoined1, TJoined2, TJoinComponent1, TJoinComponent2> On<TJoinComponent2>(
+                IJoinProvider<TJoinComponent2, TRow, IQueryableRow<TJoined2>> joiner2)
+            where TJoinComponent2 : unmanaged, IForeignKeyComponent
+        {
+            return new(config, joiner1, joiner2);
+        }
+    }
+
+    public readonly ref struct SelectFromJoinOnQuery<TRow, TResult, TJoined1, TJoined2, TJoinComponent1, TJoinComponent2>
+        where TRow : class, IEntityRow
+        where TResult : struct, IResultSet
+        where TJoined1 : struct, IResultSet
+        where TJoined2 : struct, IResultSet
+        where TJoinComponent1 : unmanaged, IForeignKeyComponent
+        where TJoinComponent2 : unmanaged, IForeignKeyComponent
+    {
+        internal readonly ResultSetQueryConfig config;
+        internal readonly IJoinProvider joiner1;
+        internal readonly IJoinProvider joiner2;
+
+        internal SelectFromJoinOnQuery(ResultSetQueryConfig config, IJoinProvider joiner1, IJoinProvider joiner2)
+        {
+            this.config = config;
+            this.joiner1 = joiner1;
+            this.joiner2 = joiner2;
+        }
+
+        public JoinQueryEnumerator<TResult, TJoined1, TJoined2, TJoinComponent1, TJoinComponent2> GetEnumerator()
+        {
+            return new(config, joiner1, joiner2);
+        }
     }
 }

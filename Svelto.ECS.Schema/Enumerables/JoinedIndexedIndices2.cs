@@ -6,25 +6,22 @@ using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema
 {
-    public ref struct JoinedIndexedIndicesEnumerator<T1>
+    public ref struct JoinedIndexedIndicesEnumerator<T1, T2>
         where T1 : unmanaged, IForeignKeyComponent
+        where T2 : unmanaged, IForeignKeyComponent
     {
-        internal MultiIndexedIndicesEnumerator _inner;
+        private JoinedIndexedIndicesEnumerator<T1> _inner;
+        private readonly NativeEGIDMapper<RowIdentityComponent> _egidMapper;
+        private readonly NB<T2> _components;
 
-        internal readonly EnginesRoot.LocatorMap _locatorMap;
-        internal readonly NativeEGIDMapper<RowIdentityComponent> _egidMapper;
-        private readonly NB<T1> _components;
-
-        internal uint _joinedCurrent;
+        private uint _joinedCurrent;
 
         internal JoinedIndexedIndicesEnumerator(
-            in MultiIndexedIndicesEnumerator inner,
-            in EnginesRoot.LocatorMap locatorMap, in NativeEGIDMapper<RowIdentityComponent> egidMapper,
-            in NB<T1> components) : this()
+            in JoinedIndexedIndicesEnumerator<T1> inner,
+            in NativeEGIDMapper<RowIdentityComponent> egidMapper,
+            in NB<T2> components) : this()
         {
             _inner = inner;
-
-            _locatorMap = locatorMap;
             _egidMapper = egidMapper;
             _components = components;
         }
@@ -33,14 +30,14 @@ namespace Svelto.ECS.Schema
         {
             while (_inner.MoveNext())
             {
-                ref var component = ref _components[_inner._current];
+                ref var component = ref _components[_inner._inner._current];
 
                 // in some condition reference is not recent because user didn't call Update
                 // we skip iteration in all those cases
                 if (component.reference == EntityReference.Invalid)
                     continue;
 
-                if (!_locatorMap.TryGetEGID(component.reference, out var egid))
+                if (!_inner._locatorMap.TryGetEGID(component.reference, out var egid))
                     continue;
 
                 if (egid.groupID != _egidMapper.groupID)
@@ -65,31 +62,28 @@ namespace Svelto.ECS.Schema
             _inner.Dispose();
         }
 
-        public (uint, uint) Current => (_inner._current, _joinedCurrent);
+        public (uint, uint, uint) Current => (_inner._inner._current, _inner._joinedCurrent, _joinedCurrent);
     }
 
-    public readonly ref struct JoinedIndexedIndices<T1>
+    public readonly ref struct JoinedIndexedIndices<T1, T2>
         where T1 : unmanaged, IForeignKeyComponent
+        where T2 : unmanaged, IForeignKeyComponent
     {
-        internal readonly MultiIndexedIndices _inner;
-
-        private readonly EnginesRoot.LocatorMap _locatorMap;
+        internal readonly JoinedIndexedIndices<T1> _inner;
         private readonly NativeEGIDMapper<RowIdentityComponent> _egidMapper;
-        private readonly NB<T1> _components;
+        private readonly NB<T2> _components;
 
         public JoinedIndexedIndices(
-            in MultiIndexedIndices inner,
-            in EnginesRoot.LocatorMap locatorMap,
+            in JoinedIndexedIndices<T1> inner,
             in NativeEGIDMapper<RowIdentityComponent> egidMapper,
-            in NB<T1> components)
+            in NB<T2> components)
         {
             _inner = inner;
-            _locatorMap = locatorMap;
             _egidMapper = egidMapper;
             _components = components;
         }
 
-        public JoinedIndexedIndicesEnumerator<T1> GetEnumerator() =>
-            new(_inner.GetEnumerator(), _locatorMap, _egidMapper, _components);
+        public JoinedIndexedIndicesEnumerator<T1, T2> GetEnumerator()
+            => new(_inner.GetEnumerator(), _egidMapper, _components);
     }
 }

@@ -35,7 +35,7 @@ namespace Svelto.ECS.Schema.Internal
                 _onEnter = new FasterList<CallbackConfig>();
             }
 
-            internal void Evaluate(IndexedDB indexedDB, in SelectFromQueryResult<StateMachineSet<TComponent>> result)
+            internal void Evaluate(IndexedDB indexedDB, in QueryResult<StateMachineSet<TComponent>> result)
             {
                 ref var filter = ref _config._index.Is(_key).GetFilter(indexedDB);
                 var groupFilter = filter.GetGroupFilter(result.group);
@@ -72,7 +72,7 @@ namespace Svelto.ECS.Schema.Internal
                 }
             }
 
-            internal void ProcessExit(IndexedDB indexedDB, in SelectFromQueryResult<StateMachineSet<TComponent>> result)
+            internal void ProcessExit(IndexedDB indexedDB, in QueryResult<StateMachineSet<TComponent>> result)
             {
                 if (_onExit.count == 0)
                     return;
@@ -96,7 +96,7 @@ namespace Svelto.ECS.Schema.Internal
                 }
             }
 
-            internal void ProcessEnter(IndexedDB indexedDB, in SelectFromQueryResult<StateMachineSet<TComponent>> result)
+            internal void ProcessEnter(IndexedDB indexedDB, in QueryResult<StateMachineSet<TComponent>> result)
             {
                 ref var filter = ref _enterCandidates.GetFilter(indexedDB);
                 var groupFilter = filter.GetGroupFilter(result.group);
@@ -135,7 +135,7 @@ namespace Svelto.ECS.Schema.Internal
                 _transitions = new FasterList<TransitionConfig<TState>>();
             }
 
-            internal void Evaluate(IndexedDB indexedDB, in SelectFromQueryResult<StateMachineSet<TComponent>> result)
+            internal void Evaluate(IndexedDB indexedDB, in QueryResult<StateMachineSet<TComponent>> result)
             {
                 for (int i = 0; i < _transitions.count; ++i)
                     _transitions[i].Ready(indexedDB.entitiesDB, result.group);
