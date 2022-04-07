@@ -113,12 +113,12 @@ namespace Svelto.ECS.Schema.Tests
             {
                 group++;
 
-                foreach (var (i, j) in result.indices)
+                foreach (var (ia, ib) in result.indices)
                 {
                     loop++;
 
-                    ref var police = ref result.set.police[i];
-                    ref var theif = ref result.joined.thief[j];
+                    ref var police = ref result.setA.police[ia];
+                    ref var theif = ref result.setB.thief[ib];
 
                     Assert.Equal(police.proof, theif.proof);
                 }
@@ -169,10 +169,10 @@ namespace Svelto.ECS.Schema.Tests
             {
                 group++;
 
-                foreach (var (i, j) in result.indices)
+                foreach (var (ia, ib) in result.indices)
                 {
-                    Assert.Contains(result.egid[i].entityID, entityIDs);
-                    Assert.Equal(result.set.police[i].proof, result.joined.thief[j].proof);
+                    Assert.Contains(result.egidA[ia].entityID, entityIDs);
+                    Assert.Equal(result.setA.police[ia].proof, result.setB.thief[ib].proof);
 
                     loop++;
                 }

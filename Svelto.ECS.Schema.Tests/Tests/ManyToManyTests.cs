@@ -1,5 +1,6 @@
 using System;
 using Svelto.DataStructures;
+using Svelto.ECS.Internal;
 using Svelto.ECS.Schema.Definition;
 using Xunit;
 
@@ -7,12 +8,12 @@ namespace Svelto.ECS.Schema.Tests
 {
     public class ManyToManyTests : SchemaTestsBase<ManyToManyTests.TestSchema>
     {
-        public struct ReferenceA : IForeignKeyComponent
+        public struct ForeignKeyA : IForeignKeyComponent
         {
             public EntityReference reference { get; set; }
         }
 
-        public struct ReferenceB : IForeignKeyComponent
+        public struct ForeignKeyB : IForeignKeyComponent
         {
             public EntityReference reference { get; set; }
         }
@@ -21,29 +22,34 @@ namespace Svelto.ECS.Schema.Tests
 
         public struct DummyResultSet : IResultSet<DummyComponent>
         {
-            public void Init(in EntityCollection<DummyComponent> buffers) { }
+            public NativeEntityIDs entityIDs;
+
+            public void Init(in EntityCollection<DummyComponent> buffers)
+            {
+                (_, entityIDs, _) = buffers;
+            }
         }
 
         public class JoinRow : DescriptorRow<JoinRow>,
-            IForeignKeyRow<ReferenceA>, IForeignKeyRow<ReferenceB>
+            IForeignKeyRow<ForeignKeyA>, IForeignKeyRow<ForeignKeyB>
         { }
 
         public class EntityARow : DescriptorRow<EntityARow>,
-            IReferenceableRow<ReferenceA>, IQueryableRow<DummyResultSet>
+            IReferenceableRow<ForeignKeyA>, IQueryableRow<DummyResultSet>
         { }
 
         public class EntityBRow : DescriptorRow<EntityBRow>,
-            IReferenceableRow<ReferenceB>, IQueryableRow<DummyResultSet>
+            IReferenceableRow<ForeignKeyB>, IQueryableRow<DummyResultSet>
         { }
 
         public class TestSchema : EntitySchema
         {
-            public readonly Table<EntityARow> EntityA = new();
-            public readonly Table<EntityBRow> EntityB = new();
-            public readonly Table<JoinRow> Join = new();
+            public readonly Table<EntityARow> Character = new();
+            public readonly Table<EntityBRow> Deck = new();
+            public readonly Table<JoinRow> CharacterInDeck = new();
 
-            public readonly ForeignKey<ReferenceA, EntityARow> EntityAFK = new();
-            public readonly ForeignKey<ReferenceB, EntityBRow> EntityBFK = new();
+            public readonly ForeignKey<ForeignKeyA, EntityARow> CharacterFK = new();
+            public readonly ForeignKey<ForeignKeyB, EntityBRow> DeckFK = new();
         }
 
         [Fact]
@@ -51,12 +57,12 @@ namespace Svelto.ECS.Schema.Tests
         {
             for (uint i = 0; i < 10; ++i)
             {
-                var builder = _factory.Build(_schema.EntityA, i);
+                var builder = _factory.Build(_schema.Character, i);
             }
 
             for (uint i = 0; i < 10; ++i)
             {
-                var builder = _factory.Build(_schema.EntityB, i);
+                var builder = _factory.Build(_schema.Deck, i);
             }
 
             _submissionScheduler.SubmitEntities();
@@ -72,14 +78,14 @@ namespace Svelto.ECS.Schema.Tests
                     if ((i + j) % 2 == 0)
                         continue;
 
-                    var builder = _factory.Build(_schema.Join, joinCount++);
+                    var builder = _factory.Build(_schema.CharacterInDeck, joinCount++);
 
-                    builder.Init(new ReferenceA
+                    builder.Init(new ForeignKeyA
                     {
                         reference = _indexedDB.GetEntityReference(resultA.egid[i])
                     });
 
-                    builder.Init(new ReferenceB
+                    builder.Init(new ForeignKeyB
                     {
                         reference = _indexedDB.GetEntityReference(resultB.egid[j])
                     });
@@ -88,20 +94,23 @@ namespace Svelto.ECS.Schema.Tests
 
             _submissionScheduler.SubmitEntities();
 
-            uint loopCount = 0;
+            uint groupCount = 0, loopCount = 0;
 
-            foreach (var resultA in _indexedDB.From<JoinRow>()
-                                        .Join<DummyResultSet>()
-                                        .On(_schema.EntityAFK))
+            foreach (var result in _indexedDB.From(_schema.CharacterInDeck)
+                                        .Join<DummyResultSet>().On(_schema.CharacterFK)
+                                        .Join<DummyResultSet>().On(_schema.DeckFK))
             {
-                // foreach (var resultB in _indexedDB.From<JoinRow>(resultA.group)
-                //                             .Join()
-                //                             .On(_schema.EntityBFK))
-                // {
+                groupCount++;
 
-                // }
-
+                foreach (var (ia, ib, ic) in result.indices)
+                {
+                    loopCount++;
+                    Assert.True((ib + ic) % 2 != 0);
+                }
             }
+
+            Assert.True(groupCount > 0);
+            Assert.True(loopCount > 0);
         }
     }
 }
