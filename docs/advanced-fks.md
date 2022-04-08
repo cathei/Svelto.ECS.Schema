@@ -113,3 +113,6 @@ foreach (var result in indexedDB.Select<HitInfoSet>().From(schema.HitInfo)
 
 ### Query with Reverse References
 For some cases, you might want to get a list of entites that referencing specific entity. Use `IndexedDB.QueryReverseReferences`.
+
+### Summary
+We looked how to use `Foreign Key` and `Join` query, making relationship between entities. You've went through all the basic features of Schema extensions, hooray! You can look through additional documents or go ahead and try yourself!

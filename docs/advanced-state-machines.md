@@ -121,4 +121,4 @@ foreach (var result in indexedDB.Select<RageSet>()
 ```
 
 ### Summary
-We learned how to define and query with State Machine, and how to configure States, Transitions, Conditions, Callbacks. You've went through all the basic features of Schema extensions, hooray! You can look through additional documents or go ahead and try yourself!
+We learned how to define and query with State Machine, and how to configure States, Transitions, Conditions, Callbacks. In [Next Document](advanced-fks.md), we will look how to use `Foreign Key` and `Join` query through it.

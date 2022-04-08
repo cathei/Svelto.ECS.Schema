@@ -72,4 +72,4 @@ foreach (var result in indexedDB.Select<DamagableSet>().FromAll<CharacterRow>().
 Note that you can use foreach loop to iterate indices.
 
 ### Summary
-We learned how to define and iterate through Indexes. Lastly, it is valid to call `IndexedDB.Update` to filter while iterating it, **only if you're changing the currently iterating index**. Otherwise it will result in undefined behaviour. Or you could consider using `StateMachine` instead, which will be the [Next Document](basic-state-machines.md).
+We learned how to define and iterate through Indexes. Lastly, it is valid to call `IndexedDB.Update` to filter while iterating it, **only if you're changing the currently iterating index**. Otherwise it will result in undefined behaviour. Or you could consider using `StateMachine` instead, which will be the [Next Document](advanced-state-machines.md).

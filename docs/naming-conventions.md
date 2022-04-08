@@ -10,16 +10,13 @@ Below is naming convention suggestions to make schema more readable.
 
 ### For Tables
 * Use `*SingularNoun*` for `Table<T>`.
-* Use `*PluralNouns*` for `Tables<T>` or `CombinedTables<T>`.
+* Use `*PluralNouns*` for `CombinedTables<T>`.
 
-### For Schemas
-* Use `*Adjective*` or `*SingularNoun*` for Schema object. e.g. `Flying`, so you can access like `Flying.Monster`
-* Use `*Adjective*` or `*PluralNouns*` for `Ranged<TSchema>`
-
-### For Indexes and State Machines
-* Use `*EntityName* + *Noun*` for `Index<T>` instance in Schema. e.g. `ItemHolder`
-* Use `*EntityName* + FSM` for `StateMachine<T>`. e.g. `CharacterFSM`
+### For Primary Keys, Foreign Keys and Indexes
+* Use `*EntityName* + *Noun*` for `PrimaryKey<T>` or `Index<T>`. e.g. `ItemHolder`
+* Use `*EntityName* + *Noun*` for `ForeignKey<T>`. e.g. `ChaserTarget`
 
 ### Etc.
+* Use `*EntityName* + FSM` for `StateMachine<T>`. e.g. `CharacterFSM`
 * Use `Indexes` as plural form for `Index` in schema.
 * Use `indices` as plural form for index of array.
