@@ -8,6 +8,7 @@ Schema and State Machine extensions for [Svelto.ECS](https://github.com/sebas77/
 * **Abstracted Interface Definition** to define how Engines should see Entities.
 * **SQL-like Queries** with **Extra Type Safety**.
 * **Indexing Entities** and Automatic Tracking over Tables.
+* **Join** between Entities, for One-to-One, One-to-Many or Many-to-Many relationships.
 * **Finite State Machine** with Transitions, Conditions and Callbacks.
 * Ensures [**Zero-allocation**](https://www.sebaslab.com/zero-allocation-code-in-unity/) for Frequently Called Critical Pathes.
 
