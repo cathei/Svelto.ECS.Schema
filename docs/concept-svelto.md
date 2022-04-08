@@ -38,7 +38,7 @@ for (int i = 0; i < count; ++i)
 ```
 As you can see, iterating groups are cache-friendly and fast, therefore it should be used as primary ways to split entities. In Schema extensions Groups are wrapped by concept of `Table`, and you will strongly pair a `Descriptor Row` to a `Table`.
 
-There is also concept of `GroupCompund` to generate combination of groups, which is completely replaced with extendible and flexible `Schema`s in Schema extensions.
+There is also concept of `GroupCompund` to generate combination of groups, which is completely replaced with extendible and flexible `Primary Key` in Schema extensions.
 
 ### Filters
 Filters are another tool to define set of entities. It stores subset of indices in a Group. But it won't be easy to use and manage it in current Svelto without Schema extensions. In Schema extensions they are wrapped by concept of `Index`.

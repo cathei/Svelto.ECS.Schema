@@ -1,8 +1,19 @@
 ## Advanced Schema Usages
+### Query with Entity ID
+Sometimes you'll want to query with specific entity ID. You can use `EntityID.Is` with `Where` query. Note that even though you query one Entity ID, you still need to loop through it by design.
+
+```csharp
+foreach (var result in indexedDB.Select<ResultSet>()
+                                .FromAll<CharacterRow>()
+                                .Where(EntityID.Is(targetID)))
+```
+It count as `|| (or)` condition if you have multiple entity ID constraints of query. Other conditions will work as `&& (and)` condition.
+
 ### Using Interfaces
 Schema extensions defines few convariant interfaces so users can easily access to abstracted Tables. For example, if `HeroRow` and `EnemyRow` both implements `ICharacterRow`, you can do this.
 ```csharp
-// this should be in schema, actually
+public class GameSchema
+
 Table<HeroRow> heroTable = new Table<HeroRow>();
 Table<EnemyRow> enemyTable = new Table<EnemyRow>();
 
@@ -21,11 +32,14 @@ In advance, you can extend your Schema with inheritance, or having multiple Sche
 ```csharp
 public abstract class GameModeSchemaBase : IEntitySchema
 {
-    public readonly Ranged<PlayerSchema> Players;
+    public readonly Table<CharacterRow> Character = new();
+
+    public readonly PrimaryKey<PlayerComponent> Player = new();
 
     public GameModeSchemaBase(int playerCount)
     {
-        Players = new Ranged<PlayerSchema>(playerCount);
+        Character.AddPrimaryKeys(Player);
+        Player.SetPossibleKeys(Enumerable.Range(0, playerCount).ToArray());
     }
 }
 
@@ -37,7 +51,7 @@ public class PvPGameModeSchema : GameModeSchemaBase
 
 public class CoOpGameModeSchema : GameModeSchemaBase
 {
-    public PlayerSchema AI = new PlayerSchema();
+    public readonly Table<CharacterRow> Enemy = new();
 
     // two player max
     public CoOpGameModeSchema() : base(2) { }

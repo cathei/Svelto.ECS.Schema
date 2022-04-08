@@ -4,23 +4,22 @@ Schema extensions support Finite State Machine (FSM) feature, which automaticall
 ```csharp
 public enum CharacterState { Normal, Angry, Fever, MAX }
 ```
-And IStateMachineComponent class to store and index the state of the entity.
+And `IKeyComponent` class to store and index the state of the entity.
 ```csharp
-public struct CharacterStateComponent : IStateMachineComponent<EnumKey<CharacterState>>
+public struct CharacterStateComponent : IKeyComponent<EnumKey<CharacterState>>
 {
-    public EGID ID { get; set; }
     public EnumKey<CharacterState> key { get; set; }
 
-    public CharacterStateComponent(CharacterState state) : this() { this.key = state; }
+    public CharacterStateComponent(CharacterState state) => key = state;
 }
 ```
-The structure is same as `IIndexableComponent<TKey>`. Since the key is `enum`, which does not implement `IEquatable<T>`, we use special wrapper `EnumKey<T>`. You can use it as it is the inner enum.
+Since the key is `enum`, which does not implement `IEquatable<T>`, we use special wrapper `EnumKey<T>`. You can use it as it is the inner enum.
 
 Now you can define FSM class, inherit `StateMachine<TComponent>`.
 ```csharp
 public class CharacterFSM : StateMachine<CharacterStateComponent>
 {
-    public interface IRow : IIndexedRow {}
+    public interface IRow : IStateMachineRow {}
 
     protected override void OnConfigure()
     {
@@ -43,7 +42,7 @@ Transition describes how State changes. In `OnConfigure` you can add Transition 
 ```csharp
 public class CharacterFSM : StateMachine<CharacterFSMState>
 {
-    public interface IRow : IIndexedRow,
+    public interface IRow : IStateMachineRow,
         IEntityRow<RageComponent>,
         IEntityRow<TriggerComponent>
     {}
@@ -68,7 +67,7 @@ public class CharacterFSM : StateMachine<CharacterFSMState>
     }
 }
 ```
-Note that here, IRow must include inner `IIndexedRow` and `IEntityRow<T>`s to use in Transitions and Conditions. It is important to manually do this, so you can ensure any Rows using State Machine will have all those Components.
+Note that here, IRow must include inner `IStateMachineRow` and `IEntityRow<T>`s to use in Transitions and Conditions. It is important to manually do this, so you can ensure any Rows using State Machine will have all those Components.
 
 By calling `FromState.AddTransition(ToState)` you define a Transition. You also should add Condition for Transition to happen, by calling `AddCondition`. Conditions take a lambda with single `ref IEntityComponent` parameter and `bool` return value.
 
@@ -105,15 +104,17 @@ CharacterFSM characterFSM = _enginesRoot.AddStateMachine<CharacterFSM>(indexedDB
 You can build entities as same and can set Initial State with it.
 ```csharp
 var builder = _schema.Character.Build(_factory, entityID);
-builder.Init(new CharacterFSM.Component(CharacterState.Normal));
+builder.Init(new CharacterStateComponent(CharacterState.Normal));
 ```
-But to make Transitions happen, **make sure you call `StateMachine.Engine.Step()`**. It is `IStepEngine` so you have option to pass it to `SortedEnginesGroup`, etc.
+But to make Transitions happen, **make sure you call `StateMachine.Step()`**. `StateMachine` is `IStepEngine` so you have option to pass it to `SortedEnginesGroup`, etc.
 
 Lastly, you can query Entities by calling `Where()` with State Machine object. Same as you do with Indexes!
 ```csharp
-characterFSM.Engine.Step();
+characterFSM.Step();
 
-foreach (var result in indexedDB.Select<RageSet>().From(schema.Character).Where(characterFSM.Is(CharacterState.Angry)).Entities())
+foreach (var result in indexedDB.Select<RageSet>()
+                            .From(schema.Character)
+                            .Where(characterFSM.Is(CharacterState.Angry)))
 {
     // ...
 }

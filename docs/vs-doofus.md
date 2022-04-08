@@ -31,33 +31,33 @@ Real problem is it is not really flexible nor extendible. What if Yellow team is
 
 With Schema extension this would be converted to below.
 ```csharp
-public class StateSchema : IEntitySchema
-{
-    public readonly Table<DoofusRow> Doofus = new Table<DoofusRow>();
-    public readonly Table<FoodRow> Food = new Table<FoodRow>();
-}
 
-public class TeamSchema : IEntitySchema
-{
-    public readonly StateSchema Eating = new StateSchema();
-    public readonly StateSchema NonEating = new StateSchema();
-}
+public enum TeamColor { Red, Blue }
+public enum StateType { Eating, NonEating }
 
 public class GameSchema : IEntitySchema
 {
-    public readonly Ranged<TeamSchema, TeamColor> Teams =
-        new Ranged<TeamSchema, TeamColor>(TeamColor.MAX, color => (int)color);
+    public readonly Table<DoofusRow> Doofus = new();
+    public readonly Table<FoodRow> Food = new();
 
-    public readonly IEntityTables<DoofusRow> EatingDoofuses;
+    public readonly PrimaryKey<TeamComponent> Team = new();
+    public readonly PrimaryKey<StateComponent> State = new();
 
     public GameSchema()
     {
-        EatingDoofuses = Teams.Combine(x => x.Eating.Doofus);
+        Doofus.AddPrimaryKeys(Team, State);
+        Food.AddPrimaryKeys(Team, State);
+
+        Team.SetPossibleKeys(TeamColor.Red, TeamColor.Blue);
+        State.SetPossibleKeys(StateType.Eating, StateType.NonEating);
     }
 }
-
-public enum TeamColor { Red, Blue, MAX }
 ```
 Now we can easly change structure without fixed names, and have changable number of teams. Type-safe queries are bonus. You'll thank to some complexity when you have to deal with big design changes!
 
-When using it, code `GameGroups.RED_DOOFUSES_EATING.Groups` would be equvalent to `GameSchema.Teams[TeamColor.Red].Eating.Doofus`.
+When using it, querying to `GameGroups.RED_DOOFUSES_EATING.Groups` would be equvalent to querying like
+```csharp
+indexedDB.From(schema.Doofus)
+    .Where(schema.Team.Is(TemaColor.Red))
+    .Where(schema.State.Is(StateType.Eating))
+```

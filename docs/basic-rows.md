@@ -4,10 +4,18 @@ Rows are most basic unit in Schema extensions. Rows must define how Engines see 
 ### Result Sets
 `Result Set`s are composition of components that a Engine will process.  You can consider these as unit of components you can query. In Svelto.ECS you query entities like this.
 ```csharp
-var (component1, component2, component3, count) = entitiesDB.QueryEntities<Component1, Component2, Component3>(characterGroup);
+foreach (var ((component1, component2, component3, count), group) in
+    entitiesDB.QueryEntities<Component1, Component2, Component3>(characterGroups))
+{
+    for (int i = 0; i < count; ++i)
+    {
+        // process your components here...
+        component1[i].value++;
+    }
+}
 ```
 
-In Schema Extensions, you must define Seletor Row and then you can query.
+In Schema Extensions, you must define `Result Set` and then you can query.
 ```csharp
 // the components you're using in your engine
 public struct Result123Set : IResultSet<Component1, Component2, Component3>
@@ -16,16 +24,19 @@ public struct Result123Set : IResultSet<Component1, Component2, Component3>
     public NB<Component2> component2;
     public NB<Component3> component3;
 
-    // required by IResultSet
-    public int count { get; set; }
-
     public void Init(in EntityCollection<Component1, Component2, Component3> collection)
-        => (component1, component2, component3, count) = collection;
+        => (component1, component2, component3, _) = collection;
 }
 
-// you can access result set through `result.set`
-// it is an compile-time error if characterTable does not contain ISelect123Row
-var result = indexedDB.Select<ISelect123Row>().From(characterTable).Entities();
+// it is an compile-time error if characterTable does not contain Result123Set
+foreach (var result in indexedDB.Select<Result123Set>().From(characterTable))
+{
+    foreach (var i in result.indices)
+    {
+        // process your components here...
+        result.set.component1[i].value++;
+    }
+}
 ```
 Fundametally, it helps writing 'good code' because the set of components you query always should have meanings. You'll always have to define how Engines should see Entities, and what they know about Entities.
 

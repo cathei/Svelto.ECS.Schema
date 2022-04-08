@@ -2,21 +2,19 @@
 Index is wrapper of Filter in Svelto, but works like indexes in RDBMS. Filters are used to have subset from a group. Indexes are to collect entities by specific key, from a child or entire schema. Let's take a look.
 
 ### Defining Index
-To define a Index, first define a `IIndexableComponent<TKey>`.
+To define a Index, first define a `IKeyComponent<TKey>`. It can be used as `Primary Key` or `Index`.
 
 ```csharp
-public struct CharacterControllerComponent : IIndexableComponent<int>
+public struct PlayerComponent : IIndexableComponent<int>
 {
-    public EGID ID { get; set; }
     public int key { get; set; }
 
-    public CharacterControllerComponent(int controllerId)
-        => key = controllerId;
+    public PlayerComponent(int playerID) => key = playerID;
 }
 ```
-IIndexableComponent is a Component that you can include in your Entity. The `TKey` parameter is the type you'd like to use as a key, we used `int` here.
+The `TKey` parameter is the type you'd like to use as a key, we used `int` here.
 
-`key` is a special property for index, and ensures that indexes are up-to-date. You should only directly assign it when initialization. After submission, instead you need to call `IndexedDB.Update(ref IIndexedComponent<TKey>, TKey)`.
+`key` is a special property for `Index`, and ensures that indexes are up-to-date. You should only directly assign it when initialization. After submission, instead you need to call `IndexedDB.Update`.
 
 Like the `IQuerableRow`, you need to add `IIndexableRow<TComponent>` to your Descriptor Row, to make it possible to index.
 
@@ -74,4 +72,4 @@ foreach (var result in indexedDB.Select<DamagableSet>().FromAll<CharacterRow>().
 Note that you can use foreach loop to iterate indices.
 
 ### Summary
-We learned how to define and iterate through Indexes. Lastly, **DO NOT** call `IndexedDB.Update` for indexable component while iterating through index query with it. It is undefined behaviour. If you have to, consider using `StateMachine` instead, which will be the [Next Document](basic-state-machines.md).
+We learned how to define and iterate through Indexes. Lastly, it is valid to call `IndexedDB.Update` to filter while iterating it, **only if you're changing the currently iterating index**. Otherwise it will result in undefined behaviour. Or you could consider using `StateMachine` instead, which will be the [Next Document](basic-state-machines.md).
