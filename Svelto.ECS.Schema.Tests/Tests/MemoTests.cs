@@ -47,7 +47,7 @@ namespace Svelto.ECS.Schema.Tests
             IQueryableRow<ControllerAndStateSet>
         { }
 
-        public class TestSchema : EntitySchema
+        public class TestSchema : IEntitySchema
         {
             public readonly Table<CharacterRow> Character = new();
 
@@ -60,7 +60,7 @@ namespace Svelto.ECS.Schema.Tests
 
             public TestSchema()
             {
-                Character.AddPrimaryKey(CharacterGroup);
+                Character.AddPrimaryKeys(CharacterGroup);
                 CharacterGroup.SetPossibleKeys(Enumerable.Range(0, 5).ToArray());
             }
         }

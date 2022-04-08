@@ -21,9 +21,9 @@ namespace Svelto.ECS.Schema.Internal
 
     public readonly struct EntityIDMultiQuery : IIndexQuery<IEntityRow>
     {
-        internal readonly FasterReadOnlyList<uint> _entityIDs;
+        internal readonly uint[] _entityIDs;
 
-        internal EntityIDMultiQuery(FasterReadOnlyList<uint> entityIDs)
+        internal EntityIDMultiQuery(uint[] entityIDs)
         {
             _entityIDs = entityIDs;
         }
@@ -34,10 +34,13 @@ namespace Svelto.ECS.Schema.Internal
                 config.selectedEntityIDs.Add(entityID);
         }
     }
+}
 
-    public sealed class EntityIDQueryable
+namespace Svelto.ECS.Schema
+{
+    public static class EntityID
     {
-        public EntityIDQuery Is(uint entityID) => new(entityID);
-        public EntityIDMultiQuery Is(FasterReadOnlyList<uint> entityIDs) => new(entityIDs);
+        public static EntityIDQuery Is(uint entityID) => new(entityID);
+        public static EntityIDMultiQuery Is(params uint[] entityIDs) => new(entityIDs);
     }
 }

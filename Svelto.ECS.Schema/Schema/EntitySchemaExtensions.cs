@@ -10,7 +10,7 @@ namespace Svelto.ECS.Schema
     }
 
     internal static class EntitySchemaTemplate<T>
-        where T : EntitySchema, new()
+        where T : class, IEntitySchema, new()
     {
         public static T Schema { get; private set; }
         public static SchemaMetadata Metadata { get; private set; }
@@ -34,7 +34,7 @@ namespace Svelto.ECS.Schema
     public static class EntitySchemaExtensions
     {
         public static T AddSchema<T>(this EnginesRoot enginesRoot, IndexedDB indexedDB)
-            where T : EntitySchema, new()
+            where T : class, IEntitySchema, new()
         {
             // Root schema - metadata pair will not be directly created
             EntitySchemaTemplate<T>.Create();
@@ -47,13 +47,20 @@ namespace Svelto.ECS.Schema
             return schema;
         }
 
+        public static T AddStateMachine<T>(this EnginesRoot enginesRoot, IndexedDB indexedDB)
+            where T : class, IEntityStateMachine, new()
+        {
+            var stateMachine = new T();
+
+            indexedDB.RegisterStateMachine(enginesRoot, stateMachine);
+
+            return stateMachine;
+        }
+
         public static IndexedDB GenerateIndexedDB(this EnginesRoot enginesRoot)
         {
             var entityFunctions = enginesRoot.GenerateEntityFunctions();
-            var indexedDB = new IndexedDB(entityFunctions);
-
-            // SchemaContextEngine injects EntitiesDB to IndexedDB
-            enginesRoot.AddEngine(indexedDB.Engine);
+            var indexedDB = new IndexedDB(enginesRoot, entityFunctions);
 
             return indexedDB;
         }

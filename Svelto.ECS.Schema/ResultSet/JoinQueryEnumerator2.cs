@@ -23,6 +23,7 @@ namespace Svelto.ECS.Schema
 
         private TJoined2 _joinedResult;
         private NB<TJoinComponent2> _components;
+        private NativeEntityIDs _entityIDs;
 
         internal JoinQueryEnumerator(ResultSetQueryConfig config, IJoinProvider joiner1, IJoinProvider joiner2) : this()
         {
@@ -81,6 +82,7 @@ namespace Svelto.ECS.Schema
                     _inner._inner._config.filters.AddAt(_joinedFilterIndex, filter);
 
                     _egidMapper = indexedDB.GetNativeEGIDMapper(_joinedGroup);
+                    _entityIDs = indexedDB.QueryEntityIDs(_joinedGroup);
 
                     ResultSetHelper<TJoined2>.Assign(out _joinedResult, indexedDB.entitiesDB, _joinedGroup);
                     break;
@@ -103,8 +105,9 @@ namespace Svelto.ECS.Schema
         internal JoinedIndexedIndices<TJoinComponent1, TJoinComponent2> Indices
             => new(_inner.Indices, _egidMapper, _components);
 
-        public QueryResult<TResult, TJoined1, TJoined2, TJoinComponent1, TJoinComponent2> Current =>
-            new(_inner._inner._result, _inner._inner._groups[_inner._inner._groupIndex],
-            _inner._joinedResult, _inner._joinedGroup, _joinedResult, _joinedGroup, Indices);
+        public QueryResult<TResult, TJoined1, TJoined2, TJoinComponent1, TJoinComponent2> Current
+            => new(_inner._inner._result, _inner._inner._groups[_inner._inner._groupIndex],
+            _inner._joinedResult, _inner._joinedGroup, _joinedResult, _joinedGroup,
+            Indices, _inner._entityIDs, _entityIDs);
     }
 }

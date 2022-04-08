@@ -10,7 +10,7 @@ using Svelto.ECS.Schema.Internal;
 namespace Svelto.ECS.Schema.Internal
 {
     internal abstract class StateMachineConfigBase<TComponent>
-        where TComponent : unmanaged, IStateMachineComponent
+        where TComponent : unmanaged, IKeyComponent
     {
         internal abstract IStepEngine AddEngines(EnginesRoot enginesRoot, IndexedDB indexedDB);
         internal abstract void Process(IndexedDB indexedDB);
@@ -37,8 +37,8 @@ namespace Svelto.ECS.Schema.Internal
     }
 
     internal sealed partial class StateMachineConfig<TRow, TComponent, TState> : StateMachineConfigBase<TComponent>
-        where TRow : class, StateMachine<TComponent>.IIndexableRow
-        where TComponent : unmanaged, IStateMachineComponent<TState>
+        where TRow : class, StateMachine<TComponent>.IStateMachineRow
+        where TComponent : unmanaged, IKeyComponent<TState>
         where TState : unmanaged, IEquatable<TState>
     {
         public static StateMachineConfig<TRow, TComponent, TState> Get(StateMachine<TComponent> fsm)
@@ -82,7 +82,7 @@ namespace Svelto.ECS.Schema.Internal
                 indexedDB.Memo(states[i]._enterCandidates).Clear();
             }
 
-            foreach (var result in indexedDB.Select<StateMachineSet<TComponent>>().From<TRow>())
+            foreach (var result in indexedDB.Select<StateMachineSet<TComponent>>().FromAll<TRow>())
             {
                 for (int i = 0; i < stateCount; ++i)
                 {

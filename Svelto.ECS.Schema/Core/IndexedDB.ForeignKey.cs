@@ -12,7 +12,7 @@ namespace Svelto.ECS.Schema
     {
         internal class ForeignKeyCache
         {
-            public FasterDictionary<EntityReference, HashSet<EntityReference>> reverseForiegnKey = new();
+            public FasterDictionary<EntityReference, FasterDictionary<EntityReference, EntityReference>> reverseForiegnKey = new();
             public FasterDictionary<EntityReference, EntityReference> previousForeignKey = new();
         }
 
@@ -52,8 +52,8 @@ namespace Svelto.ECS.Schema
             {
                 fkCache.previousForeignKey.Remove(entityReference);
 
-                if (fkCache.reverseForiegnKey.TryGetValue(other, out var otherHashSet))
-                    otherHashSet.Remove(entityReference);
+                if (fkCache.reverseForiegnKey.TryGetValue(other, out var reverseReferences))
+                    reverseReferences.Remove(entityReference);
             }
         }
 
@@ -69,15 +69,15 @@ namespace Svelto.ECS.Schema
             var fkCache = GetOrAddForeignKeyCache(fkType);
 
             if (fkCache.previousForeignKey.TryGetValue(entityReference, out var previousReference) &&
-                fkCache.reverseForiegnKey.TryGetValue(previousReference, out var previousHashSet))
+                fkCache.reverseForiegnKey.TryGetValue(previousReference, out var previousReverseReferences))
             {
-                previousHashSet.Remove(entityReference);
+                previousReverseReferences.Remove(entityReference);
             }
 
             fkCache.previousForeignKey[entityReference] = other;
 
-            var otherHashSet = fkCache.reverseForiegnKey.GetOrAdd(other, () => new());
-            otherHashSet.Add(entityReference);
+            var reverseReferences = fkCache.reverseForiegnKey.GetOrAdd(other, () => new());
+            reverseReferences.Add(entityReference, entityReference);
 
             if (other == EntityReference.Invalid || !TryGetEGID(other, out var otherID) ||
                 FindTable<IReferenceableRow<TComponent>>(otherID.groupID) == null)
@@ -112,23 +112,25 @@ namespace Svelto.ECS.Schema
             var fkCache = GetOrAddForeignKeyCache(fkType);
             var componentCache = GetOrAddComponentCache<ExclusiveGroupStruct>(fkType);
 
-            if (fkCache.reverseForiegnKey.TryGetValue(other, out var otherHashSet))
+            if (fkCache.reverseForiegnKey.TryGetValue(other, out var reverseReferences))
             {
+                var reverseReferencesValues = reverseReferences.GetValues(out var count);
+
                 if (!TryGetEGID(other, out var otherID) ||
                     FindTable<IReferenceableRow<TComponent>>(otherID.groupID) == null)
                 {
-                    foreach (var entityReference in otherHashSet)
+                    for (int i = 0; i < count; ++i)
                     {
-                        var egid = entitiesDB.GetEGID(entityReference);
-                        RemoveFromFilterInternal(fkType, componentCache, egid, entityReference);
+                        var egid = entitiesDB.GetEGID(reverseReferencesValues[i]);
+                        RemoveFromFilterInternal(fkType, componentCache, egid, reverseReferencesValues[i]);
                     }
                 }
                 else
                 {
-                    foreach (var entityReference in otherHashSet)
+                    for (int i = 0; i < count; ++i)
                     {
-                        var egid = entitiesDB.GetEGID(entityReference);
-                        UpdateFilterInternal(fkType, componentCache, egid, entityReference, otherID.groupID);
+                        var egid = entitiesDB.GetEGID(reverseReferencesValues[i]);
+                        UpdateFilterInternal(fkType, componentCache, egid, reverseReferencesValues[i], otherID.groupID);
                     }
                 }
             }
@@ -142,16 +144,94 @@ namespace Svelto.ECS.Schema
             var fkCache = GetOrAddForeignKeyCache(fkType);
             var componentCache = GetOrAddComponentCache<ExclusiveGroupStruct>(fkType);
 
-            if (fkCache.reverseForiegnKey.TryGetValue(other, out var otherHashSet))
+            if (fkCache.reverseForiegnKey.TryGetValue(other, out var reverseReferences))
             {
-                foreach (var entityReference in otherHashSet)
+                var reverseReferencesValues = reverseReferences.GetValues(out var count);
+
+                for (int i = 0; i < count; ++i)
                 {
-                    var egid = entitiesDB.GetEGID(entityReference);
-                    RemoveFromFilterInternal(fkType, componentCache, egid, entityReference);
+                    var egid = entitiesDB.GetEGID(reverseReferencesValues[i]);
+                    RemoveFromFilterInternal(fkType, componentCache, egid, reverseReferencesValues[i]);
                 }
 
                 fkCache.reverseForiegnKey.Remove(other);
             }
+        }
+
+        public ref struct ReverseReferences
+        {
+            private readonly EnginesRoot.LocatorMap locatorMap;
+            private readonly MB<EntityReference> buffer;
+            public readonly uint count;
+
+            public ReverseReferences(
+                in EnginesRoot.LocatorMap locatorMap, MB<EntityReference> buffer, uint count)
+            {
+                this.locatorMap = locatorMap;
+                this.buffer = buffer;
+                this.count = count;
+            }
+
+            public EntityReference this[int index] => buffer[index];
+            public EntityReference this[uint index] => buffer[index];
+
+            public Enumerator GetEnumerator() => new(locatorMap, buffer, count);
+
+            public ref struct Enumerator
+            {
+                private readonly EnginesRoot.LocatorMap locatorMap;
+                private readonly MB<EntityReference> buffer;
+                private readonly uint count;
+                private uint index;
+
+                public Enumerator(
+                    in EnginesRoot.LocatorMap locatorMap, MB<EntityReference> buffer, uint count)
+                {
+                    this.locatorMap = locatorMap;
+                    this.buffer = buffer;
+                    this.count = count;
+                    index = 0;
+                }
+
+                public bool MoveNext() => ++index <= count;
+
+                public void Reset() => index = 0;
+
+                public void Dispose() { }
+
+                public EGID Current => locatorMap.GetEGID(buffer[index - 1]);
+            }
+        }
+
+        /// <summary>
+        /// get reverese reference map, which is the list of referencers
+        /// useful when you want to get all entities that reference this entity
+        /// e.g. Remove all equipments from a specific character
+        /// </summary>
+        internal ReverseReferences QueryReverseReferences(
+            IEntityForeignKey foreignKey, in EGID referencedEGID)
+        {
+            return QueryReverseReferences(foreignKey, GetEntityReference(referencedEGID));
+        }
+
+        /// <summary>
+        /// get reverese reference map, which is the list of referencers
+        /// useful when you want to get all entities that reference this entity
+        /// e.g. Remove all equipments from a specific character
+        /// </summary>
+        internal ReverseReferences QueryReverseReferences(
+                IEntityForeignKey foreignKey, in EntityReference referencedEntity)
+        {
+            var fkType = foreignKey.Index.ComponentType;
+            var fkCache = GetOrAddForeignKeyCache(fkType);
+
+            if (fkCache.reverseForiegnKey.TryGetValue(referencedEntity, out var reverseReferences))
+            {
+                var buffer = reverseReferences.GetValues(out var count);
+                return new ReverseReferences(entitiesDB.GetEntityLocator(), buffer, count);
+            }
+
+            return default;
         }
     }
 }

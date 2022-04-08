@@ -29,7 +29,7 @@ namespace Svelto.ECS.Schema
 
         // this will be cleared every time entity submission happens
         // that means if user has any Update on it's iteration,
-        // they need to call IndexedDB.Engine.Step() before entity submission
+        // they need to call IndexedDB.Step() before entity submission
         internal Memo<IPrimaryKeyRow> entitiesToUpdateGroup = new();
 
         internal IndexableComponentCache<TK> GetOrAddComponentCache<TK>(in RefWrapperType componentType)
@@ -56,6 +56,14 @@ namespace Svelto.ECS.Schema
                     if (indexer.ComponentType.Equals(componentType))
                         componentIndexers.Add(indexer);
                 }
+            }
+
+            foreach (var stateMachine in registeredStateMachines)
+            {
+                var indexer = stateMachine.Index;
+
+                if (indexer.ComponentType.Equals(componentType))
+                    componentIndexers.Add(indexer);
             }
 
             componentCache.indexers = componentIndexers;

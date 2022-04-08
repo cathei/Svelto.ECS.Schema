@@ -56,10 +56,10 @@ namespace Svelto.ECS.Schema
         public EntityReference GetEntityReference(in EGID egid)
             => entitiesDB.GetEntityReference(egid);
 
-        public (NativeEntityIDs, int) QueryEntityIDs(in ExclusiveGroupStruct groupID)
+        internal NativeEntityIDs QueryEntityIDs(in ExclusiveGroupStruct groupID)
         {
-            var (_, entityIDs, count) = entitiesDB.QueryEntities<RowIdentityComponent>(groupID);
-            return (entityIDs, count);
+            var (_, entityIDs, _) = entitiesDB.QueryEntities<RowIdentityComponent>(groupID);
+            return entityIDs;
         }
     }
 }

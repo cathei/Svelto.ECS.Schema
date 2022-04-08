@@ -42,7 +42,7 @@ namespace Svelto.ECS.Schema.Tests
             IReferenceableRow<ForeignKeyB>, IQueryableRow<DummyResultSet>
         { }
 
-        public class TestSchema : EntitySchema
+        public class TestSchema : IEntitySchema
         {
             public readonly Table<EntityARow> Character = new();
             public readonly Table<EntityBRow> Deck = new();
@@ -69,8 +69,8 @@ namespace Svelto.ECS.Schema.Tests
 
             uint joinCount = 0;
 
-            foreach (var resultA in _indexedDB.From<EntityARow>())
-            foreach (var resultB in _indexedDB.From<EntityBRow>())
+            foreach (var resultA in _indexedDB.FromAll<EntityARow>())
+            foreach (var resultB in _indexedDB.FromAll<EntityBRow>())
             {
                 foreach (var i in resultA.indices)
                 foreach (var j in resultB.indices)

@@ -3,14 +3,14 @@ using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema.Internal
 {
-    public struct Refereneable<TComponent> : IEntityComponent
+    public struct Referenceable<TComponent> : IEntityComponent
         where TComponent : unmanaged, IForeignKeyComponent
     { }
 }
 
 namespace Svelto.ECS.Schema
 {
-    public interface IReferenceableRow<TComponent> : IReactiveRow<Refereneable<TComponent>>
+    public interface IReferenceableRow<TComponent> : IReactiveRow<Referenceable<TComponent>>
         where TComponent : unmanaged, IForeignKeyComponent
     { }
 

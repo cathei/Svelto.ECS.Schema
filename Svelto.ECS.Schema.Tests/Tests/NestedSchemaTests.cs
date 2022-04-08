@@ -36,7 +36,7 @@ namespace Svelto.ECS.Schema.Tests
             IPrimaryKeyRow<TeamComponent>, IPrimaryKeyRow<FoodComponent>, IPrimaryKeyRow<StateComponent>
         { }
 
-        public class TestSchema : EntitySchema
+        public class TestSchema : IEntitySchema
         {
             public readonly Table<DoofusRow> Doofus = new();
             public readonly Table<FoodRow> Food = new();
@@ -47,12 +47,12 @@ namespace Svelto.ECS.Schema.Tests
 
             public TestSchema()
             {
-                Doofus.AddPrimaryKey(TeamPK);
-                Doofus.AddPrimaryKey(StatePK);
+                Doofus.AddPrimaryKeys(TeamPK);
+                Doofus.AddPrimaryKeys(StatePK);
 
-                Food.AddPrimaryKey(TeamPK);
-                Food.AddPrimaryKey(StatePK);
-                Food.AddPrimaryKey(FoodPK);
+                Food.AddPrimaryKeys(TeamPK);
+                Food.AddPrimaryKeys(StatePK);
+                Food.AddPrimaryKeys(FoodPK);
 
                 TeamPK.SetPossibleKeys(new TeamColor[] {
                     TeamColor.Red, TeamColor.Blue, TeamColor.Yellow, TeamColor.Green

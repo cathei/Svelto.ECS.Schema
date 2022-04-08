@@ -14,7 +14,6 @@ namespace Svelto.ECS.Schema
         internal uint _current;
 
         private readonly int _maxCount;
-        private EntityFilterIndices _indices;
 
         internal MultiIndexedIndicesEnumerator(
             NativeDynamicArrayCast<uint> selectedIndices,
@@ -34,8 +33,7 @@ namespace Svelto.ECS.Schema
             }
             else if (_filters.count > 0)
             {
-                _indices = _filters[0].indices;
-                _maxCount = (int)_indices.count;
+                _maxCount = (int)_filters[0].count;
             }
             else
             {
@@ -59,7 +57,10 @@ namespace Svelto.ECS.Schema
                 }
                 else if (_filters.count > 0)
                 {
-                    _current = _indices[_index];
+                    // I prefer iterating it reverse
+                    // because it will make it safe to alter filters
+                    _current =_filters[0]._entityIDToDenseIndex
+                        .unsafeValues[_maxCount - _index - 1];
 
                     if (!ExistInAllFilters(_entityIDs[_current], 1))
                         continue;

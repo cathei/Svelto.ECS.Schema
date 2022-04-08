@@ -20,6 +20,7 @@ namespace Svelto.ECS.Schema
 
         internal TJoined _joinedResult;
         internal ExclusiveGroupStruct _joinedGroup;
+        internal NativeEntityIDs _entityIDs;
 
         internal JoinQueryEnumerator(ResultSetQueryConfig config, IJoinProvider joiner) : this()
         {
@@ -27,7 +28,7 @@ namespace Svelto.ECS.Schema
             _joiner = joiner;
             _joinedFilterIndex = (uint)config.filters.count;
 
-            if (config.indexedDB.indexers.TryGetValue(joiner.IndexerID.id, out var indexerData) &&
+            if (indexedDB.indexers.TryGetValue(joiner.IndexerID.id, out var indexerData) &&
                 indexerData is IndexerData<ExclusiveGroupStruct> indexerDataGroup)
             {
                 _joinedGroups = indexerDataGroup.keyToFilterID;
@@ -62,21 +63,22 @@ namespace Svelto.ECS.Schema
             {
                 _joinedGroup = _joinedGroups.unsafeKeys[_joinedGroupIndex].key;
 
-                if (_joiner.IsValidGroup(_inner._config.indexedDB, _joinedGroup))
+                if (_joiner.IsValidGroup(indexedDB, _joinedGroup))
                 {
                     var filterID = new CombinedFilterID(
                         _joinedGroups.unsafeValues[_joinedGroupIndex], _joiner.IndexerID);
 
-                    ref var filter = ref _inner._config.indexedDB.GetOrAddPersistentFilter(filterID);
+                    ref var filter = ref indexedDB.GetOrAddPersistentFilter(filterID);
 
                     if (filter.groupCount == 0)
                         continue;
 
                     _inner._config.filters.AddAt(_joinedFilterIndex, filter);
 
-                    _egidMapper = _inner._config.indexedDB.GetNativeEGIDMapper(_joinedGroup);
+                    _egidMapper = indexedDB.GetNativeEGIDMapper(_joinedGroup);
+                    _entityIDs = indexedDB.QueryEntityIDs(_joinedGroup);
 
-                    ResultSetHelper<TJoined>.Assign(out _joinedResult, _inner._config.indexedDB.entitiesDB, _joinedGroup);
+                    ResultSetHelper<TJoined>.Assign(out _joinedResult, indexedDB.entitiesDB, _joinedGroup);
                     break;
                 }
             }
@@ -92,10 +94,12 @@ namespace Svelto.ECS.Schema
             _inner.Dispose();
         }
 
-        internal JoinedIndexedIndices<TJoinComponent> Indices
-            => new(_inner.Indices, _inner._config.indexedDB.entitiesDB.GetEntityLocator(), _egidMapper, _inner._components);
+        private IndexedDB indexedDB => _inner._config.indexedDB;
 
-        public QueryResult<TResult, TJoined, TJoinComponent> Current =>
-            new(_inner._result, _inner._groups[_inner._groupIndex], _joinedResult, _joinedGroup, Indices);
+        internal JoinedIndexedIndices<TJoinComponent> Indices
+            => new(_inner.Indices, indexedDB.entitiesDB.GetEntityLocator(), _egidMapper, _inner._components);
+
+        public QueryResult<TResult, TJoined, TJoinComponent> Current
+            => new(_inner._result, _inner._groups[_inner._groupIndex], _joinedResult, _joinedGroup, Indices, _entityIDs);
     }
 }

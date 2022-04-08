@@ -46,7 +46,7 @@ namespace Svelto.ECS.Schema.Internal
         {
             ref var originalFilter = ref GetFilter(indexedDB);
 
-            foreach (var query in indexedDB.From<TRow>().Where(indexQuery))
+            foreach (var query in indexedDB.FromAll<TRow>().Where(indexQuery))
             {
                 var groupFilter = originalFilter.GetGroupFilter(query.group);
 
@@ -60,7 +60,7 @@ namespace Svelto.ECS.Schema.Internal
         {
             ref var originalFilter = ref GetFilter(indexedDB);
 
-            var otherQueries = indexedDB.From<TRow>().Where(other);
+            var otherQueries = indexedDB.FromAll<TRow>().Where(other);
 
             otherQueries.Build();
 

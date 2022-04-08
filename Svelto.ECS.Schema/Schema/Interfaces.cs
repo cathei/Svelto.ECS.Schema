@@ -19,7 +19,7 @@ namespace Svelto.ECS.Schema
 
             internal EntityInitializer Build(IEntityFactory factory, uint entityID, IEnumerable<object> implementors);
             internal void Swap(IEntityFunctions functions, in EGID egid, in ExclusiveBuildGroup groupID);
-            internal void Remove(IEntityFunctions functions, uint entityID, in ExclusiveGroupStruct groupID);
+            internal void Remove(IEntityFunctions functions, in EGID egid);
         }
 
         public interface IEntityIndex : ISchemaDefinition
@@ -50,10 +50,10 @@ namespace Svelto.ECS.Schema
             IEntityIndex Index { get; }
         }
 
-        public interface IEntityStateMachine : ISchemaDefinition
+        public interface IEntityStateMachine
         {
             RefWrapperType ComponentType { get; }
-            IStepEngine AddEngines(EnginesRoot enginesRoot, IndexedDB indexedDB);
+            void AddEngines(EnginesRoot enginesRoot, IndexedDB indexedDB);
             IEntityIndex Index { get; }
         }
 
@@ -62,7 +62,7 @@ namespace Svelto.ECS.Schema
             int Range { get; }
             IEntityTable GetTable(int index);
         }
-
-        public interface IEntitySchema : ISchemaDefinition { }
     }
+
+    public interface IEntitySchema : ISchemaDefinition { }
 }

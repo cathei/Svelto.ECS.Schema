@@ -24,7 +24,7 @@ namespace Svelto.ECS.Schema.Internal
 
         protected abstract EntityInitializer Build(IEntityFactory factory, uint entityID, IEnumerable<object> implementors);
         protected abstract void Swap(IEntityFunctions functions, in EGID egid, in ExclusiveBuildGroup groupID);
-        protected abstract void Remove(IEntityFunctions functions, uint entityID, in ExclusiveGroupStruct groupID);
+        protected abstract void Remove(IEntityFunctions functions, in EGID egid);
 
         EntityInitializer IEntityTable.Build(IEntityFactory factory, uint entityID, IEnumerable<object> implementors)
             => Build(factory, entityID, implementors);
@@ -37,8 +37,8 @@ namespace Svelto.ECS.Schema.Internal
         /// Because it is not possible to determine if it is safe to swap to other table
         /// Primary Key should be used instead of swap if needed.
         /// </summary>
-        void IEntityTable.Remove(IEntityFunctions functions, uint entityID, in ExclusiveGroupStruct groupID)
-            => Remove(functions, entityID, groupID);
+        void IEntityTable.Remove(IEntityFunctions functions, in EGID egid)
+            => Remove(functions, egid);
     }
 }
 
@@ -51,10 +51,10 @@ namespace Svelto.ECS.Schema
 
         private FasterList<InitializerDelegate> _defaultInitializerActions;
 
-        public void AddPrimaryKey<TPrimaryKey>(TPrimaryKey primaryKey)
-            where TPrimaryKey : IPrimaryKeyProvider<TRow>
+        public void AddPrimaryKeys(params IPrimaryKeyProvider<TRow>[] primaryKeys)
         {
-            primaryKeys.Add(primaryKey.PrimaryKeyID, primaryKey);
+            foreach (var primaryKey in primaryKeys)
+                this.primaryKeys.Add(primaryKey.PrimaryKeyID, primaryKey);
         }
 
         public void SetDefault<T>(T initialValue)
@@ -82,9 +82,9 @@ namespace Svelto.ECS.Schema
             functions.SwapEntityGroup<DescriptorRow<TRow>.Descriptor>(egid, groupID);
         }
 
-        protected override void Remove(IEntityFunctions functions, uint entityID, in ExclusiveGroupStruct groupID)
+        protected override void Remove(IEntityFunctions functions, in EGID egid)
         {
-            functions.RemoveEntity<DescriptorRow<TRow>.Descriptor>(entityID, groupID);
+            functions.RemoveEntity<DescriptorRow<TRow>.Descriptor>(egid);
         }
 
         int IEntityTables.Range => 1;

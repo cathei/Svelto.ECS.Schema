@@ -29,10 +29,12 @@ If you need help or want to give feedback, you can either join [my Discord Chann
 * [Defining Rows](docs/basic-rows.md)
 * [Defining Schemas](docs/basic-schemas.md)
 * [Using Queries](docs/basic-queries.md)
+* [Using Primary Keys](docs/basic-pks.md)
 * [Using Indexes](docs/basic-indexes.md)
 * [Using State Machines](docs/basic-state-machines.md)
 
 ### Advanced Usages
+* [Using Foreign Keys and Joins](docs/advanced-fks.md)
 * [Advanced Schema Usages](docs/advanced-schemas.md)
 
 ### Etc.

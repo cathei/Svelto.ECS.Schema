@@ -49,7 +49,7 @@ namespace Svelto.ECS.Schema.Tests
             IIndexableRow<CharacterControllerComponent>
         { }
 
-        public class TestSchema : EntitySchema
+        public class TestSchema : IEntitySchema
         {
             public readonly Table<CharacterRow> character = new();
         }

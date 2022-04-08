@@ -8,7 +8,7 @@ using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema.Internal
 {
-    public interface IPrimaryKeyRow : IReactiveRow<RowIdentityComponent> { }
+    public interface IPrimaryKeyRow : IReactiveRow<PKIdentityComponent> { }
 }
 
 namespace Svelto.ECS.Schema

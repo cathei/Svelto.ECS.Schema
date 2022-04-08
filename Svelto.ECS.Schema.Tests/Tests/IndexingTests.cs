@@ -56,7 +56,7 @@ namespace Svelto.ECS.Schema.Tests
         {}
 
         // schema
-        public class TestSchema : EntitySchema
+        public class TestSchema : IEntitySchema
         {
             public readonly Table<CharacterRow> Character = new();
             public readonly Table<ItemRow> Item = new();
@@ -67,8 +67,8 @@ namespace Svelto.ECS.Schema.Tests
 
             public TestSchema()
             {
-                Character.AddPrimaryKey(Player);
-                Item.AddPrimaryKey(Player);
+                Character.AddPrimaryKeys(Player);
+                Item.AddPrimaryKeys(Player);
 
                 Player.SetPossibleKeys(Enumerable.Range(-1, 11).ToArray());
             }
@@ -82,7 +82,7 @@ namespace Svelto.ECS.Schema.Tests
             int groupCount = 0;
 
             var query = _indexedDB.Select<ItemWithOwnerSet>()
-                .From<ItemRow>().Where(_schema.ItemOwner.Is(itemOwnerKey));
+                .FromAll<ItemRow>().Where(_schema.ItemOwner.Is(itemOwnerKey));
 
             if (playerId != null)
                 query.Where(_schema.Player.Is(playerId.Value));
@@ -203,7 +203,7 @@ namespace Svelto.ECS.Schema.Tests
                     _indexedDB.Update(ref result.set.player[i], result.egid[i], 1);
             }
 
-            _indexedDB.Engine.Step();
+            _indexedDB.Step();
             _submissionScheduler.SubmitEntities();
 
             AssertIndexer(0, -1, 1, out queriedComponents);

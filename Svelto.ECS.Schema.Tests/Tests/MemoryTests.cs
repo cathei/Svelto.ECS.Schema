@@ -63,7 +63,7 @@ namespace Svelto.ECS.Schema.Tests
         public class CharacterRow : DescriptorRow<CharacterRow>, IQueryableRow<DummySet>
         { }
 
-        public class TestSchema : EntitySchema
+        public class TestSchema : IEntitySchema
         {
             public readonly Table<CharacterRow> Character = new();
             public readonly Table<ItemRow> Item = new();
@@ -73,7 +73,7 @@ namespace Svelto.ECS.Schema.Tests
 
             public TestSchema()
             {
-                Item.AddPrimaryKey(ItemGroup);
+                Item.AddPrimaryKeys(ItemGroup);
                 ItemGroup.SetPossibleKeys(Enumerable.Range(0, ItemGroupCount).ToArray());
             }
         }
@@ -182,7 +182,7 @@ namespace Svelto.ECS.Schema.Tests
             int indicesCount = 0;
 
             // warming up
-            foreach (var query in _indexedDB.From<ItemRow>().Where(_schema.ItemOwner.Is(0)))
+            foreach (var query in _indexedDB.FromAll<ItemRow>().Where(_schema.ItemOwner.Is(0)))
             {
                 ++loop;
 
@@ -200,7 +200,7 @@ namespace Svelto.ECS.Schema.Tests
 
             for (int i = 0; i < 100; ++i)
             {
-                foreach (var query in _indexedDB.From<ItemRow>().Where(_schema.ItemOwner.Is(0)))
+                foreach (var query in _indexedDB.FromAll<ItemRow>().Where(_schema.ItemOwner.Is(0)))
                 {
                     ++loop;
 

@@ -8,8 +8,8 @@ using Svelto.ECS.Schema.Internal;
 namespace Svelto.ECS.Schema.Internal
 {
     internal class PrimaryKeyEngine :
-        IReactRowAdd<IPrimaryKeyRow, RowIdentityComponent>,
-        IReactRowSwap<IPrimaryKeyRow, RowIdentityComponent>,
+        IReactRowAdd<IPrimaryKeyRow, PKIdentityComponent>,
+        IReactRowSwap<IPrimaryKeyRow, PKIdentityComponent>,
         IStepEngine
     {
         public PrimaryKeyEngine(IndexedDB indexedDB)
@@ -21,7 +21,7 @@ namespace Svelto.ECS.Schema.Internal
 
         public string name { get; } = nameof(PrimaryKeyEngine);
 
-        public void Add(in EntityCollection<RowIdentityComponent> collection,
+        public void Add(in EntityCollection<PKIdentityComponent> collection,
             RangedIndices indices, ExclusiveGroupStruct group)
         {
             // process only build group (no. 0)
@@ -35,7 +35,7 @@ namespace Svelto.ECS.Schema.Internal
             Process(entityIDs, indices, group);
         }
 
-        public void MovedTo(in EntityCollection<RowIdentityComponent> collection,
+        public void MovedTo(in EntityCollection<PKIdentityComponent> collection,
             RangedIndices indices, ExclusiveGroupStruct fromGroup, ExclusiveGroupStruct toGroup)
         {
             // process only build group (no. 0)
@@ -82,7 +82,7 @@ namespace Svelto.ECS.Schema.Internal
 
         public void Step()
         {
-            foreach (var result in indexedDB.From<IPrimaryKeyRow>().Where(indexedDB.entitiesToUpdateGroup))
+            foreach (var result in indexedDB.FromAll<IPrimaryKeyRow>().Where(indexedDB.entitiesToUpdateGroup))
             {
                 var group = result.group;
                 var table = indexedDB.FindTable(group);

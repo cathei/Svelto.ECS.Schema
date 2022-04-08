@@ -18,17 +18,18 @@ namespace Svelto.ECS.Schema.Internal
         where TResult : struct
     {
         public readonly TResult set;
-        public readonly ExclusiveGroupStruct group;
+        public readonly ExclusiveGroupStruct group => egid._group;
         public readonly MultiIndexedIndices indices;
 
-        public readonly EGIDBuilder egid => new(indices._entityIDs, group);
+        public readonly EGIDBuilder egid;
 
         public QueryResult(TResult set,
             in ExclusiveGroupStruct group, in MultiIndexedIndices indices)
         {
             this.set = set;
-            this.group = group;
             this.indices = indices;
+
+            egid = new(indices._entityIDs, group);
         }
     }
 
@@ -40,25 +41,26 @@ namespace Svelto.ECS.Schema.Internal
         public readonly TResult setA;
         public readonly TJoined setB;
 
-        public readonly ExclusiveGroupStruct groupA;
-        public readonly ExclusiveGroupStruct groupB;
+        public readonly ExclusiveGroupStruct groupA => egidA._group;
+        public readonly ExclusiveGroupStruct groupB => egidB._group;
 
         public readonly JoinedIndexedIndices<TJoinComponent> indices;
 
-        public readonly EGIDBuilder egidA => new(indices._inner._entityIDs, groupA);
+        public readonly EGIDBuilder egidA;
+        public readonly EGIDBuilder egidB;
 
         public QueryResult(
             in TResult setA, in ExclusiveGroupStruct groupA,
             in TJoined setB, in ExclusiveGroupStruct groupB,
-            in JoinedIndexedIndices<TJoinComponent> indices)
+            in JoinedIndexedIndices<TJoinComponent> indices, NativeEntityIDs groupBEntityIDs)
         {
             this.setA = setA;
             this.setB = setB;
 
-            this.groupA = groupA;
-            this.groupB = groupB;
-
             this.indices = indices;
+
+            egidA = new(indices._inner._entityIDs, groupA);
+            egidB = new(groupBEntityIDs, groupB);
         }
     }
 
@@ -73,29 +75,32 @@ namespace Svelto.ECS.Schema.Internal
         public readonly TJoined1 setB;
         public readonly TJoined2 setC;
 
-        public readonly ExclusiveGroupStruct groupA;
-        public readonly ExclusiveGroupStruct groupB;
-        public readonly ExclusiveGroupStruct groupC;
+        public readonly ExclusiveGroupStruct groupA => egidA._group;
+        public readonly ExclusiveGroupStruct groupB => egidB._group;
+        public readonly ExclusiveGroupStruct groupC => egidC._group;
 
         public readonly JoinedIndexedIndices<TJoinComponent1, TJoinComponent2> indices;
 
-        public readonly EGIDBuilder egidA => new(indices._inner._inner._entityIDs, groupA);
+        public readonly EGIDBuilder egidA;
+        public readonly EGIDBuilder egidB;
+        public readonly EGIDBuilder egidC;
 
         public QueryResult(
             in TResult setA, in ExclusiveGroupStruct groupA,
             in TJoined1 setB, in ExclusiveGroupStruct groupB,
             in TJoined2 setC, in ExclusiveGroupStruct groupC,
-            in JoinedIndexedIndices<TJoinComponent1, TJoinComponent2> indices)
+            in JoinedIndexedIndices<TJoinComponent1, TJoinComponent2> indices,
+            NativeEntityIDs groupBEntityIDs, NativeEntityIDs groupCEntityIDs)
         {
             this.setA = setA;
             this.setB = setB;
             this.setC = setC;
 
-            this.groupA = groupA;
-            this.groupB = groupB;
-            this.groupC = groupC;
-
             this.indices = indices;
+
+            egidA = new(indices._inner._inner._entityIDs, groupA);
+            egidB = new(groupBEntityIDs, groupB);
+            egidC = new(groupCEntityIDs, groupC);
         }
     }
 }

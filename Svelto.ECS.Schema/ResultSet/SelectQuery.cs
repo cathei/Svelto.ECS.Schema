@@ -29,7 +29,7 @@ namespace Svelto.ECS.Schema.Internal
             _indexedDB = indexedDB;
         }
 
-        public SelectFromQuery<TRow, TResult> From<TRow>()
+        public SelectFromQuery<TRow, TResult> FromAll<TRow>()
             where TRow : class, IQueryableRow<TResult>
         {
             return new(_indexedDB);
@@ -58,7 +58,7 @@ namespace Svelto.ECS.Schema
             return new(indexedDB);
         }
 
-        public static SelectFromQuery<TRow, EmptyResultSet> From<TRow>(this IndexedDB indexedDB)
+        public static SelectFromQuery<TRow, EmptyResultSet> FromAll<TRow>(this IndexedDB indexedDB)
             where TRow : class, IEntityRow
         {
             return new(indexedDB);

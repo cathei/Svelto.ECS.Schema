@@ -25,15 +25,11 @@ namespace Svelto.ECS.Schema.Tests
 
         public enum CharacterState { Normal, Upset, Angry, Special, MAX }
 
-        public struct CharacterStateComponent : IStateMachineComponent<EnumKey<CharacterState>>
+        public struct CharacterStateComponent : IKeyComponent<EnumKey<CharacterState>>
         {
-            public EGID ID { get; set; }
             public EnumKey<CharacterState> key { get; set; }
 
-            public CharacterStateComponent(CharacterState state) : this()
-            {
-                this.key = state;
-            }
+            public CharacterStateComponent(CharacterState state) => key = state;
         }
 
         public struct RageResultSet : IResultSet<RageComponent, CharacterStateComponent>
@@ -66,13 +62,13 @@ namespace Svelto.ECS.Schema.Tests
 
         public class CharacterFSM : StateMachine<CharacterStateComponent>
         {
-            public interface IRow : IIndexableRow,
+            public interface IRow : IStateMachineRow,
                 IEntityRow<RageComponent>,
                 IEntityRow<TriggerComponent>,
                 IEntityRow<SpecialTimerComponent>
             { }
 
-            public CharacterFSM()
+            protected override void OnConfigure()
             {
                 var builder = Configure<IRow>();
 
@@ -110,11 +106,16 @@ namespace Svelto.ECS.Schema.Tests
             CharacterFSM.IRow, IQueryableRow<RageResultSet>, IQueryableRow<AllFourSet>
         { }
 
-        public class TestSchema : EntitySchema
+        public class TestSchema : IEntitySchema
         {
             public readonly Table<CharacterRow> Character = new();
-            
-            public readonly CharacterFSM CharacterFSM = new();
+        }
+
+        private CharacterFSM _characterFSM;
+
+        public StateMachineTests() : base()
+        {
+            _characterFSM = _enginesRoot.AddStateMachine<CharacterFSM>(_indexedDB);
         }
 
         private void AssertIndexer()
@@ -125,7 +126,7 @@ namespace Svelto.ECS.Schema.Tests
             for (CharacterState state = 0; state < CharacterState.MAX; ++state)
             {
                 foreach (var result in _indexedDB.Select<RageResultSet>()
-                    .From(_schema.Character).Where(_schema.CharacterFSM.Is(state)))
+                    .From(_schema.Character).Where(_characterFSM.Is(state)))
                 {
                     count = result.set.count;
 
@@ -154,7 +155,7 @@ namespace Svelto.ECS.Schema.Tests
 
             _submissionScheduler.SubmitEntities();
 
-            _indexedDB.Engine.Step();
+            _characterFSM.Step();
 
             AssertIndexer();
 
@@ -167,7 +168,7 @@ namespace Svelto.ECS.Schema.Tests
                 }
             }
 
-            _indexedDB.Engine.Step();
+            _characterFSM.Step();
 
             AssertIndexer();
 
@@ -203,7 +204,7 @@ namespace Svelto.ECS.Schema.Tests
                 }
             }
 
-            _indexedDB.Engine.Step();
+            _characterFSM.Step();
 
             AssertIndexer();
 
@@ -215,7 +216,7 @@ namespace Svelto.ECS.Schema.Tests
                 }
             }
 
-            _indexedDB.Engine.Step();
+            _characterFSM.Step();
 
             AssertIndexer();
 
@@ -241,7 +242,7 @@ namespace Svelto.ECS.Schema.Tests
 
             _submissionScheduler.SubmitEntities();
 
-            _indexedDB.Engine.Step();
+            _characterFSM.Step();
 
             AssertIndexer();
 
@@ -261,7 +262,7 @@ namespace Svelto.ECS.Schema.Tests
                 }
             }
 
-            _indexedDB.Engine.Step();
+            _characterFSM.Step();
 
             AssertIndexer();
 
@@ -290,7 +291,7 @@ namespace Svelto.ECS.Schema.Tests
             _submissionScheduler.SubmitEntities();
 
             // warming up
-            _indexedDB.Engine.Step();
+            _characterFSM.Step();
 
             foreach (var result in _indexedDB.Select<RageResultSet>().From(_schema.Character))
             {
@@ -301,7 +302,7 @@ namespace Svelto.ECS.Schema.Tests
                 }
             }
 
-            _indexedDB.Engine.Step();
+            _characterFSM.Step();
 
             foreach (var result in _indexedDB.Select<RageResultSet>().From(_schema.Character))
             {
@@ -311,13 +312,15 @@ namespace Svelto.ECS.Schema.Tests
                 }
             }
 
-            _indexedDB.Engine.Step();
+            _characterFSM.Step();
+            _indexedDB.Step();
 
             long before = GC.GetAllocatedBytesForCurrentThread();
 
             for (int i = 0; i < 100; ++i)
             {
-                _indexedDB.Engine.Step();
+                _characterFSM.Step();
+                _indexedDB.Step();
             }
 
             Assert.True(before + 50 > GC.GetAllocatedBytesForCurrentThread());

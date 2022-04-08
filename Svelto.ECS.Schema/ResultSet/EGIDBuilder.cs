@@ -17,7 +17,7 @@ namespace Svelto.ECS.Schema.Internal
     public readonly ref struct EGIDBuilder
     {
         private readonly NativeEntityIDs _entityIDs;
-        private readonly ExclusiveGroupStruct _group;
+        internal readonly ExclusiveGroupStruct _group;
 
         public EGIDBuilder(NativeEntityIDs entityIDs, ExclusiveGroupStruct group)
         {

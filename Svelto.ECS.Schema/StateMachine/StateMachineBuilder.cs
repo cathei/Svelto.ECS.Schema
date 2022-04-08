@@ -11,7 +11,7 @@ namespace Svelto.ECS.Schema.Internal
 {
     public readonly ref struct StateMachineBuilder<TRow, TComponent>
         where TRow : class, IEntityRow<TComponent>
-        where TComponent : unmanaged, IStateMachineComponent
+        where TComponent : unmanaged, IKeyComponent
     {
         internal readonly StateMachine<TComponent> _fsm;
 
@@ -34,8 +34,8 @@ namespace Svelto.ECS.Schema.Internal
     }
 
     public readonly ref struct StateBuilder<TRow, TComponent, TState>
-        where TRow : class, StateMachine<TComponent>.IIndexableRow
-        where TComponent : unmanaged, IStateMachineComponent<TState>
+        where TRow : class, StateMachine<TComponent>.IStateMachineRow
+        where TComponent : unmanaged, IKeyComponent<TState>
         where TState : unmanaged, IEquatable<TState>
     {
         internal readonly StateMachineConfig<TRow, TComponent, TState>.State _state;
@@ -73,8 +73,8 @@ namespace Svelto.ECS.Schema
     {
         public static StateBuilder<TRow, TComponent, TState> AddState<TRow, TComponent, TState>(
                 this StateMachineBuilder<TRow, TComponent> builder, in TState key)
-            where TRow : class, StateMachine<TComponent>.IIndexableRow
-            where TComponent : unmanaged, IStateMachineComponent<TState>
+            where TRow : class, StateMachine<TComponent>.IStateMachineRow
+            where TComponent : unmanaged, IKeyComponent<TState>
             where TState : unmanaged, IEquatable<TState>
         {
             var config = StateMachineConfig<TRow, TComponent, TState>.Get(builder._fsm);
@@ -92,8 +92,8 @@ namespace Svelto.ECS.Schema
 
         public static TransitionBuilder<TRow, TState> AddTransition<TRow, TComponent, TState>(
                 this StateMachineBuilder<TRow, TComponent>.AnyStateBuilder builder, in TState next)
-            where TRow : class, StateMachine<TComponent>.IIndexableRow
-            where TComponent : unmanaged, IStateMachineComponent<TState>
+            where TRow : class, StateMachine<TComponent>.IStateMachineRow
+            where TComponent : unmanaged, IKeyComponent<TState>
             where TState : unmanaged, IEquatable<TState>
         {
             var config = StateMachineConfig<TRow, TComponent, TState>.Get(builder._fsm);
@@ -125,8 +125,8 @@ namespace Svelto.ECS.Schema
 
         public static StateBuilder<TRow, TComponent, TState> ExecuteOnExit<TRow, TComponent, TState, TCallback>(
                 this StateBuilder<TRow, TComponent, TState> builder, CallbackNative<TCallback> callback)
-            where TRow : class, StateMachine<TComponent>.IIndexableRow, IEntityRow<TCallback>
-            where TComponent : unmanaged, IStateMachineComponent<TState>
+            where TRow : class, StateMachine<TComponent>.IStateMachineRow, IEntityRow<TCallback>
+            where TComponent : unmanaged, IKeyComponent<TState>
             where TState : unmanaged, IEquatable<TState>
             where TCallback : unmanaged, IEntityComponent
         {
@@ -137,8 +137,8 @@ namespace Svelto.ECS.Schema
 
         public static StateBuilder<TRow, TComponent, TState> ExecuteOnExit<TRow, TComponent, TState, TCallback>(
                 this StateBuilder<TRow, TComponent, TState> builder, CallbackManaged<TCallback> callback)
-            where TRow : class, StateMachine<TComponent>.IIndexableRow, IEntityRow<TCallback>
-            where TComponent : unmanaged, IStateMachineComponent<TState>
+            where TRow : class, StateMachine<TComponent>.IStateMachineRow, IEntityRow<TCallback>
+            where TComponent : unmanaged, IKeyComponent<TState>
             where TState : unmanaged, IEquatable<TState>
             where TCallback : struct, IEntityViewComponent
         {
@@ -149,8 +149,8 @@ namespace Svelto.ECS.Schema
 
         public static StateBuilder<TRow, TComponent, TState> ExecuteOnEnter<TRow, TComponent, TState, TCallback>(
                 this StateBuilder<TRow, TComponent, TState> builder, CallbackNative<TCallback> callback)
-            where TRow : class, StateMachine<TComponent>.IIndexableRow, IEntityRow<TCallback>
-            where TComponent : unmanaged, IStateMachineComponent<TState>
+            where TRow : class, StateMachine<TComponent>.IStateMachineRow, IEntityRow<TCallback>
+            where TComponent : unmanaged, IKeyComponent<TState>
             where TState : unmanaged, IEquatable<TState>
             where TCallback : unmanaged, IEntityComponent
         {
@@ -161,8 +161,8 @@ namespace Svelto.ECS.Schema
 
         public static StateBuilder<TRow, TComponent, TState> ExecuteOnEnter<TRow, TComponent, TState, TCallback>(
                 this StateBuilder<TRow, TComponent, TState> builder, CallbackManaged<TCallback> callback)
-            where TRow : class, StateMachine<TComponent>.IIndexableRow, IEntityRow<TCallback>
-            where TComponent : unmanaged, IStateMachineComponent<TState>
+            where TRow : class, StateMachine<TComponent>.IStateMachineRow, IEntityRow<TCallback>
+            where TComponent : unmanaged, IKeyComponent<TState>
             where TState : unmanaged, IEquatable<TState>
             where TCallback : struct, IEntityViewComponent
         {
@@ -177,8 +177,8 @@ namespace Svelto.ECS.Schema
         // use enum as key
         public static StateBuilder<TRow, TComponent, EnumKey<TState>> AddState<TRow, TComponent, TState>(
                 this StateMachineBuilder<TRow, TComponent> builder, in TState key)
-            where TRow : class, StateMachine<TComponent>.IIndexableRow
-            where TComponent : unmanaged, IStateMachineComponent<EnumKey<TState>>
+            where TRow : class, StateMachine<TComponent>.IStateMachineRow
+            where TComponent : unmanaged, IKeyComponent<EnumKey<TState>>
             where TState : unmanaged, Enum
         {
             return builder.AddState((EnumKey<TState>)key);
@@ -187,8 +187,8 @@ namespace Svelto.ECS.Schema
         // use enum as key
         public static TransitionBuilder<TRow, EnumKey<TState>> AddTransition<TRow, TComponent, TState>(
                 this StateMachineBuilder<TRow, TComponent>.AnyStateBuilder builder, in TState next)
-            where TRow : class, StateMachine<TComponent>.IIndexableRow
-            where TComponent : unmanaged, IStateMachineComponent<EnumKey<TState>>
+            where TRow : class, StateMachine<TComponent>.IStateMachineRow
+            where TComponent : unmanaged, IKeyComponent<EnumKey<TState>>
             where TState : unmanaged, Enum
         {
             return builder.AddTransition((EnumKey<TState>)next);
@@ -200,8 +200,8 @@ namespace Svelto.ECS.Schema
         // use state builder as key
         public static TransitionBuilder<TRow, TState> AddTransition<TRow, TComponent, TState>(
                 this StateMachineBuilder<TRow, TComponent>.AnyStateBuilder builder, StateBuilder<TRow, TComponent, TState> next)
-            where TRow : class, StateMachine<TComponent>.IIndexableRow
-            where TComponent : unmanaged, IStateMachineComponent<TState>
+            where TRow : class, StateMachine<TComponent>.IStateMachineRow
+            where TComponent : unmanaged, IKeyComponent<TState>
             where TState : unmanaged, IEquatable<TState>
         {
             return builder.AddTransition((TState)next);

@@ -89,7 +89,7 @@ namespace Svelto.ECS.Schema.Tests
         public class RowWithoutHealth : DescriptorRow<RowWithoutHealth>, IDamageRow
         { }
 
-        public class TestSchema : EntitySchema
+        public class TestSchema : IEntitySchema
         {
             public readonly Table<RowWithHealth> Table1 = new();
             public readonly Table<RowWithHealth2> Table2 = new();
@@ -101,7 +101,7 @@ namespace Svelto.ECS.Schema.Tests
             {
                 Group.SetPossibleKeys(Enumerable.Range(0, 5).ToArray());
 
-                Table2.AddPrimaryKey(Group);
+                Table2.AddPrimaryKeys(Group);
             }
         }
 
@@ -151,7 +151,7 @@ namespace Svelto.ECS.Schema.Tests
             _indexedDB.RemoveAll(_schema.Table1);
             _indexedDB.RemoveAll(_schema.Table3);
 
-            _indexedDB.Engine.Step();
+            _indexedDB.Step();
             _submissionScheduler.SubmitEntities();
 
             Assert.Equal(30, engine.moved);

@@ -12,6 +12,9 @@ namespace Svelto.ECS.Schema.Internal
 {
     // component that always exists
     public struct RowIdentityComponent : IEntityComponent { }
+
+    // component that exists for IPrimaryKeyRow
+    public struct PKIdentityComponent : IEntityComponent { }
 }
 
 namespace Svelto.ECS.Schema

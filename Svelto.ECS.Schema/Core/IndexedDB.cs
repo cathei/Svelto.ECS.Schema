@@ -10,9 +10,10 @@ namespace Svelto.ECS.Schema
     /// <summary>
     /// *Indexed* EntitiesDB
     /// </summary>
-    public sealed partial class IndexedDB
+    public sealed partial class IndexedDB : IStepEngine
     {
         internal readonly FasterList<SchemaMetadata> registeredSchemas = new();
+        internal readonly FasterList<IEntityStateMachine> registeredStateMachines = new();
 
         // engines will be created per TComponent
         internal readonly HashSet<RefWrapperType> createdIndexerEngines = new();
@@ -23,14 +24,19 @@ namespace Svelto.ECS.Schema
         internal IEntityFunctions entityFunctions;
         internal EntitiesDB entitiesDB;
 
-        public IStepEngine Engine { get; private set; }
+        private readonly IStepEngine _engine;
         private readonly FasterList<IStepEngine> enginesList = new();
 
-        internal IndexedDB(IEntityFunctions entityFunctions)
+        internal IndexedDB(EnginesRoot enginesRoot, IEntityFunctions entityFunctions)
         {
             this.entityFunctions = entityFunctions;
 
-            Engine = new IndexedDBEngine(this, enginesList);
+            var pkEngine = new PrimaryKeyEngine(this);
+            enginesRoot.AddEngine(pkEngine);
+            enginesList.Add(pkEngine);
+
+            _engine = new IndexedDBEngine(this, enginesList);
+            enginesRoot.AddEngine(_engine);
         }
 
         internal void RegisterSchema(EnginesRoot enginesRoot, SchemaMetadata metadata)
@@ -50,26 +56,36 @@ namespace Svelto.ECS.Schema
 
                 indexer.AddEngines(enginesRoot, this);
             }
+        }
 
-            foreach (var stateMachine in metadata.stateMachines)
+        internal void RegisterStateMachine<T>(EnginesRoot enginesRoot, T stateMachine)
+            where T : class, IEntityStateMachine
+        {
+            var indexer = stateMachine.Index;
+
+            if (!createdIndexerEngines.Contains(indexer.ComponentType))
             {
-                var componentType = stateMachine.ComponentType;
+                createdIndexerEngines.Add(indexer.ComponentType);
 
-                if (createdStateMachineEngines.Contains(componentType))
-                    continue;
-
-                createdStateMachineEngines.Add(componentType);
-
-                var stateMachineEngine = stateMachine.AddEngines(enginesRoot, this);
-                enginesList.Add(stateMachineEngine);
+                indexer.AddEngines(enginesRoot, this);
             }
 
-            var pkEngine = new PrimaryKeyEngine(this);
+            var componentType = stateMachine.ComponentType;
 
-            enginesRoot.AddEngine(pkEngine);
-            enginesList.Add(pkEngine);
+            if (!createdStateMachineEngines.Contains(componentType))
+            {
+                createdStateMachineEngines.Add(componentType);
+
+                stateMachine.AddEngines(enginesRoot, this);
+            }
+
+            registeredStateMachines.Add(stateMachine);
         }
 
         public static implicit operator EntitiesDB(IndexedDB indexedDB) => indexedDB.entitiesDB;
+
+        string IStepEngine.name => _engine.name;
+
+        public void Step() => _engine.Step();
     }
 }

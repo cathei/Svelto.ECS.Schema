@@ -12,18 +12,17 @@ namespace Svelto.ECS.Schema
     {
         internal readonly FasterList<IEntityTable> tables = new();
         internal readonly FasterList<IEntityIndex> indexers = new();
-        internal readonly FasterList<IEntityStateMachine> stateMachines = new();
 
         internal readonly FasterDictionary<ExclusiveGroupStruct, IEntityTable> groupToTable = new();
 
         private static readonly Type ElementBaseType = typeof(ISchemaDefinition);
 
-        internal SchemaMetadata(EntitySchema schema)
+        internal SchemaMetadata(IEntitySchema schema)
         {
             GenerateChildren(schema, schema.GetType().FullName);
         }
 
-        private void GenerateChildren(EntitySchema schema, string name)
+        private void GenerateChildren(IEntitySchema schema, string name)
         {
             foreach (var fieldInfo in GetSchemaElementFields(schema.GetType()))
             {
@@ -44,10 +43,6 @@ namespace Svelto.ECS.Schema
 
                     case IEntityForeignKey fk:
                         RegisterForeignKey(fk);
-                        break;
-
-                    case IEntityStateMachine stateMachine:
-                        RegisterStateMachine(stateMachine);
                         break;
 
                     case IEntityMemo memo:
@@ -112,12 +107,6 @@ namespace Svelto.ECS.Schema
         private void RegisterForeignKey(IEntityForeignKey fk)
         {
             indexers.Add(fk.Index);
-        }
-
-        private void RegisterStateMachine(IEntityStateMachine stateMachine)
-        {
-            indexers.Add(stateMachine.Index);
-            stateMachines.Add(stateMachine);
         }
 
         private static IEnumerable<FieldInfo> GetSchemaElementFields(Type type)

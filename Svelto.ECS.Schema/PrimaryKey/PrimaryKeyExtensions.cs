@@ -7,7 +7,7 @@ namespace Svelto.ECS.Schema
 {
     public static class PrimaryKeyExtensions
     {
-        public static void SetPossibleKeys<TComponent, TKey>(this PrimaryKey<TComponent> primaryKey, TKey[] possibleKeys)
+        public static void SetPossibleKeys<TComponent, TKey>(this PrimaryKey<TComponent> primaryKey, params TKey[] possibleKeys)
             where TComponent : unmanaged, IKeyComponent<TKey>
             where TKey : unmanaged, IEquatable<TKey>
         {
@@ -25,7 +25,7 @@ namespace Svelto.ECS.Schema
 
     public static class PrimaryKeyEnumExtensions
     {
-        public static void SetPossibleKeys<TComponent, TKey>(this PrimaryKey<TComponent> primaryKey, TKey[] possibleKeys)
+        public static void SetPossibleKeys<TComponent, TKey>(this PrimaryKey<TComponent> primaryKey, params TKey[] possibleKeys)
             where TComponent : unmanaged, IKeyComponent<EnumKey<TKey>>
             where TKey : unmanaged, Enum
         {

@@ -30,24 +30,24 @@ namespace Svelto.ECS.Schema
         /// Throws exception if Row type mismatches
         /// </summary>
         public static void Move<TRow>(
-                this IndexedDB indexedDB, IEntityTable<TRow> table, uint entityID, in ExclusiveGroupStruct groupID)
+                this IndexedDB indexedDB, in EGID egid, IEntityTable<TRow> toTable)
             where TRow : DescriptorRow<TRow>
         {
-            if (indexedDB.FindTable<TRow>(groupID) == null)
+            if (indexedDB.FindTable<TRow>(egid.groupID) == null)
                 throw new ECSException("Row type mismatch");
 
-            indexedDB.entityFunctions.SwapEntityGroup<DescriptorRow<TRow>.Descriptor>(entityID, groupID, table.Group);
+            indexedDB.entityFunctions.SwapEntityGroup<DescriptorRow<TRow>.Descriptor>(egid, toTable.Group);
         }
 
         /// <summary>
         /// Remove entity from table
         /// </summary>
         public static void Remove(
-            this IndexedDB indexedDB, uint entityID, in ExclusiveGroupStruct groupID)
+            this IndexedDB indexedDB, in EGID egid)
         {
-            var table = indexedDB.FindTable(groupID);
+            var table = indexedDB.FindTable(egid.groupID);
             // this is supported with virtual fuction so you can delete with any row
-            table.Remove(indexedDB.entityFunctions, entityID, groupID);
+            table.Remove(indexedDB.entityFunctions, egid);
         }
 
         /// <summary>

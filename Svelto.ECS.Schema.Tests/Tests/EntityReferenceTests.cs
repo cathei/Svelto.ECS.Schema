@@ -57,7 +57,7 @@ namespace Svelto.ECS.Schema.Tests
             DescriptorRow<PoliceRow>, IQueryableRow<PoliceSet>, IForeignKeyRow<PoliceComponent>
         { }
 
-        public class TestSchema : EntitySchema
+        public class TestSchema : IEntitySchema
         {
             public readonly Table<ThiefRow> Thief = new();
             public readonly Table<PoliceRow> Police = new();
@@ -67,7 +67,7 @@ namespace Svelto.ECS.Schema.Tests
 
             public TestSchema()
             {
-                Thief.AddPrimaryKey(Partition);
+                Thief.AddPrimaryKeys(Partition);
                 Partition.SetPossibleKeys(Enumerable.Range(0, 10).ToArray());
             }
         }
@@ -102,7 +102,7 @@ namespace Svelto.ECS.Schema.Tests
 
             Assert.Equal(1000u, policeCount);
 
-            _indexedDB.Engine.Step();
+            _indexedDB.Step();
             _submissionScheduler.SubmitEntities();
 
             int group = 0, loop = 0;
@@ -153,7 +153,7 @@ namespace Svelto.ECS.Schema.Tests
 
             _submissionScheduler.SubmitEntities();
 
-            _indexedDB.Engine.Step();
+            _indexedDB.Step();
 
             var entityIDs = new uint[]
             {
@@ -163,8 +163,8 @@ namespace Svelto.ECS.Schema.Tests
             int group = 0, loop = 0;
 
             foreach (var result in _indexedDB.Select<PoliceSet>()
-                                        .From<PoliceRow>()
-                                        .Where(_schema.EntityID.Is(new FasterList<uint>(entityIDs)))
+                                        .FromAll<PoliceRow>()
+                                        .Where(EntityID.Is(entityIDs))
                                         .Join<ThiefSet>().On(_schema.ThiefFK))
             {
                 group++;
