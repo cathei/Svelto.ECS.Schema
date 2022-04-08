@@ -11,7 +11,7 @@ namespace Svelto.ECS.Schema.Internal
         internal interface IHandler
         {
             void Update(IndexedDB indexedDB, ref TComponent component, in EGID egid);
-            void Remove(IndexedDB indexedDB, in EGID egid);
+            void Remove(IndexedDB indexedDB, in EntityReference entityReference);
         }
 
         internal static IHandler Handler;
@@ -43,9 +43,9 @@ namespace Svelto.ECS.Schema.Internal
             indexedDB.UpdateIndexableComponent(ComponentType, egid, KeyGetter(ref component));
         }
 
-        public void Remove(IndexedDB indexedDB, in EGID egid)
+        public void Remove(IndexedDB indexedDB, in EntityReference reference)
         {
-            indexedDB.RemoveIndexableComponent<TKey>(ComponentType, egid);
+            indexedDB.RemoveIndexableComponent<TKey>(ComponentType, reference);
         }
     }
 }

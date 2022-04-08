@@ -30,11 +30,11 @@ namespace Svelto.ECS.Schema.Internal
 
         public void Remove(in EntityCollection<TComponent> collection, RangedIndices indices, ExclusiveGroupStruct group)
         {
-            var (_, entityIDs, _) = collection;
+            var (identity, _) = indexedDB.entitiesDB.QueryEntities<RowIdentityComponent>(group);
 
             foreach (var i in indices)
             {
-                KeyComponentHelper<TComponent>.Handler.Remove(indexedDB, new(entityIDs[i], group));
+                KeyComponentHelper<TComponent>.Handler.Remove(indexedDB, identity[i].selfReference);
             }
         }
     }

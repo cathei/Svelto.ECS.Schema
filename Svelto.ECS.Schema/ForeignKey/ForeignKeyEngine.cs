@@ -22,43 +22,42 @@ namespace Svelto.ECS.Schema.Internal
         public void Add(in EntityCollection<TComponent> collection, RangedIndices indices, ExclusiveGroupStruct group)
         {
             var (component, entityIDs, _) = collection;
+            var (identity, _) = indexedDB.entitiesDB.QueryEntities<RowIdentityComponent>(group);
 
             foreach (var i in indices)
             {
                 indexedDB.UpdateForeignKeyComponent<TComponent>(
-                    new(entityIDs[i], group), component[i].reference);
+                    new(entityIDs[i], group), identity[i].selfReference, component[i].reference);
             }
         }
 
         public void Remove(in EntityCollection<TComponent> collection, RangedIndices indices, ExclusiveGroupStruct group)
         {
-            var (_, entityIDs, _) = collection;
+            var (identity, _) = indexedDB.entitiesDB.QueryEntities<RowIdentityComponent>(group);
 
             foreach (var i in indices)
             {
-                indexedDB.RemoveForeignKeyComponent<TComponent>(new(entityIDs[i], group));
+                indexedDB.RemoveForeignKeyComponent<TComponent>(identity[i].selfReference);
             }
         }
 
         public void MovedTo(in EntityCollection<Referenceable<TComponent>> collection, RangedIndices indices, ExclusiveGroupStruct fromGroup, ExclusiveGroupStruct toGroup)
         {
-            var (_, entityIDs, _) = collection;
+            var (identity, _) = indexedDB.entitiesDB.QueryEntities<RowIdentityComponent>(toGroup);
 
             foreach (var i in indices)
             {
-                var other = indexedDB.GetEntityReference(entityIDs[i], toGroup);
-                indexedDB.UpdateReferencedComponent<TComponent>(other);
+                indexedDB.UpdateReferencedComponent<TComponent>(identity[i].selfReference);
             }
         }
 
         public void Remove(in EntityCollection<Referenceable<TComponent>> collection, RangedIndices indices, ExclusiveGroupStruct group)
         {
-            var (_, entityIDs, _) = collection;
+            var (identity, _) = indexedDB.entitiesDB.QueryEntities<RowIdentityComponent>(group);
 
             foreach (var i in indices)
             {
-                var other = indexedDB.GetEntityReference(entityIDs[i], group);
-                indexedDB.RemoveReferencedComponent<TComponent>(other);
+                indexedDB.RemoveReferencedComponent<TComponent>(identity[i].selfReference);
             }
         }
     }

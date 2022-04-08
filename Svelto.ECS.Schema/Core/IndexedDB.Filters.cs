@@ -111,11 +111,9 @@ namespace Svelto.ECS.Schema
         }
 
         // remove
-        internal void RemoveIndexableComponent<TK>(RefWrapperType componentType, in EGID egid)
+        internal void RemoveIndexableComponent<TK>(RefWrapperType componentType, in EntityReference entityReference)
             where TK : unmanaged, IEquatable<TK>
         {
-            // we need to compare with previous key with reference because it's only reliable value
-            var entityReference = entitiesDB.GetEntityReference(egid);
             var componentCache = GetOrAddComponentCache<TK>(componentType);
 
             // persistent filters will be cleared automatically, we need to remove cache tho

@@ -11,7 +11,10 @@ using Svelto.ECS.Schema.Internal;
 namespace Svelto.ECS.Schema.Internal
 {
     // component that always exists
-    public struct RowIdentityComponent : IEntityComponent { }
+    public struct RowIdentityComponent : IEntityComponent
+    {
+        internal EntityReference selfReference;
+    }
 
     // component that exists for IPrimaryKeyRow
     public struct PKIdentityComponent : IEntityComponent { }

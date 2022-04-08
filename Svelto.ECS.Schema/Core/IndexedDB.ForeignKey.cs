@@ -60,14 +60,19 @@ namespace Svelto.ECS.Schema
         internal void UpdateForeignKeyComponent<TComponent>(in EGID egid, in EntityReference other)
             where TComponent : unmanaged, IForeignKeyComponent
         {
-            var fkType = ForeignKeyTag<TComponent>.wrapper;
+            UpdateForeignKeyComponent<TComponent>(egid, GetEntityReference(egid), other);
+        }
 
-            // we need to compare with previous key with reference because it's only reliable value
-            var entityReference = entitiesDB.GetEntityReference(egid);
+        internal void UpdateForeignKeyComponent<TComponent>(
+                in EGID egid, in EntityReference entityReference, in EntityReference other)
+            where TComponent : unmanaged, IForeignKeyComponent
+        {
+            var fkType = ForeignKeyTag<TComponent>.wrapper;
 
             var componentCache = GetOrAddComponentCache<ExclusiveGroupStruct>(fkType);
             var fkCache = GetOrAddForeignKeyCache(fkType);
 
+            // we need to compare with previous key with reference because it's only reliable value
             if (fkCache.previousForeignKey.TryGetValue(entityReference, out var previousReference) &&
                 fkCache.reverseForiegnKey.TryGetValue(previousReference, out var previousReverseReferences))
             {
@@ -90,13 +95,10 @@ namespace Svelto.ECS.Schema
             }
         }
 
-        internal void RemoveForeignKeyComponent<TComponent>(in EGID egid)
+        internal void RemoveForeignKeyComponent<TComponent>(in EntityReference entityReference)
             where TComponent : unmanaged, IForeignKeyComponent
         {
             var fkType = ForeignKeyTag<TComponent>.wrapper;
-
-            // we need to compare with previous key with reference because it's only reliable value
-            var entityReference = entitiesDB.GetEntityReference(egid);
             var componentCache = GetOrAddComponentCache<ExclusiveGroupStruct>(fkType);
 
             // persistent filters will be cleared automatically, we need to remove cache tho
