@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Svelto.ECS.Schema\Svelto.ECS.Schema.csproj" />
+    <ProjectReference Include="..\com.cathei.svelto.ecs.schema\Svelto.ECS.Schema.csproj" />
   </ItemGroup>
 
 </Project>

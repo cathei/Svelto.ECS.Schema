@@ -3,11 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30114.105
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Svelto.ECS.Schema", "Svelto.ECS.Schema\Svelto.ECS.Schema.csproj", "{1DDD34C7-D5B3-40B9-A651-92F14A2D4833}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Svelto.ECS.Schema", "com.cathei.svelto.ecs.schema\Svelto.ECS.Schema.csproj", "{1DDD34C7-D5B3-40B9-A651-92F14A2D4833}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Svelto.ECS.Schema.Tests", "Svelto.ECS.Schema.Tests\Svelto.ECS.Schema.Tests.csproj", "{FAF7E5AE-D774-4B06-8BFA-C97173C0971C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Svelto.ECS.Schema.Tests", "com.cathei.svelto.ecs.schema.tests\Svelto.ECS.Schema.Tests.csproj", "{FAF7E5AE-D774-4B06-8BFA-C97173C0971C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Svelto.ECS.Schema.Generator", "Svelto.ECS.Schema.Generator\Svelto.ECS.Schema.Generator.csproj", "{2D2FCBEC-21C4-44A0-A58B-E426F321B995}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Svelto.ECS.Schema.Generator", "com.cathei.svelto.ecs.schema.generator\Svelto.ECS.Schema.Generator.csproj", "{2D2FCBEC-21C4-44A0-A58B-E426F321B995}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Svelto.Common", "com.sebaslab.svelto.common\Svelto.Common.csproj", "{370917F2-21BC-4D31-8799-813DC82B8181}"
 EndProject

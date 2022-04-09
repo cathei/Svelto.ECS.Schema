@@ -19,7 +19,7 @@ jobs:
       - name: Generate packages
         run: |
           $env:RELEASE_VERSION = $env:GITHUB_REF.substring(11) # Remove 'refs/tags/v'
-          dotnet pack Svelto.ECS.Schema -c Release -p:PackageVersion=$env:RELEASE_VERSION -o out --no-restore
+          dotnet pack com.cathei.svelto.ecs.schema -c Release -p:PackageVersion=$env:RELEASE_VERSION -o out --no-restore
       - name: Publish packages
         run: dotnet nuget push out\*.nupkg -s https://api.nuget.org/v3/index.json -k $env:NUGET_TOKEN --skip-duplicate
         env:

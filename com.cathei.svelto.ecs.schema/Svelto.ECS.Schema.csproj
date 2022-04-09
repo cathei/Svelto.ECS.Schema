@@ -23,7 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Svelto.ECS.Schema.Generator\Svelto.ECS.Schema.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\com.cathei.svelto.ecs.schema.generator\Svelto.ECS.Schema.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     <Compile Remove="Generated\**\*.cs" />
   </ItemGroup>
   
