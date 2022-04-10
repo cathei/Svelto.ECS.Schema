@@ -19,7 +19,7 @@ namespace Svelto.ECS.Schema.Internal
 
 namespace Svelto.ECS.Schema
 {
-    public interface IForeignKey<TComponent, TReferRow> : IJoinProvider<TComponent, IForeignKeyRow<TComponent>, TReferRow>
+    public interface IForeignKey<TComponent, out TReferRow> : IJoinProvider<TComponent, IForeignKeyRow<TComponent>, TReferRow>
         where TComponent : unmanaged, IForeignKeyComponent
         where TReferRow : class, IReferenceableRow<TComponent>
     { }
