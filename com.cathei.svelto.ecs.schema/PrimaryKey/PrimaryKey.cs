@@ -28,8 +28,7 @@ Primary key also supports partial query
 
     ***/
     public sealed class PrimaryKey<TComponent> :
-            IPrimaryKeyProvider<IPrimaryKeyRow<TComponent>>,
-            IWhereQueryable<IPrimaryKeyRow<TComponent>, TComponent>
+            IPrimaryKeyProvider<IPrimaryKeyRow<TComponent>>, IPrimaryKey<TComponent>
         where TComponent : unmanaged, IKeyComponent
     {
         // equvalent to ExclusiveGroupStruct.Generate() or SveltoFilters.GetNewContextID()

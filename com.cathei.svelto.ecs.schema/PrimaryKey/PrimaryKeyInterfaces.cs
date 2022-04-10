@@ -12,3 +12,10 @@ namespace Svelto.ECS.Schema.Internal
     { }
 }
 
+namespace Svelto.ECS.Schema
+{
+    public interface IPrimaryKey<TComponent> : IWhereQueryable<IPrimaryKeyRow<TComponent>, TComponent>
+        where TComponent : unmanaged, IKeyComponent
+    { }
+}
+

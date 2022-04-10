@@ -23,7 +23,7 @@ namespace Svelto.ECS.Schema.Definition
             default(TComponent).Warmup<TComponent>();
         }
 
-        internal Index() { }
+        public Index() { }
 
         void IIndexDefinition.AddEngines(EnginesRoot enginesRoot, IndexedDB indexedDB)
         {
