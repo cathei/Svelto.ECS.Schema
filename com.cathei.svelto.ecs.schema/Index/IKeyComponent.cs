@@ -9,6 +9,10 @@ namespace Svelto.ECS.Schema.Internal
     {
         internal void Warmup<TComponent>() where TComponent : unmanaged, IKeyComponent;
     }
+
+    public interface IKeyedRow<TComponent> : IEntityRow<TComponent>
+        where TComponent : unmanaged, IKeyComponent
+    { }
 }
 
 namespace Svelto.ECS.Schema

@@ -9,7 +9,7 @@ namespace Svelto.ECS.Schema.Definition
     /// </summary>
     public abstract partial class StateMachine<TComponent> :
             IEntityStateMachine, IStepEngine,
-            IIndexQueryable<StateMachine<TComponent>.IStateMachineRow, TComponent>
+            IWhereQueryable<StateMachine<TComponent>.IStateMachineRow, TComponent>
         where TComponent : unmanaged, IKeyComponent
     {
         internal StateMachineConfigBase<TComponent> config;
@@ -18,8 +18,6 @@ namespace Svelto.ECS.Schema.Definition
 
         public interface IStateMachineRow :
             IIndexableRow<TComponent>, IQueryableRow<StateMachineSet<TComponent>> { }
-
-        FilterContextID IIndexQueryable<IStateMachineRow, TComponent>.IndexerID => config._index._indexerID;
 
         IIndexDefinition IEntityStateMachine.Index => config._index;
 
@@ -61,5 +59,9 @@ namespace Svelto.ECS.Schema.Definition
             return new StateMachineBuilder<TRow, TComponent>(this);
         }
 
+        void IWhereQueryable.Apply<TKey>(ResultSetQueryConfig config, TKey key)
+        {
+            ((IWhereQueryable)this.config._index).Apply(config, key);
+        }
     }
 }

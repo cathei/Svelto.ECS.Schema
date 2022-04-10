@@ -10,20 +10,5 @@ namespace Svelto.ECS.Schema.Internal
     public interface IPrimaryKeyProvider<in TRow> : IPrimaryKeyDefinition
         where TRow : class, IEntityRow
     { }
-
-    // contravariance (in) for TRow, for type check
-    public interface IPrimaryKeyQueryable<in TRow, TComponent>
-    {
-        public int PrimaryKeyID { get; }
-        public Delegate KeyToIndex { get; }
-    }
-}
-
-namespace Svelto.ECS.Schema
-{
-    /// <summary>
-    /// contravariance (in) for TRow
-    /// </summary>
-    public interface IPrimaryKey<in TRow> { }
 }
 

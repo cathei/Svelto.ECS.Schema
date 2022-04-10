@@ -37,7 +37,7 @@ namespace Svelto.ECS.Schema.Internal
 
             internal void Evaluate(IndexedDB indexedDB, in QueryResult<StateMachineSet<TComponent>> result)
             {
-                ref var filter = ref _config._index.Is(_key).GetFilter(indexedDB);
+                ref var filter = ref _config._index.GetFilter(indexedDB, _key);
                 var groupFilter = filter.GetGroupFilter(result.group);
 
                 // nothing to check

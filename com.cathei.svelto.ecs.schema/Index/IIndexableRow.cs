@@ -11,7 +11,7 @@ namespace Svelto.ECS.Schema.Internal
 namespace Svelto.ECS.Schema
 {
     public interface IIndexableRow<TComponent> :
-            IReactiveRow<TComponent>, IEntityRow<TComponent>
+            IReactiveRow<TComponent>, IKeyedRow<TComponent>
         where TComponent : unmanaged, IKeyComponent
     { }
 }

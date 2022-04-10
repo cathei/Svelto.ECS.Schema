@@ -14,7 +14,7 @@ namespace Svelto.ECS.Schema.Internal
         public static CombinedFilterID Generate() => new(Interlocked.Increment(ref Count), MemoContextID);
     }
 
-    public abstract class MemoBase<TRow> : IMemoDefinition, IEntityMemo<TRow>, IWhereQuery<TRow>
+    public abstract class MemoBase<TRow> : IMemoDefinition, IEntityMemo<TRow>
         where TRow : class, IEntityRow
     {
         // equvalent to ExclusiveGroupStruct.Generate()

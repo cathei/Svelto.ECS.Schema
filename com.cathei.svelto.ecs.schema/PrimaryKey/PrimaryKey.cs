@@ -28,9 +28,8 @@ Primary key also supports partial query
 
     ***/
     public sealed class PrimaryKey<TComponent> :
-            IPrimaryKey<IPrimaryKeyRow<TComponent>>,
             IPrimaryKeyProvider<IPrimaryKeyRow<TComponent>>,
-            IPrimaryKeyQueryable<IPrimaryKeyRow<TComponent>, TComponent>
+            IWhereQueryable<IPrimaryKeyRow<TComponent>, TComponent>
         where TComponent : unmanaged, IKeyComponent
     {
         // equvalent to ExclusiveGroupStruct.Generate() or SveltoFilters.GetNewContextID()
@@ -43,7 +42,6 @@ Primary key also supports partial query
         public ushort PossibleKeyCount { get; internal set; }
 
         Delegate IPrimaryKeyDefinition.KeyToIndex => _keyToIndex;
-        Delegate IPrimaryKeyQueryable<IPrimaryKeyRow<TComponent>, TComponent>.KeyToIndex => _keyToIndex;
 
         private readonly ThreadLocal<NB<TComponent>> threadStorage = new();
 
@@ -61,6 +59,12 @@ Primary key also supports partial query
         int IPrimaryKeyDefinition.QueryGroupIndex(uint index)
         {
             return _componentToIndex(threadStorage.Value[index]);
+        }
+
+        void IWhereQueryable.Apply<TKey>(ResultSetQueryConfig config, TKey key)
+        {
+            var keyToIndex = (Func<TKey, int>)_keyToIndex;
+            config.pkToValue.Add(_primaryKeyID, keyToIndex(key));
         }
     }
 }

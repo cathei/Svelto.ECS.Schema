@@ -6,7 +6,7 @@ using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema
 {
-    public interface IEntityMemo<out TRow>
+    public interface IEntityMemo<out TRow> : IWhereQuery<IEntityRow>
         where TRow : class, IEntityRow
     {
         internal ref EntityFilterCollection GetFilter(IndexedDB indexedDB);

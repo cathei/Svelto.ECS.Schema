@@ -13,7 +13,7 @@ namespace Svelto.ECS.Schema.Internal
 
 namespace Svelto.ECS.Schema
 {
-    public interface IPrimaryKeyRow<TComponent> : IPrimaryKeyRow, IEntityRow<TComponent>
+    public interface IPrimaryKeyRow<TComponent> : IPrimaryKeyRow, IKeyedRow<TComponent>
         where TComponent : unmanaged, IKeyComponent
     { }
 }
