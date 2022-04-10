@@ -49,7 +49,7 @@ namespace Svelto.ECS.Schema
 
         public LocalFasterReadOnlyList<ExclusiveGroupStruct> ExclusiveGroups => Build();
 
-        IEntityTable IEntityTables.GetTable(int index) => _tables[index];
+        ITableDefinition ITablesDefinition.GetTable(int index) => _tables[index];
         IEntityTable<TRow> IEntityTables<TRow>.GetTable(int index) => _tables[index];
     }
 }

@@ -16,7 +16,7 @@ namespace Svelto.ECS.Schema
         internal class IndexableComponentCache
         {
             // cached when called
-            public FasterList<IEntityIndex> indexers = null;
+            public FasterList<IIndexDefinition> indexers = null;
         }
 
         // cache for indexer update
@@ -39,7 +39,7 @@ namespace Svelto.ECS.Schema
                 componentType, () => new IndexableComponentCache<TK>());
         }
 
-        internal FasterList<IEntityIndex> FindIndexers(
+        internal FasterList<IIndexDefinition> FindIndexers(
             in RefWrapperType componentType, IndexableComponentCache componentCache)
         {
             if (componentCache.indexers != null)
@@ -47,7 +47,7 @@ namespace Svelto.ECS.Schema
 
             // Cache doesn't exists, let's build one
             // We don't support dynamic addition of Schemas and StateMachines
-            var componentIndexers = new FasterList<IEntityIndex>();
+            var componentIndexers = new FasterList<IIndexDefinition>();
 
             foreach (var schemaMetadata in registeredSchemas)
             {

@@ -7,7 +7,7 @@ using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema.Internal
 {
-    public struct PrimaryKeyQuery<TRow> : IIndexQuery<TRow>
+    public struct PrimaryKeyQuery<TRow> : IWhereQuery<TRow>
         where TRow : class, IEntityRow
     {
         internal int _primaryKeyID;
@@ -19,7 +19,7 @@ namespace Svelto.ECS.Schema.Internal
             _primaryKeyValue = pkValue;
         }
 
-        void IIndexQuery.Apply(ResultSetQueryConfig config)
+        void IWhereQuery.Apply(ResultSetQueryConfig config)
         {
             config.pkToValue.Add(_primaryKeyID, _primaryKeyValue);
         }

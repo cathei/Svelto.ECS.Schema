@@ -8,32 +8,20 @@ namespace Svelto.ECS.Schema.Internal
     {
         public static RefWrapperType wrapper => TypeRefWrapper<ForeignKeyTag<TComponent>>.wrapper;
     }
-
-    public interface IJoinProvider
-    {
-        public FilterContextID IndexerID { get; }
-
-        internal bool IsValidGroup(IndexedDB indexedDB, ExclusiveGroupStruct group);
-    }
-
-    // supprots contravariance and covariance for type checking.
-    // usage: IJoinProvider<ICharacterRow, IQueryableRow<ResultSet>>
-    public interface IJoinProvider<TComponent, in TRow, out TReferRow> : IJoinProvider
-    { }
 }
 
-namespace Svelto.ECS.Schema
+namespace Svelto.ECS.Schema.Definition
 {
     /// <summary>
     /// Foreign key is used to mimic Join operation
     /// Foreign key backend is special filter to map groups so join work
     /// </summary>
     public sealed class ForeignKey<TComponent, TReferRow> :
-            IEntityForeignKey, IJoinProvider<TComponent, IForeignKeyRow<TComponent>, TReferRow>
+            IForeignKeyDefinition, IForeignKey<TComponent, TReferRow>
         where TComponent : unmanaged, IForeignKeyComponent
         where TReferRow : class, IReferenceableRow<TComponent>
     {
-        internal sealed class Index : IEntityIndex
+        internal sealed class Index : IIndexDefinition
         {
             // equvalent to ExclusiveGroupStruct.Generate()
             internal readonly FilterContextID _indexerID = EntitiesDB.SveltoFilters.GetNewContextID();
@@ -51,7 +39,7 @@ namespace Svelto.ECS.Schema
 
         internal Index _index = new();
 
-        IEntityIndex IEntityForeignKey.Index => _index;
+        IIndexDefinition IForeignKeyDefinition.Index => _index;
 
         public FilterContextID IndexerID => _index._indexerID;
 

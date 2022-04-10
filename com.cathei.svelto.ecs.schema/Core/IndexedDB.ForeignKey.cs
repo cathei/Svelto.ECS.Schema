@@ -211,7 +211,7 @@ namespace Svelto.ECS.Schema
         /// e.g. Remove all equipments from a specific character
         /// </summary>
         internal ReverseReferences QueryReverseReferences(
-            IEntityForeignKey foreignKey, in EGID referencedEGID)
+            IForeignKeyDefinition foreignKey, in EGID referencedEGID)
         {
             return QueryReverseReferences(foreignKey, GetEntityReference(referencedEGID));
         }
@@ -222,7 +222,7 @@ namespace Svelto.ECS.Schema
         /// e.g. Remove all equipments from a specific character
         /// </summary>
         internal ReverseReferences QueryReverseReferences(
-                IEntityForeignKey foreignKey, in EntityReference referencedEntity)
+                IForeignKeyDefinition foreignKey, in EntityReference referencedEntity)
         {
             var fkType = foreignKey.Index.ComponentType;
             var fkCache = GetOrAddForeignKeyCache(fkType);

@@ -14,12 +14,12 @@ namespace Svelto.ECS.Schema.Internal
         public static CombinedFilterID Generate() => new(Interlocked.Increment(ref Count), MemoContextID);
     }
 
-    public abstract class MemoBase : IEntityMemo
+    public abstract class MemoBase : IMemoDefinition
     {
         // equvalent to ExclusiveGroupStruct.Generate()
         internal readonly CombinedFilterID _filterID = GlobalMemoCount.Generate();
 
-        CombinedFilterID IEntityMemo.FilterID => _filterID;
+        CombinedFilterID IMemoDefinition.FilterID => _filterID;
 
         internal MemoBase() { }
 
@@ -29,20 +29,20 @@ namespace Svelto.ECS.Schema.Internal
         }
     }
 
-    public abstract class MemoBase<TRow> : MemoBase, IIndexQuery<TRow>
+    public abstract class MemoBase<TRow> : MemoBase, IWhereQuery<TRow>
         where TRow : class, IEntityRow
     {
         internal MemoBase() { }
 
         internal void Set<TIndex>(IndexedDB indexedDB, TIndex indexQuery)
-            where TIndex : IIndexQuery<TRow>
+            where TIndex : IWhereQuery<TRow>
         {
             indexedDB.ClearMemo(this);
             Union(indexedDB, indexQuery);
         }
 
         internal void Union<TIndex>(IndexedDB indexedDB, TIndex indexQuery)
-            where TIndex : IIndexQuery<TRow>
+            where TIndex : IWhereQuery<TRow>
         {
             ref var originalFilter = ref GetFilter(indexedDB);
 
@@ -56,7 +56,7 @@ namespace Svelto.ECS.Schema.Internal
         }
 
         internal void Intersect<TIndex>(IndexedDB indexedDB, TIndex other)
-            where TIndex : IIndexQuery<TRow>
+            where TIndex : IWhereQuery<TRow>
         {
             ref var originalFilter = ref GetFilter(indexedDB);
 
@@ -98,7 +98,7 @@ namespace Svelto.ECS.Schema.Internal
             }
         }
 
-        void IIndexQuery.Apply(ResultSetQueryConfig config)
+        void IWhereQuery.Apply(ResultSetQueryConfig config)
         {
             config.filters.Add(GetFilter(config.indexedDB));
         }
@@ -107,10 +107,10 @@ namespace Svelto.ECS.Schema.Internal
 
 namespace Svelto.ECS.Schema.Definition
 {
-    public sealed class Memo<TRow> : MemoBase<TRow>
+    public sealed class Memo<TRow> : MemoBase<TRow>, IEntityMemo<TRow>
         where TRow : class, IEntityRow
     { }
 
-    public sealed class Memo : MemoBase<IEntityRow>
+    public sealed class Memo : MemoBase<IEntityRow>, IEntityMemo
     { }
 }

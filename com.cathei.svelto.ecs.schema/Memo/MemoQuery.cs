@@ -46,21 +46,21 @@ namespace Svelto.ECS.Schema.Internal
         }
 
         public MemoQuery<TRow> Set<TIndex>(TIndex indexQuery)
-            where TIndex : IIndexQuery<TRow>
+            where TIndex : IWhereQuery<TRow>
         {
             _memo.Set(_indexedDB, indexQuery);
             return this;
         }
 
         public MemoQuery<TRow> Union<TIndex>(TIndex indexQuery)
-            where TIndex : IIndexQuery<TRow>
+            where TIndex : IWhereQuery<TRow>
         {
             _memo.Union(_indexedDB, indexQuery);
             return this;
         }
 
         public MemoQuery<TRow> Intersect<TIndex>(TIndex indexQuery)
-            where TIndex : IIndexQuery<TRow>
+            where TIndex : IWhereQuery<TRow>
         {
             _memo.Intersect(_indexedDB, indexQuery);
             return this;

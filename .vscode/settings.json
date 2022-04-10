@@ -6,5 +6,9 @@
         "coverage.xml",
         "jacoco.xml",
         "coverage.cobertura.xml"
-    ]
+    ],
+    "files.exclude": {
+        "**/bin": true,
+        "**/obj": true
+    }
 }

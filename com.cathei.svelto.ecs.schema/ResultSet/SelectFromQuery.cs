@@ -36,7 +36,7 @@ namespace Svelto.ECS.Schema.Internal
         }
 
         public SelectFromQuery<TRow, TResult> Where<T>(T query)
-            where T : IIndexQuery<TRow>
+            where T : IWhereQuery<TRow>
         {
             if (config.temporaryGroups.count != 0)
                 throw new ECSException("Query is already in use, cannot add Where condition");

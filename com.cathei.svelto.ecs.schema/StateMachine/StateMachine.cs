@@ -21,7 +21,7 @@ namespace Svelto.ECS.Schema.Definition
 
         FilterContextID IIndexQueryable<IStateMachineRow, TComponent>.IndexerID => config._index._indexerID;
 
-        IEntityIndex IEntityStateMachine.Index => config._index;
+        IIndexDefinition IEntityStateMachine.Index => config._index;
 
         RefWrapperType IEntityStateMachine.ComponentType => TypeRefWrapper<TComponent>.wrapper;
 

@@ -6,27 +6,7 @@ using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema.Internal
 {
-    // /// <summary>
-    // /// contravariance (in) for TRow
-    // /// </summary>
-    public interface IIndexQueryable<in TRow, TComponent>
-        where TRow : class, IEntityRow
-        where TComponent : unmanaged, IEntityComponent
-    {
-        public FilterContextID IndexerID { get; }
-    }
-
-    public interface IIndexQuery
-    {
-        internal void Apply(ResultSetQueryConfig config);
-    }
-
-    /// <summary>
-    /// contravariance (in) for TRow
-    /// </summary>
-    public interface IIndexQuery<in TRow> : IIndexQuery { }
-
-    public readonly struct IndexQuery<TRow, TKey> : IIndexQuery<TRow>
+    public readonly struct IndexQuery<TRow, TKey> : IWhereQuery<TRow>
         where TKey : unmanaged, IEquatable<TKey>
     {
         internal readonly FilterContextID _indexerID;
@@ -38,7 +18,7 @@ namespace Svelto.ECS.Schema.Internal
             _key = key;
         }
 
-        void IIndexQuery.Apply(ResultSetQueryConfig config)
+        void IWhereQuery.Apply(ResultSetQueryConfig config)
         {
             config.filters.Add(GetFilter(config.indexedDB));
         }

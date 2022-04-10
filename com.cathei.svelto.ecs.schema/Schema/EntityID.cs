@@ -4,7 +4,7 @@ using Svelto.DataStructures;
 
 namespace Svelto.ECS.Schema.Internal
 {
-    public readonly struct EntityIDQuery : IIndexQuery<IEntityRow>
+    public readonly struct EntityIDQuery : IWhereQuery<IEntityRow>
     {
         internal readonly uint _entityID;
 
@@ -13,13 +13,13 @@ namespace Svelto.ECS.Schema.Internal
             _entityID = entityID;
         }
 
-        void IIndexQuery.Apply(ResultSetQueryConfig config)
+        void IWhereQuery.Apply(ResultSetQueryConfig config)
         {
             config.selectedEntityIDs.Add(_entityID);
         }
     }
 
-    public readonly struct EntityIDMultiQuery : IIndexQuery<IEntityRow>
+    public readonly struct EntityIDMultiQuery : IWhereQuery<IEntityRow>
     {
         internal readonly uint[] _entityIDs;
 
@@ -28,7 +28,7 @@ namespace Svelto.ECS.Schema.Internal
             _entityIDs = entityIDs;
         }
 
-        void IIndexQuery.Apply(ResultSetQueryConfig config)
+        void IWhereQuery.Apply(ResultSetQueryConfig config)
         {
             foreach (var entityID in _entityIDs)
                 config.selectedEntityIDs.Add(entityID);

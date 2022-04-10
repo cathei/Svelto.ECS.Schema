@@ -8,13 +8,13 @@ namespace Svelto.ECS.Schema
 {
     public sealed partial class IndexedDB
     {
-        internal readonly FasterDictionary<ExclusiveGroupStruct, IEntityTable> _groupToTable
-            = new FasterDictionary<ExclusiveGroupStruct, IEntityTable>();
+        internal readonly FasterDictionary<ExclusiveGroupStruct, ITableDefinition> _groupToTable
+            = new FasterDictionary<ExclusiveGroupStruct, ITableDefinition>();
 
-        internal readonly FasterDictionary<RefWrapperType, IEntityTables> _rowToTables
-            = new FasterDictionary<RefWrapperType, IEntityTables>();
+        internal readonly FasterDictionary<RefWrapperType, ITablesDefinition> _rowToTables
+            = new FasterDictionary<RefWrapperType, ITablesDefinition>();
 
-        public IEntityTable FindTable(in ExclusiveGroupStruct groupID)
+        public ITableDefinition FindTable(in ExclusiveGroupStruct groupID)
         {
             return _groupToTable[groupID];
         }

@@ -5,7 +5,7 @@ using Svelto.ECS.Schema.Internal;
 
 namespace Svelto.ECS.Schema.Internal
 {
-    public abstract class Table : IEntityTable
+    public abstract class Table : ITableDefinition
     {
         public string Name { get; internal set; }
 
@@ -17,8 +17,8 @@ namespace Svelto.ECS.Schema.Internal
         public ref readonly ExclusiveGroup Group => ref group;
         public int GroupRange => groupRange;
 
-        internal FasterDictionary<int, IEntityPrimaryKey> primaryKeys = new();
-        FasterDictionary<int, IEntityPrimaryKey> IEntityTable.PrimaryKeys => primaryKeys;
+        internal FasterDictionary<int, IPrimaryKeyDefinition> primaryKeys = new();
+        FasterDictionary<int, IPrimaryKeyDefinition> ITableDefinition.PrimaryKeys => primaryKeys;
 
         internal Table() { }
 
@@ -26,10 +26,10 @@ namespace Svelto.ECS.Schema.Internal
         protected abstract void Swap(IEntityFunctions functions, in EGID egid, in ExclusiveBuildGroup groupID);
         protected abstract void Remove(IEntityFunctions functions, in EGID egid);
 
-        EntityInitializer IEntityTable.Build(IEntityFactory factory, uint entityID, IEnumerable<object> implementors)
+        EntityInitializer ITableDefinition.Build(IEntityFactory factory, uint entityID, IEnumerable<object> implementors)
             => Build(factory, entityID, implementors);
 
-        void IEntityTable.Swap(IEntityFunctions functions, in EGID egid, in ExclusiveBuildGroup groupID)
+        void ITableDefinition.Swap(IEntityFunctions functions, in EGID egid, in ExclusiveBuildGroup groupID)
             => Swap(functions, egid, groupID);
 
         /// <summary>
@@ -37,7 +37,7 @@ namespace Svelto.ECS.Schema.Internal
         /// Because it is not possible to determine if it is safe to swap to other table
         /// Primary Key should be used instead of swap if needed.
         /// </summary>
-        void IEntityTable.Remove(IEntityFunctions functions, in EGID egid)
+        void ITableDefinition.Remove(IEntityFunctions functions, in EGID egid)
             => Remove(functions, egid);
     }
 }
@@ -87,9 +87,9 @@ namespace Svelto.ECS.Schema
             functions.RemoveEntity<DescriptorRow<TRow>.Descriptor>(egid);
         }
 
-        int IEntityTables.Range => 1;
+        int ITablesDefinition.Range => 1;
 
-        IEntityTable IEntityTables.GetTable(int index) => this;
+        ITableDefinition ITablesDefinition.GetTable(int index) => this;
 
         IEntityTable<TRow> IEntityTables<TRow>.GetTable(int index) => this;
 

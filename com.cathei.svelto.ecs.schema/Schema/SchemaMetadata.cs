@@ -10,12 +10,12 @@ namespace Svelto.ECS.Schema
 {
     internal sealed partial class SchemaMetadata
     {
-        internal readonly FasterList<IEntityTable> tables = new();
-        internal readonly FasterList<IEntityIndex> indexers = new();
+        internal readonly FasterList<ITableDefinition> tables = new();
+        internal readonly FasterList<IIndexDefinition> indexers = new();
 
-        internal readonly FasterDictionary<ExclusiveGroupStruct, IEntityTable> groupToTable = new();
+        internal readonly FasterDictionary<ExclusiveGroupStruct, ITableDefinition> groupToTable = new();
 
-        private static readonly Type ElementBaseType = typeof(ISchemaDefinition);
+        private static readonly Type ElementBaseType = typeof(ISchemaElementDefinition);
 
         internal SchemaMetadata(IEntitySchema schema)
         {
@@ -37,16 +37,16 @@ namespace Svelto.ECS.Schema
                         RegisterTable(table, $"{name}.{fieldInfo.Name}");
                         break;
 
-                    case IEntityIndex indexer:
+                    case IIndexDefinition indexer:
                         RegisterIndexer(indexer);
                         break;
 
-                    case IEntityForeignKey fk:
+                    case IForeignKeyDefinition fk:
                         RegisterForeignKey(fk);
                         break;
 
-                    case IEntityMemo memo:
-                    case IEntityPrimaryKey pk:
+                    case IMemoDefinition memo:
+                    case IPrimaryKeyDefinition pk:
                         break;
 
                     // case IEntitySchema schema:
@@ -99,12 +99,12 @@ namespace Svelto.ECS.Schema
             }
         }
 
-        private void RegisterIndexer(IEntityIndex indexer)
+        private void RegisterIndexer(IIndexDefinition indexer)
         {
             indexers.Add(indexer);
         }
 
-        private void RegisterForeignKey(IEntityForeignKey fk)
+        private void RegisterForeignKey(IForeignKeyDefinition fk)
         {
             indexers.Add(fk.Index);
         }
