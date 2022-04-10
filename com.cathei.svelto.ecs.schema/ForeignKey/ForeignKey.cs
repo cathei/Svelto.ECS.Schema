@@ -34,6 +34,7 @@ namespace Svelto.ECS.Schema.Definition
             public void AddEngines(EnginesRoot enginesRoot, IndexedDB indexedDB)
             {
                 enginesRoot.AddEngine(new ForeignKeyEngine<TComponent>(indexedDB));
+                enginesRoot.AddEngine(new ForeignKeyReferenceableEngine<TComponent>(indexedDB));
             }
         }
 

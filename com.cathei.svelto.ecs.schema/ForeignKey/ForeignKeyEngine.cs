@@ -7,9 +7,7 @@ namespace Svelto.ECS.Schema.Internal
 {
     internal class ForeignKeyEngine<TComponent> :
             IReactRowAdd<IForeignKeyRow<TComponent>, TComponent>,
-            IReactRowRemove<IForeignKeyRow<TComponent>, TComponent>,
-            IReactRowSwap<IReferenceableRow<TComponent>, Referenceable<TComponent>>,
-            IReactRowRemove<IReferenceableRow<TComponent>, Referenceable<TComponent>>
+            IReactRowRemove<IForeignKeyRow<TComponent>, TComponent>
         where TComponent : unmanaged, IForeignKeyComponent
     {
         public ForeignKeyEngine(IndexedDB indexedDB)
@@ -40,6 +38,19 @@ namespace Svelto.ECS.Schema.Internal
                 indexedDB.RemoveForeignKeyComponent<TComponent>(identity[i].selfReference);
             }
         }
+    }
+
+    internal class ForeignKeyReferenceableEngine<TComponent> :
+            IReactRowSwap<IReferenceableRow<TComponent>, Referenceable<TComponent>>,
+            IReactRowRemove<IReferenceableRow<TComponent>, Referenceable<TComponent>>
+        where TComponent : unmanaged, IForeignKeyComponent
+    {
+        public ForeignKeyReferenceableEngine(IndexedDB indexedDB)
+        {
+            this.indexedDB = indexedDB;
+        }
+
+        public IndexedDB indexedDB { get; }
 
         public void MovedTo(in EntityCollection<Referenceable<TComponent>> collection, RangedIndices indices, ExclusiveGroupStruct fromGroup, ExclusiveGroupStruct toGroup)
         {
