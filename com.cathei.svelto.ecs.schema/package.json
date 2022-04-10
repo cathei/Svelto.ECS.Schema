@@ -1,27 +1,28 @@
 {
-    "name": "com.cathei.svelto.ecs.schema",
-    "version": "0.6.0",
-    "displayName": "Svelto ECS Schema",
-    "description": "Svelto ECS Schema Extensions",
-    "unity": "2021.1",
-    "unityRelease": "0f1",
-    "documentationUrl": "https://github.com/cathei/Svelto.ECS.Schema/",
-    "dependencies": {
-        "com.sebaslab.svelto.common": "3.2.4",
-        "com.sebaslab.svelto.ecs": "3.2.4"
-    },
-    "keywords": [
-        "svelto",
-        "ecs",
-        "schema"
-    ],
-    "author": {
-        "name": "Maxwell Keonwoo Kang",
-        "email": "code.athei@gmail.com",
-        "url": "https://github.com/cathei"
-    },
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/cathei/Svelto.ECS.Schema.git"
-    }
-  }
+  "name": "com.cathei.svelto.ecs.schema",
+  "version": "0.7.1",
+  "displayName": "Svelto ECS Schema",
+  "description": "Svelto ECS Schema Extensions",
+  "unity": "2021.2",
+  "unityRelease": "17f1",
+  "documentationUrl": "https://github.com/cathei/Svelto.ECS.Schema/",
+  "dependencies": {
+    "com.sebaslab.svelto.common": "3.3.0",
+    "com.sebaslab.svelto.ecs": "3.3.0"
+  },
+  "keywords": [
+    "svelto",
+    "ecs",
+    "schema"
+  ],
+  "author": {
+    "name": "Maxwell Keonwoo Kang",
+    "email": "code.athei@gmail.com",
+    "url": "https://github.com/cathei"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cathei/Svelto.ECS.Schema.git"
+  },
+  "type": "library"
+}
