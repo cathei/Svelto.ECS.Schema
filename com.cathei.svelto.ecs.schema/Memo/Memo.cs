@@ -24,11 +24,35 @@ namespace Svelto.ECS.Schema.Internal
 
         internal MemoBase() { }
 
+        void IEntityMemo<TRow>.Add(IndexedDB indexedDB, in EGID egid)
+        {
+            if (indexedDB.FindTable<TRow>(egid.groupID) == null)
+                return;
+
+            ref var filter = ref GetFilter(indexedDB);
+            var mapper = indexedDB.GetNativeEGIDMapper(egid.groupID);
+
+            filter.Add(egid, mapper);
+        }
+
+        void IEntityMemo<TRow>.Remove(IndexedDB indexedDB, in EGID egid)
+        {
+            ref var filter = ref GetFilter(indexedDB);
+            filter.Remove(egid);
+        }
+
+        void IEntityMemo<TRow>.Clear(IndexedDB indexedDB)
+        {
+            ref var filter = ref GetFilter(indexedDB);
+            filter.Clear();
+        }
+
         void IEntityMemo<TRow>.Set<TWhere>(IndexedDB indexedDB, TWhere indexQuery)
         {
-            indexedDB.ClearMemo(this);
+            IEntityMemo<TRow> memo = this;
 
-            ((IEntityMemo<TRow>)this).Union(indexedDB, indexQuery);
+            memo.Clear(indexedDB);
+            memo.Union(indexedDB, indexQuery);
         }
 
         void IEntityMemo<TRow>.Union<TWhere>(IndexedDB indexedDB, TWhere indexQuery)

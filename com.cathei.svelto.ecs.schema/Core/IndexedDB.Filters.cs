@@ -141,5 +141,15 @@ namespace Svelto.ECS.Schema
 
             return ref GetOrAddPersistentFilter(filterID);
         }
+
+        internal ref EntityFilterCollection GetOrAddPersistentFilter(CombinedFilterID filterID)
+        {
+            return ref entitiesDB.GetFilters().GetOrCreatePersistentFilter<RowIdentityComponent>(filterID);
+        }
+
+        internal ref EntityFilterCollection GetOrAddTransientFilter(CombinedFilterID filterID)
+        {
+            return ref entitiesDB.GetFilters().GetOrCreateTransientFilter<RowIdentityComponent>(filterID);
+        }
     }
 }
