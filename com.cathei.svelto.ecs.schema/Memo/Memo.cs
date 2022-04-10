@@ -14,7 +14,8 @@ namespace Svelto.ECS.Schema.Internal
         public static CombinedFilterID Generate() => new(Interlocked.Increment(ref Count), MemoContextID);
     }
 
-    public abstract class MemoBase : IMemoDefinition
+    public abstract class MemoBase<TRow> : IMemoDefinition, IEntityMemo<TRow>, IWhereQuery<TRow>
+        where TRow : class, IEntityRow
     {
         // equvalent to ExclusiveGroupStruct.Generate()
         internal readonly CombinedFilterID _filterID = GlobalMemoCount.Generate();
@@ -23,26 +24,14 @@ namespace Svelto.ECS.Schema.Internal
 
         internal MemoBase() { }
 
-        internal ref EntityFilterCollection GetFilter(IndexedDB indexedDB)
-        {
-            return ref indexedDB.GetOrAddTransientFilter(_filterID);
-        }
-    }
-
-    public abstract class MemoBase<TRow> : MemoBase, IWhereQuery<TRow>
-        where TRow : class, IEntityRow
-    {
-        internal MemoBase() { }
-
-        internal void Set<TIndex>(IndexedDB indexedDB, TIndex indexQuery)
-            where TIndex : IWhereQuery<TRow>
+        void IEntityMemo<TRow>.Set<TWhere>(IndexedDB indexedDB, TWhere indexQuery)
         {
             indexedDB.ClearMemo(this);
-            Union(indexedDB, indexQuery);
+
+            ((IEntityMemo<TRow>)this).Union(indexedDB, indexQuery);
         }
 
-        internal void Union<TIndex>(IndexedDB indexedDB, TIndex indexQuery)
-            where TIndex : IWhereQuery<TRow>
+        void IEntityMemo<TRow>.Union<TWhere>(IndexedDB indexedDB, TWhere indexQuery)
         {
             ref var originalFilter = ref GetFilter(indexedDB);
 
@@ -55,8 +44,7 @@ namespace Svelto.ECS.Schema.Internal
             }
         }
 
-        internal void Intersect<TIndex>(IndexedDB indexedDB, TIndex other)
-            where TIndex : IWhereQuery<TRow>
+        void IEntityMemo<TRow>.Intersect<TWhere>(IndexedDB indexedDB, TWhere other)
         {
             ref var originalFilter = ref GetFilter(indexedDB);
 
@@ -98,6 +86,13 @@ namespace Svelto.ECS.Schema.Internal
             }
         }
 
+        internal ref EntityFilterCollection GetFilter(IndexedDB indexedDB)
+        {
+            return ref indexedDB.GetOrAddTransientFilter(_filterID);
+        }
+
+        ref EntityFilterCollection IEntityMemo<TRow>.GetFilter(IndexedDB indexedDB) => ref GetFilter(indexedDB);
+
         void IWhereQuery.Apply(ResultSetQueryConfig config)
         {
             config.filters.Add(GetFilter(config.indexedDB));
@@ -107,10 +102,10 @@ namespace Svelto.ECS.Schema.Internal
 
 namespace Svelto.ECS.Schema.Definition
 {
-    public sealed class Memo<TRow> : MemoBase<TRow>, IEntityMemo<TRow>
+    public sealed class Memo<TRow> : MemoBase<TRow>
         where TRow : class, IEntityRow
     { }
 
-    public sealed class Memo : MemoBase<IEntityRow>, IEntityMemo
+    public sealed class Memo : MemoBase<IEntityRow>
     { }
 }

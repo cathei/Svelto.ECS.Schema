@@ -7,6 +7,7 @@ using Svelto.ECS.Schema.Internal;
 namespace Svelto.ECS.Schema.Internal
 {
     public readonly struct IndexQuery<TRow, TKey> : IWhereQuery<TRow>
+        where TRow : class, IEntityRow
         where TKey : unmanaged, IEquatable<TKey>
     {
         internal readonly FilterContextID _indexerID;

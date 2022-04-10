@@ -10,9 +10,14 @@ namespace Svelto.ECS.Schema.Internal
     {
         internal void Apply(ResultSetQueryConfig config);
     }
+}
 
+namespace Svelto.ECS.Schema
+{
     /// <summary>
     /// contravariance (in) for TRow
     /// </summary>
-    public interface IWhereQuery<in TRow> : IWhereQuery { }
+    public interface IWhereQuery<in TRow> : IWhereQuery
+        where TRow : class, IEntityRow
+    { }
 }

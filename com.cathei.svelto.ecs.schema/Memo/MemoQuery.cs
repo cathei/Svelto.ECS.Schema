@@ -7,9 +7,9 @@ namespace Svelto.ECS.Schema.Internal
         where TRow : class, IEntityRow
     {
         public readonly IndexedDB _indexedDB;
-        public readonly MemoBase<TRow> _memo;
+        public readonly IEntityMemo<TRow> _memo;
 
-        public MemoQuery(IndexedDB indexedDB, MemoBase<TRow> memo)
+        public MemoQuery(IndexedDB indexedDB, IEntityMemo<TRow> memo)
         {
             _indexedDB = indexedDB;
             _memo = memo;
@@ -73,7 +73,7 @@ namespace Svelto.ECS.Schema
     public static class MemoExtensions
     {
         public static MemoQuery<TRow> Memo<TRow>(
-                this IndexedDB indexedDB, MemoBase<TRow> memo)
+                this IndexedDB indexedDB, IEntityMemo<TRow> memo)
             where TRow : class, IEntityRow
         {
             return new MemoQuery<TRow>(indexedDB, memo);

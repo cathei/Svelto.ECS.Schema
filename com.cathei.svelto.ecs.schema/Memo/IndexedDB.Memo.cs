@@ -8,7 +8,7 @@ namespace Svelto.ECS.Schema
 {
     public partial class IndexedDB
     {
-        internal void AddMemo<TR>(MemoBase<TR> memo, in EGID egid)
+        internal void AddMemo<TR>(IEntityMemo<TR> memo, in EGID egid)
             where TR : class, IEntityRow
         {
             if (FindTable<TR>(egid.groupID) == null)
@@ -20,14 +20,15 @@ namespace Svelto.ECS.Schema
             filter.Add(egid, mapper);
         }
 
-        internal void RemoveMemo<TR>(MemoBase<TR> memo, in EGID egid)
+        internal void RemoveMemo<TR>(IEntityMemo<TR> memo, in EGID egid)
             where TR : class, IEntityRow
         {
             var filter = memo.GetFilter(this);
             filter.Remove(egid);
         }
 
-        internal void ClearMemo(MemoBase memo)
+        internal void ClearMemo<TR>(IEntityMemo<TR> memo)
+            where TR : class, IEntityRow
         {
             var filter = memo.GetFilter(this);
             filter.Clear();
