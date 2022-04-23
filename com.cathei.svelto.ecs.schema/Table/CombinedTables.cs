@@ -29,9 +29,9 @@ namespace Svelto.ECS.Schema
             if (_groups != null)
                 return _groups;
 
-            _groups = _tables.SelectMany(
+            _groups = new FasterList<ExclusiveGroupStruct>(_tables.SelectMany(
                 x => Enumerable.Range(0, x.GroupRange).Select(i => x.Group + (uint)i)
-            ).ToFasterList();
+            ).ToArray());
 
             return _groups;
         }

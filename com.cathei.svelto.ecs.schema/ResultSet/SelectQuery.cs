@@ -45,6 +45,15 @@ namespace Svelto.ECS.Schema.Internal
         {
             return new(_indexedDB);
         }
+
+        ///<summary>
+        /// This meant to be used limitedly for case like ReactiveEngine
+        ///</summary>
+        public TResult From(ExclusiveGroupStruct group)
+        {
+            ResultSetHelper<TResult>.Assign(out var result, _indexedDB.entitiesDB, group);
+            return result;
+        }
     }
 }
 

@@ -14,11 +14,6 @@ namespace Svelto.ECS.Schema
 {
     public static partial class TableExtensions
     {
-        public static FasterList<T> ToFasterList<T>(this IEnumerable<T> enumerable)
-        {
-            return new FasterList<T>(enumerable.ToArray());
-        }
-
         public static EntityInitializer Build<TRow>(this IEntityFactory factory, IEntityTable<TRow> table,
                 uint entityID, IEnumerable<object> implementors = null)
             where TRow : DescriptorRow<TRow>
@@ -53,9 +48,9 @@ namespace Svelto.ECS.Schema
         /// <summary>
         /// Remove all entities from table
         /// </summary>
-        public static void RemoveAll<TR>(
-                this IndexedDB indexedDB, IEntityTable<TR> table)
-            where TR : class, IEntityRow
+        public static void RemoveAll<TRow>(
+                this IndexedDB indexedDB, IEntityTable<TRow> table)
+            where TRow : class, IEntityRow
         {
             for (uint i = 0; i < table.GroupRange; ++i)
             {

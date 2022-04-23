@@ -8,48 +8,45 @@ namespace Svelto.ECS.Schema
 {
     public sealed partial class IndexedDB
     {
-        internal readonly FasterDictionary<ExclusiveGroupStruct, ITableDefinition> _groupToTable
-            = new FasterDictionary<ExclusiveGroupStruct, ITableDefinition>();
-
-        internal readonly FasterDictionary<RefWrapperType, ITablesDefinition> _rowToTables
-            = new FasterDictionary<RefWrapperType, ITablesDefinition>();
+        internal readonly FasterDictionary<ExclusiveGroupStruct, ITableDefinition> _groupToTable = new();
+        internal readonly FasterDictionary<RefWrapperType, ITablesDefinition> _rowToTables = new();
 
         public ITableDefinition FindTable(in ExclusiveGroupStruct groupID)
         {
             return _groupToTable[groupID];
         }
 
-        public IEntityTable<TR> FindTable<TR>(in ExclusiveGroupStruct groupID)
-            where TR : class, IEntityRow
+        public IEntityTable<TRow> FindTable<TRow>(in ExclusiveGroupStruct groupID)
+            where TRow : class, IEntityRow
         {
             // return null if type does not match
-            return FindTable(groupID) as IEntityTable<TR>;
+            return FindTable(groupID) as IEntityTable<TRow>;
         }
 
         /// <summary>
         /// This will find all Tables containing Row type TR
         /// </summary>
-        public IEntityTables<TR> FindTables<TR>()
-            where TR : class, IEntityRow
+        public IEntityTables<TRow> FindTables<TRow>()
+            where TRow : class, IEntityRow
         {
-            if (!_rowToTables.TryGetValue(TypeRefWrapper<TR>.wrapper, out var tables))
+            if (!_rowToTables.TryGetValue(TypeRefWrapper<TRow>.wrapper, out var tables))
             {
-                var tablesList = new FasterList<IEntityTable<TR>>();
+                var tablesList = new FasterList<IEntityTable<TRow>>();
 
                 foreach (var schemaMetadata in registeredSchemas)
                 {
                     foreach (var table in schemaMetadata.tables)
                     {
-                        if (table is IEntityTable<TR> matchingTable)
+                        if (table is IEntityTable<TRow> matchingTable)
                             tablesList.Add(matchingTable);
                     }
                 }
 
-                tables = new CombinedTables<TR>(tablesList);
-                _rowToTables[TypeRefWrapper<TR>.wrapper] = tables;
+                tables = new CombinedTables<TRow>(tablesList);
+                _rowToTables[TypeRefWrapper<TRow>.wrapper] = tables;
             }
 
-            return (IEntityTables<TR>)tables;
+            return (IEntityTables<TRow>)tables;
         }
     }
 }
